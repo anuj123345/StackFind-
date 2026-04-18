@@ -10,10 +10,10 @@
 
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
-import type { Database } from "@/types/database"
 
 function serviceClient() {
-  return createClient<Database>(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return createClient<any>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
@@ -86,7 +86,7 @@ export async function POST(req: NextRequest) {
   for (const [slug, thumbUrl] of Object.entries(thumbnails)) {
     const { data } = await supabase
       .from("tools")
-      .update({ logo_url: thumbUrl as string })
+      .update({ logo_url: thumbUrl })
       .eq("slug", slug)
       .select("id")
       .single()
