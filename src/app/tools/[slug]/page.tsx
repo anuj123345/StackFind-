@@ -8,6 +8,8 @@ import Link from "next/link"
 import type { Metadata } from "next"
 import { DetailLogo } from "@/components/tools/detail-logo"
 
+export const dynamic = "force-dynamic"
+
 interface PageProps {
   params: Promise<{ slug: string }>
 }
@@ -55,12 +57,10 @@ function FeaturePill({ active, label }: { active: boolean; label: string }) {
 
 export default async function ToolDetailPage({ params }: PageProps) {
   const { slug } = await params
-  const [tool, related] = await Promise.all([
-    getToolBySlug(slug),
-    getRelatedTools(slug, [], 4),
-  ])
-
+  const tool = await getToolBySlug(slug)
   if (!tool) notFound()
+
+  const related = await getRelatedTools(slug, [], 4)
 
   const pricing = PRICING_COLOR[tool.pricing_model] ?? PRICING_COLOR.free
 
