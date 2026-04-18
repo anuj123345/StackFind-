@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.90.0",
     "@base-ui/react": "^1.4.0",
     "@fontsource-variable/bricolage-grotesque": "^5.2.10",
     "@fontsource-variable/plus-jakarta-sans": "^5.2.8",

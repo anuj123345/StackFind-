@@ -8,6 +8,7 @@ import Link from "next/link"
 import type { Metadata } from "next"
 import { DetailLogo } from "@/components/tools/detail-logo"
 import { RedditInsights, RedditBuzzSidebar } from "@/components/tools/reddit-insights"
+import { ToolDescription } from "@/components/tools/tool-description"
 
 export const dynamic = "force-dynamic"
 
@@ -154,27 +155,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
             {/* Left: main content */}
             <div className="lg:col-span-2 space-y-6">
 
-              {/* Description / About */}
-              <div
-                className="rounded-2xl p-6"
-                style={{ background: "rgba(255,255,255,0.7)", border: "1px solid rgba(140,110,80,0.1)" }}
-              >
-                <h2
-                  className="font-bold mb-3 text-sm tracking-wide uppercase"
-                  style={{ color: "#C4B0A0", letterSpacing: "0.1em" }}
-                >
-                  About
-                </h2>
-                {tool.description ? (
-                  <p className="text-sm leading-relaxed" style={{ color: "#5A4A3A", lineHeight: "1.8" }}>
-                    {tool.description}
-                  </p>
-                ) : (
-                  <p className="text-sm italic" style={{ color: "#C4B0A0" }}>
-                    No official description available. See community discussions below for real-world insights.
-                  </p>
-                )}
-              </div>
+              <ToolDescription slug={slug} initialDescription={tool.description} />
 
               <RedditInsights toolName={tool.name} />
 
