@@ -204,11 +204,16 @@ function NewsCard({ item }: { item: NewsItem }) {
 
 export function FoundersClient({ founders, news }: Props) {
   const [tab, setTab] = useState<"founders" | "news">("founders")
+  const [region, setRegion] = useState<"all" | "india" | "global">("all")
+
+  const filteredFounders = founders.filter(f =>
+    region === "all" ? true : f.region === region
+  )
 
   return (
     <div>
       {/* Tab switcher */}
-      <div className="flex gap-1 mb-8 p-1 rounded-xl w-fit" style={{ background: "rgba(140,110,80,0.06)" }}>
+      <div className="flex gap-1 mb-6 p-1 rounded-xl w-fit" style={{ background: "rgba(140,110,80,0.06)" }}>
         {(["founders", "news"] as const).map(t => (
           <button
             key={t}
@@ -226,11 +231,35 @@ export function FoundersClient({ founders, news }: Props) {
       </div>
 
       {tab === "founders" && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {founders.map(f => (
-            <FounderCard key={f.slug} founder={f} />
-          ))}
-        </div>
+        <>
+          {/* Region filter */}
+          <div className="flex gap-2 mb-6 flex-wrap">
+            {([
+              { key: "all", label: "All Founders" },
+              { key: "india", label: "🇮🇳 India" },
+              { key: "global", label: "🌍 Global" },
+            ] as const).map(r => (
+              <button
+                key={r.key}
+                onClick={() => setRegion(r.key)}
+                className="px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all"
+                style={
+                  region === r.key
+                    ? { background: "#1C1611", color: "#FAF7F2" }
+                    : { background: "rgba(140,110,80,0.06)", color: "#7A6A57", border: "1px solid rgba(140,110,80,0.1)" }
+                }
+              >
+                {r.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {filteredFounders.map(f => (
+              <FounderCard key={f.slug} founder={f} />
+            ))}
+          </div>
+        </>
       )}
 
       {tab === "news" && (

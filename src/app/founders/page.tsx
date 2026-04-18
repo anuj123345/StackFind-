@@ -3,7 +3,7 @@ import { Footer } from "@/components/footer"
 import { FoundersClient } from "@/components/founders/founders-client"
 
 export const dynamic = "force-dynamic"
-export const metadata = { title: "Indian AI Founders — StackFind" }
+export const metadata = { title: "AI Founders — StackFind" }
 
 export interface FounderProfile {
   slug: string
@@ -17,6 +17,7 @@ export interface FounderProfile {
   twitter: string | null
   linkedin: string | null
   tags: string[]
+  region: "india" | "global"
 }
 
 // Curated list of real Indian AI founders
@@ -33,6 +34,7 @@ export const FOUNDERS: FounderProfile[] = [
     twitter: "bhash",
     linkedin: "bhavishaggarwal",
     tags: ["LLM", "Consumer AI", "Mobility"],
+    region: "india",
   },
   {
     slug: "vivek-raghunathan",
@@ -46,6 +48,7 @@ export const FOUNDERS: FounderProfile[] = [
     twitter: "vivek_vr",
     linkedin: "vivekraghunathan",
     tags: ["Indic LLM", "Voice AI", "Foundation Model"],
+    region: "india",
   },
   {
     slug: "pratyush-kumar",
@@ -59,6 +62,7 @@ export const FOUNDERS: FounderProfile[] = [
     twitter: "pratyush103",
     linkedin: "pratyush-kumar-b3540824",
     tags: ["NLP", "Research", "Indic Languages"],
+    region: "india",
   },
   {
     slug: "raghu-ravinutala",
@@ -72,6 +76,7 @@ export const FOUNDERS: FounderProfile[] = [
     twitter: "raghu_rv",
     linkedin: "raghuraveen",
     tags: ["Conversational AI", "Enterprise", "CX Automation"],
+    region: "india",
   },
   {
     slug: "aakrit-vaish",
@@ -85,6 +90,7 @@ export const FOUNDERS: FounderProfile[] = [
     twitter: "aakritv",
     linkedin: "aakritvaish",
     tags: ["Chatbots", "Enterprise AI", "Jio"],
+    region: "india",
   },
   {
     slug: "ragy-thomas",
@@ -98,6 +104,7 @@ export const FOUNDERS: FounderProfile[] = [
     twitter: "ragythomas",
     linkedin: "ragythomas",
     tags: ["CXM", "Enterprise AI", "NYSE Listed"],
+    region: "india",
   },
   {
     slug: "sridhar-vembu",
@@ -111,6 +118,7 @@ export const FOUNDERS: FounderProfile[] = [
     twitter: "svembu",
     linkedin: "sridharvembu",
     tags: ["SaaS", "Bootstrapped", "AI-first"],
+    region: "india",
   },
   {
     slug: "swapnil-jain",
@@ -124,6 +132,7 @@ export const FOUNDERS: FounderProfile[] = [
     twitter: "swapniljain",
     linkedin: "swapniljain7",
     tags: ["Contact Center AI", "Voice AI", "Series C"],
+    region: "india",
   },
   {
     slug: "umesh-sachdev",
@@ -137,6 +146,7 @@ export const FOUNDERS: FounderProfile[] = [
     twitter: "umeshsachdev",
     linkedin: "umeshsachdev",
     tags: ["Conversational AI", "Automation", "Enterprise"],
+    region: "india",
   },
   {
     slug: "ashwini-asokan",
@@ -150,6 +160,7 @@ export const FOUNDERS: FounderProfile[] = [
     twitter: "ash_asokan",
     linkedin: "ashwiniasokan",
     tags: ["Computer Vision", "Retail AI", "Fashion Tech"],
+    region: "india",
   },
   {
     slug: "sourabh-gupta",
@@ -163,6 +174,7 @@ export const FOUNDERS: FounderProfile[] = [
     twitter: "sourabhgupta_ai",
     linkedin: "sourabhguptaai",
     tags: ["Voice AI", "Regional Languages", "Call Center"],
+    region: "india",
   },
   {
     slug: "abhinav-shashank",
@@ -176,6 +188,163 @@ export const FOUNDERS: FounderProfile[] = [
     twitter: "abhinavshashank",
     linkedin: "abhinavshashank",
     tags: ["Healthcare AI", "Data Platform", "Series E"],
+    region: "india",
+  },
+
+  // ── Global AI Founders ────────────────────────────────────────────────────
+  {
+    slug: "sam-altman",
+    name: "Sam Altman",
+    role: "CEO",
+    company: "OpenAI",
+    companyUrl: "https://openai.com",
+    city: "San Francisco",
+    bio: "Leading the most consequential AI lab in history. Under Sam's leadership, OpenAI shipped GPT-4, ChatGPT (now 200M+ users), Sora, and o1. Previously president of Y Combinator.",
+    avatar: "/api/avatar/sama",
+    twitter: "sama",
+    linkedin: "samaltman",
+    tags: ["LLM", "ChatGPT", "AGI"],
+    region: "global",
+  },
+  {
+    slug: "dario-amodei",
+    name: "Dario Amodei",
+    role: "Co-founder & CEO",
+    company: "Anthropic",
+    companyUrl: "https://anthropic.com",
+    city: "San Francisco",
+    bio: "Building safer AI systems at Anthropic. Created the Claude family of models with a focus on AI safety and interpretability. Previously VP of Research at OpenAI.",
+    avatar: "/api/avatar/DarioAmodei",
+    twitter: "DarioAmodei",
+    linkedin: "dario-amodei-3934ba16",
+    tags: ["AI Safety", "Claude", "Research"],
+    region: "global",
+  },
+  {
+    slug: "demis-hassabis",
+    name: "Demis Hassabis",
+    role: "Co-founder & CEO",
+    company: "Google DeepMind",
+    companyUrl: "https://deepmind.google",
+    city: "London",
+    bio: "Nobel Prize winner (Chemistry, 2024) and AI pioneer. Co-founded DeepMind which created AlphaFold, AlphaGo, and Gemini. Merged with Google Brain to lead the world's largest AI research lab.",
+    avatar: "/api/avatar/demishassabis",
+    twitter: "demishassabis",
+    linkedin: "demishassabis",
+    tags: ["DeepMind", "AlphaFold", "Nobel Prize"],
+    region: "global",
+  },
+  {
+    slug: "andrej-karpathy",
+    name: "Andrej Karpathy",
+    role: "Founder",
+    company: "Eureka Labs",
+    companyUrl: "https://eurekalabs.ai",
+    city: "San Francisco",
+    bio: "AI educator and researcher building AI-native education at Eureka Labs. Former Director of AI at Tesla (Autopilot) and founding member of OpenAI. Creator of the legendary neural networks course.",
+    avatar: "/api/avatar/karpathy",
+    twitter: "karpathy",
+    linkedin: "andrej-karpathy-9a650716",
+    tags: ["Education", "Tesla", "Neural Networks"],
+    region: "global",
+  },
+  {
+    slug: "yann-lecun",
+    name: "Yann LeCun",
+    role: "Chief AI Scientist",
+    company: "Meta AI",
+    companyUrl: "https://ai.meta.com",
+    city: "New York",
+    bio: "Turing Award winner and father of convolutional neural networks. Chief AI Scientist at Meta, open-sourcing Llama models for the world. Vocal advocate for open-source AI development.",
+    avatar: "/api/avatar/ylecun",
+    twitter: "ylecun",
+    linkedin: "yann-lecun-0b999b5a",
+    tags: ["Meta AI", "Llama", "Open Source"],
+    region: "global",
+  },
+  {
+    slug: "ilya-sutskever",
+    name: "Ilya Sutskever",
+    role: "Co-founder",
+    company: "Safe Superintelligence (SSI)",
+    companyUrl: "https://ssi.inc",
+    city: "Palo Alto",
+    bio: "Co-founded OpenAI and served as Chief Scientist, contributing to GPT series and DALL·E. Now building Safe Superintelligence (SSI) with a singular focus on making superintelligent AI that is safe.",
+    avatar: "/api/avatar/ilyasut",
+    twitter: "ilyasut",
+    linkedin: "ilya-sutskever",
+    tags: ["Superintelligence", "AI Safety", "OpenAI"],
+    region: "global",
+  },
+  {
+    slug: "clement-delangue",
+    name: "Clément Delangue",
+    role: "Co-founder & CEO",
+    company: "Hugging Face",
+    companyUrl: "https://huggingface.co",
+    city: "New York",
+    bio: "Built Hugging Face into the GitHub of machine learning — home to 500K+ models, datasets, and spaces. Democratizing AI by making models and tools open and accessible to every developer.",
+    avatar: "/api/avatar/ClementDelangue",
+    twitter: "ClementDelangue",
+    linkedin: "clementdelangue",
+    tags: ["Open Source", "ML Hub", "Transformers"],
+    region: "global",
+  },
+  {
+    slug: "arthur-mensch",
+    name: "Arthur Mensch",
+    role: "Co-founder & CEO",
+    company: "Mistral AI",
+    companyUrl: "https://mistral.ai",
+    city: "Paris",
+    bio: "Building Europe's most powerful AI lab. Mistral AI has released open-weight models (Mistral 7B, Mixtral, Mistral Large) rivaling proprietary models. Raised $1B+ at a $6B valuation.",
+    avatar: "/api/avatar/arthurmensch",
+    twitter: "arthurmensch",
+    linkedin: "arthur-mensch",
+    tags: ["Open Weights", "Europe", "LLM"],
+    region: "global",
+  },
+  {
+    slug: "aidan-gomez",
+    name: "Aidan Gomez",
+    role: "Co-founder & CEO",
+    company: "Cohere",
+    companyUrl: "https://cohere.com",
+    city: "Toronto",
+    bio: "Co-authored the original Transformer paper ('Attention Is All You Need') at age 20. Now building enterprise-focused LLMs at Cohere, helping businesses deploy AI securely at scale.",
+    avatar: "/api/avatar/aidangomez",
+    twitter: "aidangomez",
+    linkedin: "aidan-gomez",
+    tags: ["Transformers", "Enterprise AI", "NLP"],
+    region: "global",
+  },
+  {
+    slug: "emad-mostaque",
+    name: "Emad Mostaque",
+    role: "Founder",
+    company: "Stability AI",
+    companyUrl: "https://stability.ai",
+    city: "London",
+    bio: "Founded Stability AI and released Stable Diffusion — the open-source image generation model that sparked the generative AI art revolution. Strong believer in open, decentralized AI development.",
+    avatar: "/api/avatar/EMostaque",
+    twitter: "EMostaque",
+    linkedin: "emostaque",
+    tags: ["Stable Diffusion", "Open Source", "Image AI"],
+    region: "global",
+  },
+  {
+    slug: "mustafa-suleyman",
+    name: "Mustafa Suleyman",
+    role: "CEO",
+    company: "Microsoft AI",
+    companyUrl: "https://microsoft.com/ai",
+    city: "London / Seattle",
+    bio: "Co-founded DeepMind with Demis Hassabis, then built Inflection AI (Pi assistant) before joining Microsoft as CEO of Microsoft AI. One of the most influential figures in applied AI.",
+    avatar: "/api/avatar/mustafasuleyman",
+    twitter: "mustafasuleyman",
+    linkedin: "mustafa-suleyman-02409aa",
+    tags: ["DeepMind", "Microsoft", "Applied AI"],
+    region: "global",
   },
 ]
 
@@ -214,10 +383,10 @@ export default async function FoundersPage() {
               color: "#1C1611",
             }}
           >
-            Indian AI Founders
+            AI Founders
           </h1>
           <p className="mb-12 max-w-lg" style={{ color: "#7A6A57", fontSize: "1.0625rem", lineHeight: "1.6" }}>
-            The builders behind India's AI revolution — shipping foundation models, voice AI, and enterprise tools with maximum ambition.
+            The builders shaping the AI era — from India's homegrown foundation models to the global labs redefining intelligence.
           </p>
 
           <FoundersClient founders={FOUNDERS} news={news} />
