@@ -146,25 +146,21 @@ export default async function ToolDetailPage({ params }: PageProps) {
                     href={tool.website}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200"
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 hover:opacity-80"
                     style={{ background: "#1C1611", color: "#FAF7F2" }}
-                    onMouseEnter={e => (e.currentTarget.style.background = "#2d2318")}
-                    onMouseLeave={e => (e.currentTarget.style.background = "#1C1611")}
                   >
                     <Globe size={14} />
                     Visit site
                     <ArrowUpRight size={13} />
                   </a>
                 )}
-                <button
-                  className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200"
+                <div
+                  className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm"
                   style={{ border: "1px solid rgba(140,110,80,0.2)", color: "#7A6A57" }}
-                  onMouseEnter={e => (e.currentTarget.style.background = "rgba(99,102,241,0.06)")}
-                  onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
                 >
                   <ChevronUp size={15} />
                   {tool.upvotes.toLocaleString()}
-                </button>
+                </div>
               </div>
             </div>
           </div>
