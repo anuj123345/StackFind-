@@ -9,11 +9,11 @@
 
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
-import type { Database } from "@/types/database"
 import { detectCategories, detectIndia, slugify } from "@/lib/categorize"
 
 function serviceClient() {
-  return createClient<Database>(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return createClient<any>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
