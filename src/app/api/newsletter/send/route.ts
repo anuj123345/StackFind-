@@ -18,20 +18,13 @@ function serviceClient() {
   )
 }
 
-// ─── News fetching ────────────────────────────────────────────────────────────
+// ─── News fetching via Google News RSS ───────────────────────────────────────
 
-const AI_NEWS_FEEDS = [
-  { url: "https://feeds.feedburner.com/venturebeat/SZYF", source: "VentureBeat AI" },
-  { url: "https://techcrunch.com/feed/", source: "TechCrunch" },
-  { url: "https://www.technologyreview.com/feed/", source: "MIT Tech Review" },
-  { url: "https://yourstory.com/feed", source: "YourStory" },
-  { url: "https://inc42.com/feed/", source: "Inc42" },
-]
-
-const AI_KEYWORDS = [
-  "ai", "artificial intelligence", "machine learning", "llm", "chatgpt", "claude",
-  "gemini", "gpt", "openai", "anthropic", "deepmind", "meta ai", "mistral",
-  "generative", "foundation model", "language model", "neural", "startup", "funding",
+const GOOGLE_NEWS_QUERIES = [
+  "artificial+intelligence+startup+funding+2025",
+  "OpenAI+Anthropic+Google+DeepMind+news",
+  "LLM+foundation+model+launch+release",
+  "India+AI+startup+technology",
 ]
 
 interface NewsItem {
@@ -41,45 +34,37 @@ interface NewsItem {
   summary: string
 }
 
-function extractXml(xml: string, tag: string): string {
-  const cdata = new RegExp(`<${tag}[^>]*>\\s*<!\\[CDATA\\[([\\s\\S]*?)\\]\\]>`, "i").exec(xml)
-  if (cdata) return cdata[1].trim()
-  const plain = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, "i").exec(xml)
-  if (plain) return plain[1].replace(/<[^>]+>/g, "").trim()
-  return ""
-}
-
 function decodeEntities(s: string): string {
   return s.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
     .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&#x27;/g, "'")
     .replace(/<[^>]+>/g, "").trim()
 }
 
-async function fetchFeed(feedUrl: string, source: string): Promise<NewsItem[]> {
+async function fetchGoogleNews(q: string): Promise<NewsItem[]> {
   try {
-    const res = await fetch(feedUrl, {
-      headers: { "User-Agent": "StackFind-Newsletter/1.0" },
+    const url = `https://news.google.com/rss/search?q=${q}&hl=en-US&gl=US&ceid=US:en`
+    const res = await fetch(url, {
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; StackFind/1.0)" },
       signal: AbortSignal.timeout(8000),
     })
     if (!res.ok) return []
 
     const xml = await res.text()
     const items: NewsItem[] = []
-    const itemRe = /<item[^>]*>([\s\S]*?)<\/item>/gi
+    const itemRe = /<item>([\s\S]*?)<\/item>/gi
     let match: RegExpExecArray | null
 
-    while ((match = itemRe.exec(xml)) !== null && items.length < 15) {
+    while ((match = itemRe.exec(xml)) !== null && items.length < 8) {
       const block = match[1]
-      const title = decodeEntities(extractXml(block, "title"))
-      const link = extractXml(block, "link") || extractXml(block, "guid")
-      const desc = decodeEntities(extractXml(block, "description") || extractXml(block, "content:encoded"))
+      const titleRaw = /<title[^>]*>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/title>/i.exec(block)
+      const title = decodeEntities(titleRaw?.[1] ?? "")
+      const linkRaw = /<link>([^<]+)<\/link>/i.exec(block)
+      const url = linkRaw?.[1]?.trim() ?? ""
+      const sourceRaw = /<source[^>]*>([^<]+)<\/source>/i.exec(block)
+      const source = sourceRaw?.[1]?.trim() ?? "Google News"
 
-      if (!title || !link) continue
-
-      const combined = `${title} ${desc}`.toLowerCase()
-      if (!AI_KEYWORDS.some(kw => combined.includes(kw))) continue
-
-      items.push({ title, url: link.trim(), source, summary: desc.slice(0, 160) })
+      if (!title || !url) continue
+      items.push({ title, url, source, summary: "" })
     }
     return items
   } catch {
@@ -89,10 +74,17 @@ async function fetchFeed(feedUrl: string, source: string): Promise<NewsItem[]> {
 
 async function getAINews(): Promise<NewsItem[]> {
   const results = await Promise.allSettled(
-    AI_NEWS_FEEDS.map(f => fetchFeed(f.url, f.source))
+    GOOGLE_NEWS_QUERIES.map(q => fetchGoogleNews(q))
   )
+  const seen = new Set<string>()
   return results
     .flatMap(r => r.status === "fulfilled" ? r.value : [])
+    .filter(item => {
+      const key = item.title.toLowerCase().slice(0, 60)
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
     .slice(0, 8)
 }
 
