@@ -86,7 +86,7 @@ export async function POST(req: NextRequest) {
   for (const [slug, thumbUrl] of Object.entries(thumbnails)) {
     const { data } = await supabase
       .from("tools")
-      .update({ logo_url: thumbUrl })
+      .update({ logo_url: thumbUrl as string })
       .eq("slug", slug)
       .select("id")
       .single()
