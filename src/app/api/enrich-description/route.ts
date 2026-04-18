@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
   if (!tool) return NextResponse.json({ error: "Tool not found" }, { status: 404 })
 
   // Already has a rich description — return it
-  if (tool.description && tool.description.length > 500) {
+  if (tool.description && tool.description.length > 600) {
     return NextResponse.json({ description: tool.description, cached: true })
   }
 
@@ -82,26 +82,29 @@ export async function POST(req: NextRequest) {
 
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
-  const prompt = `You are writing a product description for an AI tool directory called StackFind.
+  const prompt = `Write a detailed product description for an AI tool. You MUST write exactly 3 full paragraphs separated by blank lines. Each paragraph must be 3-5 sentences. Total length: 200-300 words minimum.
 
-Tool name: ${tool.name}
+Tool: ${tool.name}
 Tagline: ${tool.tagline}
 Pricing: ${tool.pricing_model}
 ${ogDescription ? `Official description: ${ogDescription}` : ""}
-${websiteText ? `Website content (excerpt): ${websiteText.slice(0, 2000)}` : ""}
+${websiteText ? `Website content: ${websiteText.slice(0, 2500)}` : ""}
 
-Write a descriptive, informative product description in 2-3 paragraphs (150-250 words total).
-- What the tool does and who it's for
-- Key features and use cases
-- What makes it stand out
+Paragraph 1: What this tool is, what problem it solves, and who it is built for.
+Paragraph 2: The main features, capabilities, and how people use it day-to-day.
+Paragraph 3: What makes it stand out, pricing model, and who gets the most value from it.
 
-Write in clear, direct prose. No bullet points. No marketing fluff. No mention of StackFind.
-Just describe the tool honestly based on the information above.`
+Rules:
+- Write in plain prose, no bullet points, no headers, no markdown
+- Do not start with the tool name
+- Do not use phrases like "In conclusion" or "Overall"
+- Be specific and concrete, not vague marketing language
+- Write all 3 paragraphs even if information is limited — use what you know about this tool`
 
   try {
     const message = await anthropic.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 400,
+      max_tokens: 700,
       messages: [{ role: "user", content: prompt }],
     })
 
