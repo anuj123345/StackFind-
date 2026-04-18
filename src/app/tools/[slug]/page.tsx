@@ -3,7 +3,7 @@ import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { ToolCard } from "@/components/tool-card"
 import { getToolBySlug, getRelatedTools } from "@/lib/queries"
-import { ArrowUpRight, ChevronUp, Check, Globe, Tag } from "lucide-react"
+import { ArrowUpRight, ChevronUp, Globe, Tag } from "lucide-react"
 import Link from "next/link"
 import type { Metadata } from "next"
 import { DetailLogo } from "@/components/tools/detail-logo"
@@ -34,26 +34,6 @@ const PRICING_COLOR: Record<string, { bg: string; color: string }> = {
   open_source: { bg: "rgba(59,130,246,0.1)",  color: "#3b82f6" },
 }
 
-function FeaturePill({ active, label }: { active: boolean; label: string }) {
-  return (
-    <div
-      className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium"
-      style={{
-        background: active ? "rgba(16,185,129,0.08)" : "rgba(140,110,80,0.04)",
-        color: active ? "#059669" : "#C4B0A0",
-        border: `1px solid ${active ? "rgba(16,185,129,0.2)" : "rgba(140,110,80,0.1)"}`,
-      }}
-    >
-      <div
-        className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0"
-        style={{ background: active ? "rgba(16,185,129,0.15)" : "rgba(140,110,80,0.08)" }}
-      >
-        {active && <Check size={10} style={{ color: "#059669" }} strokeWidth={3} />}
-      </div>
-      {label}
-    </div>
-  )
-}
 
 export default async function ToolDetailPage({ params }: PageProps) {
   const { slug } = await params
@@ -189,25 +169,6 @@ export default async function ToolDetailPage({ params }: PageProps) {
                 </div>
               )}
 
-              {/* India features */}
-              <div
-                className="rounded-2xl p-6"
-                style={{ background: "rgba(255,255,255,0.7)", border: "1px solid rgba(140,110,80,0.1)" }}
-              >
-                <h2
-                  className="font-bold mb-4 text-sm tracking-wide uppercase"
-                  style={{ color: "#C4B0A0", letterSpacing: "0.1em" }}
-                >
-                  India Support
-                </h2>
-                <div className="grid grid-cols-2 gap-2">
-                  <FeaturePill active={tool.has_inr_billing}   label="INR Billing" />
-                  <FeaturePill active={tool.has_upi}           label="UPI Payments" />
-                  <FeaturePill active={tool.has_gst_invoice}   label="GST Invoice" />
-                  <FeaturePill active={tool.has_india_support} label="India Support" />
-                  <FeaturePill active={tool.is_made_in_india}  label="Made in India" />
-                </div>
-              </div>
 
             </div>
 
