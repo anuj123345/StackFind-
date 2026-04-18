@@ -87,7 +87,7 @@ export function ToolCard({
   const p = PRICING[pricingModel] ?? PRICING.free
 
   return (
-    <div className="card-bezel h-full group">
+    <Link href={`/tools/${slug}`} className="card-bezel h-full group block">
       <div className="card-inner flex flex-col h-full">
 
         {/* Top */}
@@ -131,13 +131,12 @@ export function ToolCard({
               </div>
             </div>
 
-            <Link
-              href={`/tools/${slug}`}
+            <div
               className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
               style={{ background: "rgba(140,110,80,0.06)", border: "1px solid rgba(140,110,80,0.1)" }}
             >
               <ArrowUpRight size={13} style={{ color: "#7A6A57" }} />
-            </Link>
+            </div>
           </div>
 
           {/* Tagline */}
@@ -171,20 +170,18 @@ export function ToolCard({
             )}
           </div>
 
-          <button
-            className="flex items-center gap-1 px-2 py-1 rounded-lg transition-all duration-200"
+          <div
+            className="flex items-center gap-1 px-2 py-1 rounded-lg"
             style={{ border: "1px solid rgba(140,110,80,0.1)" }}
-            onMouseEnter={e => (e.currentTarget.style.background = "rgba(99,102,241,0.06)")}
-            onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
           >
             <ChevronUp size={11} style={{ color: "#C4B0A0" }} />
             <span className="text-[11px] font-semibold tabular-nums" style={{ color: "#C4B0A0" }}>
               {upvotes.toLocaleString()}
             </span>
-          </button>
+          </div>
         </div>
 
       </div>
-    </div>
+    </Link>
   )
 }
