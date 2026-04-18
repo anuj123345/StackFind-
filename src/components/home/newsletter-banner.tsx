@@ -1,11 +1,37 @@
 "use client"
 
 import { useState } from "react"
-import { ArrowRight, Mail } from "lucide-react"
+import { ArrowRight, Mail, CheckCircle2, Loader2 } from "lucide-react"
+
+type State = "idle" | "loading" | "success" | "error"
 
 export function NewsletterBanner() {
   const [email, setEmail] = useState("")
-  const [submitted, setSubmitted] = useState(false)
+  const [state, setState] = useState<State>("idle")
+  const [errorMsg, setErrorMsg] = useState("")
+
+  async function handleSubscribe() {
+    if (!email || state === "loading") return
+    setState("loading")
+    setErrorMsg("")
+    try {
+      const res = await fetch("/api/newsletter/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      })
+      const data = await res.json()
+      if (res.ok && data.ok) {
+        setState("success")
+      } else {
+        setErrorMsg(data.error ?? "Something went wrong. Try again.")
+        setState("error")
+      }
+    } catch {
+      setErrorMsg("Network error. Please try again.")
+      setState("error")
+    }
+  }
 
   return (
     <section className="relative z-10 px-4 pb-24">
@@ -34,33 +60,52 @@ export function NewsletterBanner() {
                 Stay ahead of the AI curve
               </h2>
               <p className="text-sm mb-8 max-w-sm mx-auto" style={{ color: "#7A6A57" }}>
-                Every week — the best new AI tools, India pricing updates, and founder stories. No fluff.
+                Every week — new AI tools, top news stories, and what builders are buzzing about. Straight to your inbox.
               </p>
 
-              {submitted ? (
-                <div className="flex items-center justify-center gap-2 text-sm text-emerald-400">
-                  <span>🎉</span>
-                  <span>You&apos;re in! Check your inbox.</span>
+              {state === "success" ? (
+                <div className="flex flex-col items-center gap-3">
+                  <div className="flex items-center gap-2 text-emerald-600 font-semibold text-sm">
+                    <CheckCircle2 size={18} />
+                    You&apos;re subscribed! Check your inbox for a welcome email.
+                  </div>
+                  <p className="text-xs" style={{ color: "#C4B0A0" }}>
+                    You&apos;ll get the digest every Monday morning.
+                  </p>
                 </div>
               ) : (
-                <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-                  <div className="search-wrap flex items-center gap-2 px-4 flex-1">
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={e => setEmail(e.target.value)}
-                      placeholder="you@example.com"
-                      className="flex-1 bg-transparent text-sm outline-none py-3"
-                      style={{ color: "#1C1611" }}
-                    />
+                <div className="flex flex-col items-center gap-3">
+                  <div className="flex flex-col sm:flex-row gap-3 max-w-md w-full mx-auto">
+                    <div className="search-wrap flex items-center gap-2 px-4 flex-1">
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={e => { setEmail(e.target.value); if (state === "error") setState("idle") }}
+                        onKeyDown={e => e.key === "Enter" && handleSubscribe()}
+                        placeholder="you@example.com"
+                        className="flex-1 bg-transparent text-sm outline-none py-3"
+                        style={{ color: "#1C1611" }}
+                        disabled={state === "loading"}
+                      />
+                    </div>
+                    <button
+                      className="btn-primary flex items-center gap-2 justify-center disabled:opacity-60"
+                      onClick={handleSubscribe}
+                      disabled={!email || state === "loading"}
+                    >
+                      {state === "loading" ? (
+                        <Loader2 size={14} className="animate-spin" />
+                      ) : (
+                        <>Subscribe <ArrowRight size={14} /></>
+                      )}
+                    </button>
                   </div>
-                  <button
-                    className="btn-primary flex items-center gap-2 justify-center"
-                    onClick={() => email && setSubmitted(true)}
-                  >
-                    Subscribe
-                    <ArrowRight size={14} />
-                  </button>
+                  {state === "error" && (
+                    <p className="text-xs text-red-500">{errorMsg}</p>
+                  )}
+                  <p className="text-xs" style={{ color: "#C4B0A0" }}>
+                    No spam. Unsubscribe any time.
+                  </p>
                 </div>
               )}
             </div>
