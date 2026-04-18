@@ -11,10 +11,10 @@ export function ToolDescription({ slug, initialDescription }: Props) {
   const [description, setDescription] = useState<string | null>(initialDescription)
   const [loading, setLoading] = useState(false)
 
-  const isShort = !initialDescription || initialDescription.length < 200
-
   useEffect(() => {
-    if (!isShort) return // already rich, nothing to do
+    // Skip if already fetched this session for this slug
+    const cacheKey = `enrich:${slug}`
+    if (typeof sessionStorage !== "undefined" && sessionStorage.getItem(cacheKey)) return
 
     setLoading(true)
     fetch("/api/enrich-description", {
@@ -24,11 +24,14 @@ export function ToolDescription({ slug, initialDescription }: Props) {
     })
       .then(r => r.json())
       .then(data => {
-        if (data.description) setDescription(data.description)
+        if (data.description) {
+          setDescription(data.description)
+          if (typeof sessionStorage !== "undefined") sessionStorage.setItem(cacheKey, "1")
+        }
       })
       .catch(() => {})
       .finally(() => setLoading(false))
-  }, [slug, isShort])
+  }, [slug])
 
   return (
     <div

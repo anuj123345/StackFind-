@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
   if (!tool) return NextResponse.json({ error: "Tool not found" }, { status: 404 })
 
   // Already has a rich description — return it
-  if (tool.description && tool.description.length > 200) {
+  if (tool.description && tool.description.length > 500) {
     return NextResponse.json({ description: tool.description, cached: true })
   }
 
