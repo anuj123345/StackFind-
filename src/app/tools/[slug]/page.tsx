@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation"
-import { Navbar } from "@/components/navbar"
+// Navbar rendered by global layout
 import { Footer } from "@/components/footer"
 import { ToolCard } from "@/components/tool-card"
 import { getToolBySlug, getRelatedTools } from "@/lib/queries"
@@ -53,7 +53,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
 
   return (
     <div className="min-h-screen" style={{ background: "#FAF7F2" }}>
-      <Navbar />
+      
       <main className="pt-28 pb-24 px-4">
         <div className="max-w-5xl mx-auto">
 

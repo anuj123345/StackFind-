@@ -1,4 +1,4 @@
-import { Navbar } from "@/components/navbar"
+// Navbar rendered by global layout
 import { Footer } from "@/components/footer"
 import { NewsletterBanner } from "@/components/home/newsletter-banner"
 import { LiveNewsFeed } from "@/components/newsletter/live-news-feed"
@@ -8,7 +8,7 @@ export const metadata = { title: "AI News & Newsletter — StackFind" }
 export default function NewsletterPage() {
   return (
     <div className="min-h-screen" style={{ background: "#FAF7F2" }}>
-      <Navbar />
+      
       <main className="pt-32 pb-8">
 
         {/* Hero */}

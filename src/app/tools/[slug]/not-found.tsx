@@ -1,11 +1,11 @@
 import Link from "next/link"
-import { Navbar } from "@/components/navbar"
+// Navbar rendered by global layout
 import { Footer } from "@/components/footer"
 
 export default function ToolNotFound() {
   return (
     <div className="min-h-screen" style={{ background: "#FAF7F2" }}>
-      <Navbar />
+      
       <main className="pt-32 pb-24 px-4 flex items-center justify-center">
         <div className="text-center max-w-md">
           <p

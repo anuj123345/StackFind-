@@ -1,4 +1,4 @@
-import { Navbar } from "@/components/navbar"
+// Navbar rendered by global layout
 import { Footer } from "@/components/footer"
 import { ToolsDirectory } from "@/components/tools/tools-directory"
 import { getAllTools, getCategories } from "@/lib/queries"
@@ -40,7 +40,7 @@ async function Directory({ searchParams }: { searchParams: PageProps["searchPara
 export default async function ToolsPage({ searchParams }: PageProps) {
   return (
     <div className="min-h-screen" style={{ background: "#FAF7F2" }}>
-      <Navbar />
+      
       <main className="pt-32 pb-24 px-4">
         <div className="max-w-6xl mx-auto">
 

@@ -1,4 +1,4 @@
-import { Navbar } from "@/components/navbar"
+// Navbar rendered by global layout
 import { Footer } from "@/components/footer"
 import { FoundersClient } from "@/components/founders/founders-client"
 
@@ -350,7 +350,7 @@ export const FOUNDERS: FounderProfile[] = [
 export default function FoundersPage() {
   return (
     <div className="min-h-screen" style={{ background: "#FAF7F2" }}>
-      <Navbar />
+      
       <main className="pt-32 pb-24 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="mb-2">

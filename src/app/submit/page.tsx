@@ -1,4 +1,4 @@
-import { Navbar } from "@/components/navbar"
+// Navbar rendered by global layout
 import { Footer } from "@/components/footer"
 import { SubmitForm } from "@/components/submit/submit-form"
 import type { Metadata } from "next"
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 export default function SubmitPage() {
   return (
     <div className="min-h-screen" style={{ background: "#FAF7F2" }}>
-      <Navbar />
+      
       <main className="pt-28 pb-24 px-4">
         <div className="max-w-5xl mx-auto">
 
