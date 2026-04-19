@@ -229,6 +229,7 @@ export function PlaygroundClient({ tools, isAuthenticated }: Props) {
   const [search, setSearch] = useState("")
   const [idea, setIdea] = useState("")
   const [output, setOutput] = useState("")
+  const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
   const [copied, setCopied] = useState(false)
   const [browserOpen, setBrowserOpen] = useState(true)
@@ -285,6 +286,7 @@ export function PlaygroundClient({ tools, isAuthenticated }: Props) {
   async function generate() {
     if (!idea.trim() || stack.length === 0 || loading) return
     setOutput("")
+    setError("")
     setLoading(true)
     try {
       const res = await fetch("/api/playground/generate", {
@@ -292,12 +294,24 @@ export function PlaygroundClient({ tools, isAuthenticated }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ tools: stack, productIdea: idea }),
       })
+
       if (!res.ok) {
-        const err = await res.json()
-        setOutput(`Error: ${err.error}`)
+        // Try to parse JSON error, fall back to status text
+        let msg = `Server error ${res.status}`
+        try {
+          const data = await res.json()
+          msg = data.error ?? msg
+        } catch {}
+        setError(msg)
         return
       }
-      const reader = res.body!.getReader()
+
+      if (!res.body) {
+        setError("No response stream received from server")
+        return
+      }
+
+      const reader = res.body.getReader()
       const decoder = new TextDecoder()
       let full = ""
       while (true) {
@@ -306,7 +320,12 @@ export function PlaygroundClient({ tools, isAuthenticated }: Props) {
         full += decoder.decode(value, { stream: true })
         setOutput(full)
       }
+      // Flush any remaining bytes
+      full += decoder.decode()
+      setOutput(full)
       setTimeout(() => outputRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100)
+    } catch (err: any) {
+      setError(err?.message ?? "Network error — check your connection and try again")
     } finally {
       setLoading(false)
     }
@@ -730,8 +749,30 @@ export function PlaygroundClient({ tools, isAuthenticated }: Props) {
         </div>
       )}
 
+      {/* Error banner */}
+      {error && !loading && (
+        <div
+          className="mt-5 rounded-2xl px-6 py-5 flex items-start gap-3"
+          style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.2)" }}
+        >
+          <span className="text-lg mt-0.5">⚠️</span>
+          <div className="flex-1">
+            <p className="text-sm font-bold mb-1" style={{ color: "#DC2626" }}>Generation failed</p>
+            <p className="text-sm" style={{ color: "#7A2020" }}>{error}</p>
+            {error.includes("ANTHROPIC_API_KEY") && (
+              <p className="text-xs mt-2" style={{ color: "#9A3A3A" }}>
+                Go to <strong>Vercel → Project → Settings → Environment Variables</strong> and add <code className="px-1 py-0.5 rounded text-xs" style={{ background: "rgba(239,68,68,0.1)" }}>ANTHROPIC_API_KEY</code> with your Anthropic API key. Then redeploy.
+              </p>
+            )}
+          </div>
+          <button onClick={() => setError("")} className="flex-shrink-0 hover:opacity-60">
+            <X size={14} style={{ color: "#DC2626" }} />
+          </button>
+        </div>
+      )}
+
       {/* Placeholder */}
-      {!output && !loading && stack.length > 0 && (
+      {!output && !loading && !error && stack.length > 0 && (
         <div
           className="mt-5 rounded-2xl py-12 text-center"
           style={{ background: "rgba(140,110,80,0.02)", border: "1px dashed rgba(140,110,80,0.15)" }}
