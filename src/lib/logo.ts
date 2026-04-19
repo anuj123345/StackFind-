@@ -1,21 +1,30 @@
 /**
- * Logo URL strategy — simple and reliable:
+ * Logo URL strategy:
  *
- * - Stored logo_url in DB  → use it (admin manually verified it)
- * - No stored URL          → return [] immediately → component shows letter avatar
- *
- * We do NOT fall back to any external favicon service (Clearbit, Google S2,
- * DuckDuckGo) because they all return a generic globe for unknown/small domains
- * with HTTP 200, so onError never fires and the globe silently replaces the logo.
- *
- * For new tools: admin must paste a working logo URL in the admin form.
- * The form shows a live preview before saving so bad logos are caught up front.
+ * 1. Stored logo_url in DB  → highest priority (admin-verified)
+ * 2. Clearbit Logo API      → reliable fallback: returns the real logo PNG for
+ *    known companies, and a proper HTTP 404 for unknown ones — so onError fires
+ *    correctly and the letter avatar takes over. Unlike Google S2 / DuckDuckGo
+ *    which return a generic globe with HTTP 200 (breaking onError).
  */
 export function getLogoSources(
-  _website: string | null | undefined,
+  website: string | null | undefined,
   storedLogoUrl?: string | null
 ): string[] {
-  return storedLogoUrl ? [storedLogoUrl] : []
+  const sources: string[] = []
+
+  if (storedLogoUrl) sources.push(storedLogoUrl)
+
+  if (website) {
+    try {
+      const domain = new URL(website).hostname.replace(/^www\./, "")
+      sources.push(`https://logo.clearbit.com/${domain}`)
+    } catch {
+      // invalid URL — skip
+    }
+  }
+
+  return sources
 }
 
 export function getLogoUrl(
