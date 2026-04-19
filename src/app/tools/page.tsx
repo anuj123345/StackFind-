@@ -3,6 +3,7 @@ import { Footer } from "@/components/footer"
 import { ToolsDirectory } from "@/components/tools/tools-directory"
 import { getAllTools, getCategories } from "@/lib/queries"
 import { Suspense } from "react"
+import Link from "next/link"
 
 export const metadata = { title: "AI Tools Directory — StackFind" }
 
@@ -33,7 +34,15 @@ export default async function ToolsPage({ searchParams }: PageProps) {
       <main className="pt-32 pb-24 px-4">
         <div className="max-w-6xl mx-auto">
 
-          <div className="mb-2">
+          <div className="mb-2 flex items-center gap-3">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1.5 text-[0.75rem] font-medium transition-colors duration-200 hover:text-[#1C1611]"
+              style={{ color: "#C4B0A0" }}
+            >
+              ← Home
+            </Link>
+            <span style={{ color: "rgba(140,110,80,0.25)" }}>·</span>
             <span className="text-[0.6875rem] font-semibold tracking-[0.14em] uppercase" style={{ color: "#C4B0A0" }}>
               Directory
             </span>
