@@ -2,8 +2,12 @@ import { notFound } from "next/navigation"
 // Navbar rendered by global layout
 import { Footer } from "@/components/footer"
 import { ToolCard } from "@/components/tool-card"
+import { GuestWall } from "@/components/guest-wall"
 import { getCategoryBySlug, getToolsByCategory } from "@/lib/queries"
+import { getIsAuthenticated } from "@/lib/auth"
 import type { Metadata } from "next"
+
+const GUEST_LIMIT = 4
 
 // Always fetch fresh — new tools appear immediately without a rebuild
 export const dynamic = "force-dynamic"
@@ -30,18 +34,20 @@ const ICON_FALLBACK: Record<string, string> = {
 
 export default async function CategoryPage({ params }: Props) {
   const { slug } = await params
-  const [cat, tools] = await Promise.all([
+  const [cat, allTools, isAuthenticated] = await Promise.all([
     getCategoryBySlug(slug),
     getToolsByCategory(slug),
+    getIsAuthenticated(),
   ])
 
   if (!cat) notFound()
 
   const icon = cat.icon ?? ICON_FALLBACK[slug] ?? "🔧"
+  const visibleTools = isAuthenticated ? allTools : allTools.slice(0, GUEST_LIMIT)
+  const lockedCount = allTools.length - GUEST_LIMIT
 
   return (
     <div className="min-h-screen" style={{ background: "#FAF7F2" }}>
-      
       <main className="pt-32 pb-24 px-4">
         <div className="max-w-6xl mx-auto">
 
@@ -69,29 +75,34 @@ export default async function CategoryPage({ params }: Props) {
               </p>
             )}
             <p className="mt-2 text-sm font-medium" style={{ color: "#C4B0A0" }}>
-              {tools.length} tool{tools.length !== 1 ? "s" : ""}
+              {allTools.length} tool{allTools.length !== 1 ? "s" : ""}
             </p>
           </div>
 
           {/* Grid */}
-          {tools.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              {tools.map(tool => (
-                <ToolCard
-                  key={tool.slug}
-                  name={tool.name}
-                  slug={tool.slug}
-                  tagline={tool.tagline}
-                  website={tool.website}
-                  logoUrl={tool.logo_url ?? undefined}
-                  pricingModel={tool.pricing_model}
-                  upvotes={tool.upvotes}
-                  isMadeInIndia={tool.is_made_in_india}
-                  hasInrBilling={tool.has_inr_billing}
-                  hasUpi={tool.has_upi}
-                  categories={tool.categoryNames}
-                />
-              ))}
+          {allTools.length > 0 ? (
+            <div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                {visibleTools.map(tool => (
+                  <ToolCard
+                    key={tool.slug}
+                    name={tool.name}
+                    slug={tool.slug}
+                    tagline={tool.tagline}
+                    website={tool.website}
+                    logoUrl={tool.logo_url ?? undefined}
+                    pricingModel={tool.pricing_model}
+                    upvotes={tool.upvotes}
+                    isMadeInIndia={tool.is_made_in_india}
+                    hasInrBilling={tool.has_inr_billing}
+                    hasUpi={tool.has_upi}
+                    categories={tool.categoryNames}
+                  />
+                ))}
+              </div>
+              {!isAuthenticated && lockedCount > 0 && (
+                <GuestWall lockedCount={lockedCount} label="tools" />
+              )}
             </div>
           ) : (
             <div

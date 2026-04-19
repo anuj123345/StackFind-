@@ -1,12 +1,21 @@
 // Navbar rendered by global layout
 import { Footer } from "@/components/footer"
 import { ToolCard } from "@/components/tool-card"
+import { GuestWall } from "@/components/guest-wall"
 import { getMadeInIndiaTools } from "@/lib/queries"
+import { getIsAuthenticated } from "@/lib/auth"
 
 export const metadata = { title: "Made in India AI Tools — StackFind" }
 
+const GUEST_LIMIT = 4
+
 export default async function MadeInIndiaPage() {
-  const tools = await getMadeInIndiaTools(12)
+  const [allTools, isAuthenticated] = await Promise.all([
+    getMadeInIndiaTools(50),
+    getIsAuthenticated(),
+  ])
+  const tools = isAuthenticated ? allTools : allTools.slice(0, GUEST_LIMIT)
+  const lockedCount = allTools.length - GUEST_LIMIT
 
   return (
     <div className="min-h-screen" style={{ background: "#FAF7F2" }}>
@@ -58,6 +67,9 @@ export default async function MadeInIndiaPage() {
               />
             ))}
           </div>
+          {!isAuthenticated && lockedCount > 0 && (
+            <GuestWall lockedCount={lockedCount} label="tools" />
+          )}
         </div>
       </main>
       <Footer />

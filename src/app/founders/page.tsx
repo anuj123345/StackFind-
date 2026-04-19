@@ -1,6 +1,8 @@
 // Navbar rendered by global layout
 import { Footer } from "@/components/footer"
 import { FoundersClient } from "@/components/founders/founders-client"
+import { GuestWall } from "@/components/guest-wall"
+import { getIsAuthenticated } from "@/lib/auth"
 
 export const metadata = { title: "AI Founders — StackFind" }
 
@@ -347,7 +349,13 @@ export const FOUNDERS: FounderProfile[] = [
   },
 ]
 
-export default function FoundersPage() {
+const GUEST_LIMIT = 4
+
+export default async function FoundersPage() {
+  const isAuthenticated = await getIsAuthenticated()
+  const visibleFounders = isAuthenticated ? FOUNDERS : FOUNDERS.slice(0, GUEST_LIMIT)
+  const lockedCount = FOUNDERS.length - GUEST_LIMIT
+
   return (
     <div className="min-h-screen" style={{ background: "#FAF7F2" }}>
       
@@ -372,7 +380,10 @@ export default function FoundersPage() {
             The builders shaping the AI era — from India's homegrown foundation models to the global labs redefining intelligence.
           </p>
 
-          <FoundersClient founders={FOUNDERS} />
+          <FoundersClient founders={visibleFounders} />
+          {!isAuthenticated && lockedCount > 0 && (
+            <GuestWall lockedCount={lockedCount} label="founders" />
+          )}
         </div>
       </main>
       <Footer />

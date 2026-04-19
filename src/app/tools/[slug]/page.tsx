@@ -2,7 +2,9 @@ import { notFound } from "next/navigation"
 // Navbar rendered by global layout
 import { Footer } from "@/components/footer"
 import { ToolCard } from "@/components/tool-card"
+import { GuestWall } from "@/components/guest-wall"
 import { getToolBySlug, getRelatedTools } from "@/lib/queries"
+import { getIsAuthenticated } from "@/lib/auth"
 import { ArrowUpRight, ChevronUp, Globe, Tag } from "lucide-react"
 import Link from "next/link"
 import type { Metadata } from "next"
@@ -44,10 +46,13 @@ const PRICING_COLOR: Record<string, { bg: string; color: string }> = {
 
 export default async function ToolDetailPage({ params }: PageProps) {
   const { slug } = await params
-  const tool = await getToolBySlug(slug)
+  const [tool, isAuthenticated] = await Promise.all([
+    getToolBySlug(slug),
+    getIsAuthenticated(),
+  ])
   if (!tool) notFound()
 
-  const related = await getRelatedTools(slug, [], 4)
+  const related = isAuthenticated ? await getRelatedTools(slug, [], 4) : []
 
   const pricing = PRICING_COLOR[tool.pricing_model] ?? PRICING_COLOR.free
 
@@ -150,7 +155,10 @@ export default async function ToolDetailPage({ params }: PageProps) {
           </div>
 
           {/* Main content grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {!isAuthenticated && (
+            <GuestWall message="Sign in to see full details" />
+          )}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6" style={!isAuthenticated ? { display: "none" } : {}}>
 
             {/* Left: main content */}
             <div className="lg:col-span-2 space-y-6">
@@ -248,7 +256,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
           </div>
 
           {/* Related tools */}
-          {related.length > 0 && (
+          {isAuthenticated && related.length > 0 && (
             <div className="mt-16">
               <div className="flex items-center gap-3 mb-6">
                 <span
