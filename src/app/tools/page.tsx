@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server"
 import { Suspense } from "react"
 import Link from "next/link"
 
+export const dynamic = "force-dynamic"
 export const metadata = { title: "AI Tools Directory — StackFind" }
 
 const GUEST_LIMIT = 16

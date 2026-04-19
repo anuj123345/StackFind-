@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic"
+
 // Navbar rendered by global layout
 import { Footer } from "@/components/footer"
 import { FoundersClient } from "@/components/founders/founders-client"
