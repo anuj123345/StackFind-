@@ -36,28 +36,28 @@ export function Navbar() {
         {/* Nav links */}
         <div className="hidden md:flex items-center gap-0.5 flex-1">
           {[
-            { label: "Tools",         href: "/tools" },
-            { label: "Categories",    href: "/categories" },
-            { label: "Made in India", href: "/made-in-india" },
-            { label: "Founders",      href: "/founders" },
-            { label: "Newsletter",    href: "/newsletter" },
+            { label: "Tools",       href: "/tools" },
+            { label: "Categories",  href: "/categories" },
+            { label: "🇮🇳 India",   href: "/made-in-india" },
+            { label: "Founders",    href: "/founders" },
+            { label: "Newsletter",  href: "/newsletter" },
           ].map((link) => (
             <Link key={link.href} href={link.href}
-              className="px-3 py-1.5 rounded-full text-sm font-medium text-[#7A6A57] hover:text-[#1C1611] hover:bg-black/[0.04] transition-all duration-200 whitespace-nowrap">
+              className="px-2.5 py-1.5 rounded-full text-[0.8125rem] font-medium text-[#7A6A57] hover:text-[#1C1611] hover:bg-black/[0.04] transition-all duration-200 whitespace-nowrap">
               {link.label}
             </Link>
           ))}
         </div>
 
         {/* Right */}
-        <div className="flex items-center gap-2 ml-auto">
+        <div className="flex items-center gap-1.5 ml-auto">
           <button
             onClick={() => window.dispatchEvent(new CustomEvent("open-search"))}
-            className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full text-[#C4B0A0] hover:text-[#1C1611] hover:bg-black/[0.04] transition-all duration-200"
+            className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[#C4B0A0] hover:text-[#1C1611] hover:bg-black/[0.04] transition-all duration-200"
             aria-label="Search tools"
           >
-            <Search size={14} />
-            <span className="text-xs font-medium">Search</span>
+            <Search size={13} />
+            <span className="text-[0.8125rem] font-medium">Search</span>
             <kbd
               className="text-[10px] font-medium px-1.5 py-0.5 rounded"
               style={{ background: "rgba(140,110,80,0.08)", border: "1px solid rgba(140,110,80,0.12)", lineHeight: "1.4" }}
@@ -67,14 +67,14 @@ export function Navbar() {
           </button>
           <button
             onClick={() => window.dispatchEvent(new CustomEvent("open-search"))}
-            className="sm:hidden w-8 h-8 rounded-full flex items-center justify-center text-[#C4B0A0] hover:text-[#1C1611] hover:bg-black/[0.04] transition-all duration-200"
+            className="lg:hidden w-8 h-8 rounded-full flex items-center justify-center text-[#C4B0A0] hover:text-[#1C1611] hover:bg-black/[0.04] transition-all duration-200"
             aria-label="Search tools"
           >
             <Search size={15} />
           </button>
-          <Link href="/submit" className="btn-primary flex items-center gap-1.5 !py-2 !px-4 !text-sm">
-            <Plus size={14} strokeWidth={2.5} />
-            Submit Tool
+          <Link href="/submit" className="btn-primary flex items-center gap-1.5 !py-2 !px-3.5 !text-[0.8125rem]">
+            <Plus size={13} strokeWidth={2.5} />
+            Submit
           </Link>
         </div>
       </nav>
