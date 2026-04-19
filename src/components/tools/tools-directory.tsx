@@ -67,7 +67,8 @@ export function ToolsDirectory({
   }, [tools, search, category, pricing, indiaOnly])
 
   const hasFilters = !!(search || category || pricing || indiaOnly)
-  const lockedCount = totalCount - tools.length
+  const VISIBLE_COUNT = 8
+  const lockedCount = totalCount - VISIBLE_COUNT
 
   function clearAll() {
     setSearch("")
@@ -272,8 +273,9 @@ export function ToolsDirectory({
       {/* Grid */}
       {filtered.length > 0 ? (
         <div>
+          {/* Visible tools */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            {filtered.map(tool => (
+            {(isAuthenticated ? filtered : filtered.slice(0, VISIBLE_COUNT)).map(tool => (
               <ToolCard
                 key={tool.slug}
                 name={tool.name}
@@ -291,76 +293,80 @@ export function ToolsDirectory({
             ))}
           </div>
 
-          {/* Unlock wall for guests */}
+          {/* Unlock wall for guests — blurred real cards + gradient + CTA */}
           {!isAuthenticated && lockedCount > 0 && (
-            <div className="relative mt-3">
-              {/* Blurred ghost cards */}
+            <div className="relative mt-3" style={{ minHeight: 320 }}>
+              {/* Real blurred cards */}
               <div
                 className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3"
-                style={{ filter: "blur(6px)", pointerEvents: "none", userSelect: "none", opacity: 0.5 }}
+                style={{ filter: "blur(8px)", pointerEvents: "none", userSelect: "none" }}
                 aria-hidden
               >
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <div key={i} className="card-bezel">
-                    <div className="card-inner p-4 h-36" style={{ background: "rgba(140,110,80,0.04)" }}>
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="w-9 h-9 rounded-lg" style={{ background: "rgba(140,110,80,0.1)" }} />
-                        <div className="flex-1">
-                          <div className="h-3 rounded-full mb-1.5" style={{ background: "rgba(140,110,80,0.1)", width: "60%" }} />
-                          <div className="h-2.5 rounded-full" style={{ background: "rgba(140,110,80,0.07)", width: "40%" }} />
-                        </div>
-                      </div>
-                      <div className="h-2.5 rounded-full mb-2" style={{ background: "rgba(140,110,80,0.07)", width: "90%" }} />
-                      <div className="h-2.5 rounded-full" style={{ background: "rgba(140,110,80,0.07)", width: "70%" }} />
-                    </div>
-                  </div>
+                {filtered.slice(VISIBLE_COUNT).map(tool => (
+                  <ToolCard
+                    key={tool.slug}
+                    name={tool.name}
+                    slug={tool.slug}
+                    tagline={tool.tagline}
+                    website={tool.website}
+                    logoUrl={tool.logo_url ?? undefined}
+                    pricingModel={tool.pricing_model}
+                    upvotes={tool.upvotes}
+                    isMadeInIndia={tool.is_made_in_india}
+                    hasInrBilling={tool.has_inr_billing}
+                    hasUpi={tool.has_upi}
+                    categories={tool.categoryNames}
+                  />
                 ))}
               </div>
 
-              {/* Overlay CTA */}
+              {/* Gradient fade + CTA */}
               <div
-                className="absolute inset-0 flex flex-col items-center justify-center"
+                className="absolute inset-0 flex flex-col items-end justify-center pb-6"
                 style={{
-                  background: "linear-gradient(to bottom, rgba(250,247,242,0) 0%, rgba(250,247,242,0.97) 35%)",
+                  background: "linear-gradient(to bottom, rgba(250,247,242,0) 0%, rgba(250,247,242,0.85) 30%, rgba(250,247,242,1) 60%)",
                 }}
               >
-                <div
-                  className="rounded-2xl px-8 py-8 text-center max-w-sm mx-auto"
-                  style={{
-                    background: "#FFFFFF",
-                    border: "1px solid rgba(140,110,80,0.14)",
-                    boxShadow: "0 8px 40px rgba(140,110,80,0.12)",
-                  }}
-                >
+                <div className="w-full flex flex-col items-center mt-auto">
                   <div
-                    className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4"
-                    style={{ background: "rgba(99,102,241,0.08)" }}
-                  >
-                    <Lock size={20} style={{ color: "#6366f1" }} />
-                  </div>
-                  <p
-                    className="font-black mb-1.5 leading-tight"
+                    className="rounded-2xl px-8 py-7 text-center w-full max-w-sm"
                     style={{
-                      fontFamily: "'Bricolage Grotesque Variable', sans-serif",
-                      fontSize: "1.25rem",
-                      color: "#1C1611",
+                      background: "#FFFFFF",
+                      border: "1px solid rgba(140,110,80,0.14)",
+                      boxShadow: "0 8px 48px rgba(140,110,80,0.14), 0 2px 12px rgba(140,110,80,0.08)",
                     }}
                   >
-                    {lockedCount.toLocaleString()} more tools locked
-                  </p>
-                  <p className="text-sm mb-6 leading-relaxed" style={{ color: "#7A6A57" }}>
-                    Sign in for free to unlock the full directory — INR pricing, UPI billing, and Made-in-India picks.
-                  </p>
-                  <Link
-                    href="/login"
-                    className="block w-full py-3 rounded-xl font-bold text-sm text-center transition-all duration-200"
-                    style={{ background: "#6366f1", color: "#fff" }}
-                  >
-                    Sign in to unlock all tools →
-                  </Link>
-                  <p className="text-xs mt-3" style={{ color: "#C4B0A0" }}>
-                    Free forever. No credit card needed.
-                  </p>
+                    <div
+                      className="w-11 h-11 rounded-xl flex items-center justify-center mx-auto mb-4"
+                      style={{ background: "rgba(99,102,241,0.08)" }}
+                    >
+                      <Lock size={18} style={{ color: "#6366f1" }} />
+                    </div>
+                    <p
+                      className="font-black mb-2 leading-tight"
+                      style={{
+                        fontFamily: "'Bricolage Grotesque Variable', sans-serif",
+                        fontSize: "1.375rem",
+                        color: "#1C1611",
+                        letterSpacing: "-0.02em",
+                      }}
+                    >
+                      {lockedCount.toLocaleString()} tools locked
+                    </p>
+                    <p className="text-[0.8125rem] mb-5 leading-relaxed" style={{ color: "#7A6A57" }}>
+                      Sign in free to unlock the full directory — INR pricing, UPI billing &amp; Made-in-India picks.
+                    </p>
+                    <Link
+                      href="/login"
+                      className="block w-full py-3 rounded-xl font-bold text-[0.9375rem] text-center transition-all duration-200 hover:opacity-90"
+                      style={{ background: "#6366f1", color: "#fff" }}
+                    >
+                      Unlock all tools →
+                    </Link>
+                    <p className="text-[0.75rem] mt-3" style={{ color: "#C4B0A0" }}>
+                      Free forever · No credit card
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>

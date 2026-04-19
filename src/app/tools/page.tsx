@@ -8,7 +8,7 @@ import Link from "next/link"
 
 export const metadata = { title: "AI Tools Directory — StackFind" }
 
-const GUEST_LIMIT = 8
+const GUEST_LIMIT = 16
 
 interface PageProps {
   searchParams: Promise<{ q?: string; category?: string; pricing?: string; india?: string }>
