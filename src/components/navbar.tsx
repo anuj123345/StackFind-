@@ -1,17 +1,37 @@
 "use client"
 
 import Link from "next/link"
-import { Search, Plus, Zap } from "lucide-react"
+import { Search, Plus, Zap, LogOut } from "lucide-react"
 import { useState, useEffect } from "react"
+import { createClient } from "@/lib/supabase/client"
+import { useRouter } from "next/navigation"
+import type { User } from "@supabase/supabase-js"
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false)
+  const [user, setUser] = useState<User | null>(null)
+  const router = useRouter()
+  const supabase = createClient()
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 20)
     window.addEventListener("scroll", handler, { passive: true })
     return () => window.removeEventListener("scroll", handler)
   }, [])
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUser(data.user))
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+    })
+    return () => subscription.unsubscribe()
+  }, [])
+
+  async function signOut() {
+    await supabase.auth.signOut()
+    router.push("/")
+    router.refresh()
+  }
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 flex justify-center pt-5 px-4">
@@ -72,6 +92,23 @@ export function Navbar() {
           >
             <Search size={15} />
           </button>
+
+          {user ? (
+            <button
+              onClick={signOut}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[0.8125rem] font-medium transition-all duration-200 hover:bg-black/[0.04]"
+              style={{ color: "#7A6A57" }}
+              title={`Sign out (${user.email})`}
+            >
+              <LogOut size={13} />
+              <span className="hidden sm:inline">Sign out</span>
+            </button>
+          ) : (
+            <Link href="/login" className="btn-primary flex items-center gap-1.5 !py-2 !px-3.5 !text-[0.8125rem]">
+              Sign in
+            </Link>
+          )}
+
           <Link href="/submit" className="btn-primary flex items-center gap-1.5 !py-2 !px-3.5 !text-[0.8125rem]">
             <Plus size={13} strokeWidth={2.5} />
             Submit
