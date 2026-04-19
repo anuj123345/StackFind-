@@ -40,6 +40,7 @@ export function Navbar() {
             { label: "Categories",    href: "/categories" },
             { label: "Made in India", href: "/made-in-india" },
             { label: "Founders",      href: "/founders" },
+            { label: "Newsletter",    href: "/newsletter" },
           ].map((link) => (
             <Link key={link.href} href={link.href}
               className="px-3 py-1.5 rounded-full text-sm font-medium text-[#7A6A57] hover:text-[#1C1611] hover:bg-black/[0.04] transition-all duration-200">
