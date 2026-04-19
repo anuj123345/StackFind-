@@ -1,6 +1,7 @@
 /**
  * GET /api/founders/news
- * Fetches live AI news using Google News RSS search — always reachable from Vercel.
+ * Fetches live AI news using Google News RSS.
+ * Follows redirects + extracts og:image for each article.
  * Cached for 1 hour.
  */
 
@@ -14,19 +15,15 @@ export interface NewsItem {
   source: string
   published: string
   summary: string
+  image: string | null
 }
 
-// Google News RSS — reliable from any server, no API key needed
 const GOOGLE_NEWS_QUERIES = [
-  { q: "artificial+intelligence+startup+2025", label: "AI Startups" },
-  { q: "LLM+foundation+model+launch", label: "AI Models" },
-  { q: "India+AI+startup+funding", label: "India AI" },
-  { q: "OpenAI+Anthropic+Google+DeepMind+news", label: "AI Labs" },
+  "artificial+intelligence+startup+2025",
+  "LLM+foundation+model+launch",
+  "India+AI+startup+funding",
+  "OpenAI+Anthropic+Google+DeepMind+news",
 ]
-
-function googleNewsUrl(q: string) {
-  return `https://news.google.com/rss/search?q=${q}&hl=en-US&gl=US&ceid=US:en`
-}
 
 function decodeEntities(s: string): string {
   return s
@@ -43,42 +40,82 @@ function extractTag(xml: string, tag: string): string {
   return ""
 }
 
-// Google News wraps source in <source url="...">Source Name</source>
 function extractSource(block: string): string {
   const m = /<source[^>]*>([^<]+)<\/source>/i.exec(block)
   return m ? m[1].trim() : "Google News"
 }
 
-// Google News links are redirects — extract the real URL from the href
 function extractGoogleLink(block: string): string {
-  // <link> tag in Google News RSS comes right after </title> as plain text
   const linkTag = /<link>([^<]+)<\/link>/i.exec(block)
   if (linkTag) return linkTag[1].trim()
-  // fallback: guid
-  const guid = extractTag(block, "guid")
-  return guid || ""
+  return extractTag(block, "guid")
 }
 
-async function fetchGoogleNews(q: string): Promise<NewsItem[]> {
+// Follow Google News redirect → get real article URL
+async function resolveUrl(googleUrl: string): Promise<string> {
   try {
-    const res = await fetch(googleNewsUrl(q), {
+    const res = await fetch(googleUrl, {
+      method: "HEAD",
+      redirect: "follow",
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; StackFind/1.0)" },
+      signal: AbortSignal.timeout(4000),
+    })
+    return res.url !== googleUrl ? res.url : googleUrl
+  } catch {
+    return googleUrl
+  }
+}
+
+// Fetch first 12KB of article, extract og:image
+async function fetchOgImage(articleUrl: string): Promise<string | null> {
+  try {
+    const res = await fetch(articleUrl, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (compatible; StackFind/1.0)",
+        "Range": "bytes=0-12288",
+      },
+      signal: AbortSignal.timeout(4000),
+      redirect: "follow",
+    })
+    if (!res.ok) return null
+    const html = await res.text()
+
+    // og:image
+    const og = /<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i.exec(html)
+      ?? /<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i.exec(html)
+    if (og?.[1] && og[1].startsWith("http")) return og[1]
+
+    // twitter:image fallback
+    const tw = /<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i.exec(html)
+      ?? /<meta[^>]+content=["']([^"']+)["'][^>]+name=["']twitter:image["']/i.exec(html)
+    if (tw?.[1] && tw[1].startsWith("http")) return tw[1]
+
+    return null
+  } catch {
+    return null
+  }
+}
+
+async function fetchGoogleNews(q: string): Promise<Omit<NewsItem, "image">[]> {
+  try {
+    const url = `https://news.google.com/rss/search?q=${q}&hl=en-US&gl=US&ceid=US:en`
+    const res = await fetch(url, {
       headers: { "User-Agent": "Mozilla/5.0 (compatible; StackFind/1.0)" },
       signal: AbortSignal.timeout(8000),
     })
     if (!res.ok) return []
 
     const xml = await res.text()
-    const items: NewsItem[] = []
+    const items: Omit<NewsItem, "image">[] = []
     const itemRe = /<item>([\s\S]*?)<\/item>/gi
     let match: RegExpExecArray | null
 
-    while ((match = itemRe.exec(xml)) !== null && items.length < 8) {
+    while ((match = itemRe.exec(xml)) !== null && items.length < 6) {
       const block = match[1]
       const title = decodeEntities(extractTag(block, "title"))
       const url = extractGoogleLink(block)
       const published = extractTag(block, "pubDate")
       const source = extractSource(block)
-
       if (!title || !url) continue
       items.push({ title, url, source, published, summary: "" })
     }
@@ -90,13 +127,14 @@ async function fetchGoogleNews(q: string): Promise<NewsItem[]> {
 }
 
 export async function GET() {
-  const results = await Promise.allSettled(
-    GOOGLE_NEWS_QUERIES.map(({ q }) => fetchGoogleNews(q))
+  // 1. Fetch all RSS feeds in parallel
+  const feedResults = await Promise.allSettled(
+    GOOGLE_NEWS_QUERIES.map(q => fetchGoogleNews(q))
   )
 
-  // Dedupe by title
+  // 2. Dedupe by title
   const seen = new Set<string>()
-  const all: NewsItem[] = results
+  const raw = feedResults
     .flatMap(r => r.status === "fulfilled" ? r.value : [])
     .filter(item => {
       const key = item.title.toLowerCase().slice(0, 60)
@@ -109,9 +147,24 @@ export async function GET() {
       const db = b.published ? new Date(b.published).getTime() : 0
       return db - da
     })
-    .slice(0, 20)
+    .slice(0, 16)
 
-  return NextResponse.json({ items: all }, {
+  // 3. Resolve real URLs + fetch og:images in parallel (2s window each)
+  const withImages: NewsItem[] = await Promise.all(
+    raw.map(async (item) => {
+      try {
+        // Follow Google redirect to get real URL
+        const realUrl = await resolveUrl(item.url)
+        // Fetch og:image from real article
+        const image = await fetchOgImage(realUrl)
+        return { ...item, url: realUrl, image }
+      } catch {
+        return { ...item, image: null }
+      }
+    })
+  )
+
+  return NextResponse.json({ items: withImages }, {
     headers: { "Cache-Control": "s-maxage=3600, stale-while-revalidate=7200" },
   })
 }
