@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useRef, useCallback } from "react"
+import { useEffect, useState, useRef, useCallback, useMemo } from "react"
 import { Search, X, ArrowRight, Zap } from "lucide-react"
 import type { SearchResult } from "@/app/api/search/route"
 
@@ -20,16 +20,24 @@ const QUICK_LINKS = [
   { label: "Writing tools",      href: "/tools?category=writing",   icon: "✍️" },
 ]
 
-function ToolLogo({ name, logoUrl }: { name: string; logoUrl: string | null }) {
-  const [failed, setFailed] = useState(false)
-  const initials = name.slice(0, 2).toUpperCase()
+function ToolLogo({ name, website, logoUrl }: { name: string; website: string | null; logoUrl: string | null }) {
+  // Derive proxy URL — same logic as tool-card
+  const src = useMemo(() => {
+    if (logoUrl && !logoUrl.includes("logo.clearbit.com")) return logoUrl
+    if (website) {
+      try {
+        const domain = new URL(website).hostname.replace(/^www\./, "")
+        return `/api/logo/${domain}`
+      } catch { /* ignore */ }
+    }
+    return null
+  }, [logoUrl, website])
 
-  if (logoUrl && !failed) {
+  if (src) {
     return (
       <img
-        src={logoUrl}
+        src={src}
         alt={name}
-        onError={() => setFailed(true)}
         className="w-9 h-9 rounded-xl object-contain"
         style={{ background: "rgba(140,110,80,0.04)", border: "1px solid rgba(140,110,80,0.08)" }}
       />
@@ -41,7 +49,7 @@ function ToolLogo({ name, logoUrl }: { name: string; logoUrl: string | null }) {
       className="w-9 h-9 rounded-xl flex items-center justify-center text-xs font-black"
       style={{ background: "rgba(79,70,229,0.08)", color: "#4338CA", border: "1px solid rgba(79,70,229,0.1)" }}
     >
-      {initials}
+      {name.slice(0, 2).toUpperCase()}
     </div>
   )
 }
@@ -196,7 +204,7 @@ export function SearchModal() {
                         className="flex items-center gap-3 px-4 py-3 transition-colors"
                         style={{ background: isActive ? "rgba(79,70,229,0.05)" : "transparent" }}
                       >
-                        <ToolLogo name={r.name} logoUrl={r.logo_url} />
+                        <ToolLogo name={r.name} website={r.website} logoUrl={r.logo_url} />
 
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">

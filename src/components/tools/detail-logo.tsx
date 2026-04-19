@@ -1,7 +1,6 @@
 "use client"
 
-import { useState } from "react"
-import { getLogoSources } from "@/lib/logo"
+import { getLogoUrl } from "@/lib/logo"
 
 const LETTER_PALETTES = [
   { bg: "#EEF2FF", text: "#4338CA" },
@@ -26,25 +25,22 @@ interface DetailLogoProps {
 }
 
 export function DetailLogo({ name, website, logoUrl }: DetailLogoProps) {
-  const sources = getLogoSources(website, logoUrl)
-  const [idx, setIdx] = useState(0)
-  const palette = letterPalette(name)
+  const src = getLogoUrl(website, logoUrl)
 
-  if (idx < sources.length) {
+  if (src) {
     return (
       <img
-        key={sources[idx]}
-        src={sources[idx]}
+        src={src}
         alt={`${name} logo`}
         width={48}
         height={48}
-        onError={() => setIdx(i => i + 1)}
         className="rounded-xl object-contain"
         style={{ width: 48, height: 48 }}
       />
     )
   }
 
+  const palette = letterPalette(name)
   return (
     <span
       className="font-black flex items-center justify-center w-full h-full rounded-xl"

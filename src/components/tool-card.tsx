@@ -1,9 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { useState } from "react"
 import { ArrowUpRight, ChevronUp } from "lucide-react"
-import { getLogoSources } from "@/lib/logo"
+import { getLogoUrl } from "@/lib/logo"
 
 // Deterministic color pair from a string — never random, always consistent per tool
 const LETTER_PALETTES = [
@@ -44,26 +43,23 @@ const PRICING: Record<string, { label: string; bg: string; color: string }> = {
 }
 
 function ToolLogo({ name, website, logoUrl }: { name: string; website?: string | null; logoUrl?: string | null }) {
-  const sources = getLogoSources(website, logoUrl)
-  const [idx, setIdx] = useState(0)
-  const palette = letterPalette(name)
+  const src = getLogoUrl(website, logoUrl)
 
-  if (idx < sources.length) {
+  if (src) {
     return (
       <img
-        key={sources[idx]}
-        src={sources[idx]}
+        src={src}
         alt={`${name} logo`}
         width={36}
         height={36}
-        onError={() => setIdx(i => i + 1)}
         className="rounded-lg object-contain"
         style={{ width: 36, height: 36 }}
       />
     )
   }
 
-  // All sources exhausted → styled letter avatar
+  // No website at all → letter avatar
+  const palette = letterPalette(name)
   return (
     <span
       className="font-black text-base select-none flex items-center justify-center w-full h-full rounded-xl"

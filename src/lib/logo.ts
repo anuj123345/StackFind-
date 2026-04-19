@@ -1,39 +1,41 @@
 /**
  * Logo URL strategy:
  *
- * 1. Stored logo_url in DB  → highest priority (admin-verified)
- * 2. Clearbit Logo API      → best quality logos for well-known companies;
- *    returns HTTP 404 for unknown ones so onError fires correctly.
- * 3. Google S2 favicons     → reliable final fallback; returns the site's
- *    actual favicon for any real domain. For truly unknown domains it returns
- *    a generic globe with HTTP 200 (onError won't fire), but all approved tools
- *    have real websites so this is acceptable.
+ * All logo loading goes through /api/logo/[domain] — a server-side proxy
+ * that tries Clearbit → Google S2 → SVG letter avatar. It ALWAYS returns
+ * an image, so client-side onError never fires. Results are cached 24h at CDN.
+ *
+ * Stored logo_url in DB (e.g. ph-files.imgix.net) takes highest priority
+ * and bypasses the proxy entirely.
  */
-export function getLogoSources(
-  website: string | null | undefined,
-  storedLogoUrl?: string | null
-): string[] {
-  const sources: string[] = []
-
-  if (storedLogoUrl) sources.push(storedLogoUrl)
-
-  if (website) {
-    try {
-      const domain = new URL(website).hostname.replace(/^www\./, "")
-      sources.push(`https://logo.clearbit.com/${domain}`)
-      sources.push(`https://www.google.com/s2/favicons?domain=${domain}&sz=128`)
-    } catch {
-      // invalid URL — skip
-    }
-  }
-
-  // Deduplicate while preserving order
-  return [...new Set(sources)]
-}
 
 export function getLogoUrl(
   website: string | null | undefined,
   storedLogoUrl?: string | null
 ): string | null {
-  return getLogoSources(website, storedLogoUrl)[0] ?? null
+  // Admin-stored URL (ProductHunt logos, custom uploads, etc.) — use directly
+  if (storedLogoUrl && !storedLogoUrl.includes("logo.clearbit.com")) {
+    return storedLogoUrl
+  }
+
+  // Derive domain from website URL, route through server-side proxy
+  if (website) {
+    try {
+      const domain = new URL(website).hostname.replace(/^www\./, "")
+      return `/api/logo/${domain}`
+    } catch {
+      // invalid URL
+    }
+  }
+
+  return null
+}
+
+/** @deprecated use getLogoUrl */
+export function getLogoSources(
+  website: string | null | undefined,
+  storedLogoUrl?: string | null
+): string[] {
+  const url = getLogoUrl(website, storedLogoUrl)
+  return url ? [url] : []
 }
