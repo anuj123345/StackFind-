@@ -6,8 +6,6 @@ import { createClient } from "@/lib/supabase/client"
 import Link from "next/link"
 import { ArrowRight } from "lucide-react"
 
-const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://stack-find.vercel.app"
-
 function LoginContent() {
   const searchParams = useSearchParams()
   const [email, setEmail] = useState("")
@@ -23,12 +21,16 @@ function LoginContent() {
 
   const supabase = createClient()
 
+  function callbackUrl() {
+    return `${window.location.origin}/auth/callback`
+  }
+
   async function signInWithGoogle() {
     setError(null)
     setLoading("google")
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${appUrl}/auth/callback` },
+      options: { redirectTo: callbackUrl() },
     })
     if (error) { setError(error.message); setLoading(null) }
   }
@@ -38,7 +40,7 @@ function LoginContent() {
     setLoading("github")
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "github",
-      options: { redirectTo: `${appUrl}/auth/callback` },
+      options: { redirectTo: callbackUrl() },
     })
     if (error) { setError(error.message); setLoading(null) }
   }
@@ -50,7 +52,7 @@ function LoginContent() {
     setLoading("email")
     const { error } = await supabase.auth.signInWithOtp({
       email: email.trim().toLowerCase(),
-      options: { emailRedirectTo: `${appUrl}/auth/callback` },
+      options: { emailRedirectTo: callbackUrl() },
     })
     setLoading(null)
     if (error) { setError(error.message) } else { setEmailSent(true) }
