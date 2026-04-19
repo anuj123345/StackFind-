@@ -289,6 +289,7 @@ export function ToolsDirectory({
                 hasInrBilling={tool.has_inr_billing}
                 hasUpi={tool.has_upi}
                 categories={tool.categoryNames}
+                startingPriceUsd={tool.starting_price_usd}
               />
             ))}
           </div>

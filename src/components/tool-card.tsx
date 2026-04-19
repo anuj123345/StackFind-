@@ -1,8 +1,9 @@
 "use client"
 
 import Link from "next/link"
-import { ArrowUpRight, ChevronUp } from "lucide-react"
+import { ArrowUpRight, ChevronUp, Plus, Check } from "lucide-react"
 import { getLogoUrl } from "@/lib/logo"
+import { useStack } from "@/hooks/use-stack"
 
 // Deterministic color pair from a string — never random, always consistent per tool
 const LETTER_PALETTES = [
@@ -33,6 +34,7 @@ interface ToolCardProps {
   hasInrBilling?: boolean
   hasUpi?: boolean
   categories?: string[]
+  startingPriceUsd?: number | null
 }
 
 const PRICING: Record<string, { label: string; bg: string; color: string }> = {
@@ -78,9 +80,11 @@ function ToolLogo({ name, website, logoUrl }: { name: string; website?: string |
 
 export function ToolCard({
   name, slug, tagline, website, logoUrl, pricingModel, upvotes,
-  isMadeInIndia, hasInrBilling, hasUpi, categories = [],
+  isMadeInIndia, hasInrBilling, hasUpi, categories = [], startingPriceUsd = null,
 }: ToolCardProps) {
   const p = PRICING[pricingModel] ?? PRICING.free
+  const { toggle, isInStack } = useStack()
+  const inStack = isInStack(slug)
 
   return (
     <Link href={`/tools/${slug}`} className="card-bezel h-full group block">
@@ -127,11 +131,33 @@ export function ToolCard({
               </div>
             </div>
 
-            <div
-              className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-              style={{ background: "rgba(140,110,80,0.06)", border: "1px solid rgba(140,110,80,0.1)" }}
-            >
-              <ArrowUpRight size={13} style={{ color: "#7A6A57" }} />
+            <div className="flex items-center gap-1 flex-shrink-0">
+              {/* Add to stack button */}
+              <button
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  toggle({ slug, name, tagline, website: website ?? null, logoUrl: logoUrl ?? null, pricingModel, startingPriceUsd, categories })
+                }}
+                className="w-7 h-7 rounded-full flex items-center justify-center transition-all duration-200"
+                style={{
+                  background: inStack ? "rgba(99,102,241,0.12)" : "rgba(140,110,80,0.06)",
+                  border: `1px solid ${inStack ? "rgba(99,102,241,0.3)" : "rgba(140,110,80,0.1)"}`,
+                  opacity: inStack ? 1 : undefined,
+                }}
+                title={inStack ? "Remove from playground" : "Add to playground"}
+              >
+                {inStack
+                  ? <Check size={11} style={{ color: "#6366f1" }} />
+                  : <Plus size={11} style={{ color: "#7A6A57" }} className="opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                }
+              </button>
+              <div
+                className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                style={{ background: "rgba(140,110,80,0.06)", border: "1px solid rgba(140,110,80,0.1)" }}
+              >
+                <ArrowUpRight size={13} style={{ color: "#7A6A57" }} />
+              </div>
             </div>
           </div>
 

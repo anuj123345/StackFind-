@@ -282,6 +282,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
                     hasInrBilling={t.has_inr_billing}
                     hasUpi={t.has_upi}
                     categories={t.categoryNames}
+                    startingPriceUsd={t.starting_price_usd}
                   />
                 ))}
               </div>

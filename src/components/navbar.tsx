@@ -6,6 +6,7 @@ import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import type { User } from "@supabase/supabase-js"
+import { StackIndicator } from "@/components/stack-indicator"
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false)
@@ -60,6 +61,7 @@ export function Navbar() {
             { label: "Categories",  href: "/categories" },
             { label: "🇮🇳 India",   href: "/made-in-india" },
             { label: "Founders",    href: "/founders" },
+            { label: "Playground",  href: "/playground" },
             { label: "Newsletter",  href: "/newsletter" },
           ].map((link) => (
             <Link key={link.href} href={link.href}
@@ -71,6 +73,7 @@ export function Navbar() {
 
         {/* Right */}
         <div className="flex items-center gap-1.5 ml-auto">
+          <StackIndicator />
           <button
             onClick={() => window.dispatchEvent(new CustomEvent("open-search"))}
             className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[#C4B0A0] hover:text-[#1C1611] hover:bg-black/[0.04] transition-all duration-200"
