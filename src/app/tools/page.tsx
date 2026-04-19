@@ -2,10 +2,13 @@ import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { ToolsDirectory } from "@/components/tools/tools-directory"
 import { getAllTools, getCategories } from "@/lib/queries"
+import { createClient } from "@/lib/supabase/server"
 import { Suspense } from "react"
 import Link from "next/link"
 
 export const metadata = { title: "AI Tools Directory — StackFind" }
+
+const GUEST_LIMIT = 8
 
 interface PageProps {
   searchParams: Promise<{ q?: string; category?: string; pricing?: string; india?: string }>
@@ -13,7 +16,12 @@ interface PageProps {
 
 async function Directory({ searchParams }: { searchParams: PageProps["searchParams"] }) {
   const params = await searchParams
-  const [tools, categories] = await Promise.all([getAllTools(), getCategories()])
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  const isAuthenticated = !!user
+
+  const [allTools, categories] = await Promise.all([getAllTools(), getCategories()])
+  const tools = isAuthenticated ? allTools : allTools.slice(0, GUEST_LIMIT)
 
   return (
     <ToolsDirectory
@@ -23,6 +31,8 @@ async function Directory({ searchParams }: { searchParams: PageProps["searchPara
       initialCategory={params.category ?? ""}
       initialPricing={params.pricing ?? ""}
       initialIndia={params.india === "1"}
+      isAuthenticated={isAuthenticated}
+      totalCount={allTools.length}
     />
   )
 }
