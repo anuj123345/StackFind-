@@ -2,7 +2,6 @@ import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { FoundersClient } from "@/components/founders/founders-client"
 
-export const dynamic = "force-dynamic"
 export const metadata = { title: "AI Founders — StackFind" }
 
 export interface FounderProfile {
@@ -348,23 +347,7 @@ export const FOUNDERS: FounderProfile[] = [
   },
 ]
 
-async function getFounderNews() {
-  try {
-    const base = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
-    const res = await fetch(`${base}/api/founders/news`, {
-      next: { revalidate: 3600 },
-    })
-    if (!res.ok) return []
-    const data = await res.json()
-    return data.items ?? []
-  } catch {
-    return []
-  }
-}
-
-export default async function FoundersPage() {
-  const news = await getFounderNews()
-
+export default function FoundersPage() {
   return (
     <div className="min-h-screen" style={{ background: "#FAF7F2" }}>
       <Navbar />
@@ -389,7 +372,7 @@ export default async function FoundersPage() {
             The builders shaping the AI era — from India's homegrown foundation models to the global labs redefining intelligence.
           </p>
 
-          <FoundersClient founders={FOUNDERS} news={news} />
+          <FoundersClient founders={FOUNDERS} />
         </div>
       </main>
       <Footer />

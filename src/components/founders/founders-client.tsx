@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useCallback } from "react"
 import type { FounderProfile } from "@/app/founders/page"
 
 interface NewsItem {
@@ -9,11 +9,11 @@ interface NewsItem {
   source: string
   published: string
   summary: string
+  image?: string | null
 }
 
 interface Props {
   founders: FounderProfile[]
-  news: NewsItem[]
 }
 
 const LETTER_PALETTES = [
@@ -202,13 +202,54 @@ function NewsCard({ item }: { item: NewsItem }) {
   )
 }
 
-export function FoundersClient({ founders, news }: Props) {
+function NewsSkeletonCard() {
+  return (
+    <div className="card-bezel animate-pulse">
+      <div className="card-inner p-4 flex flex-col gap-2">
+        <div className="flex justify-between">
+          <div className="h-4 w-20 rounded-full" style={{ background: "rgba(140,110,80,0.1)" }} />
+          <div className="h-4 w-12 rounded-full" style={{ background: "rgba(140,110,80,0.08)" }} />
+        </div>
+        <div className="h-3.5 rounded" style={{ width: "95%", background: "rgba(140,110,80,0.08)" }} />
+        <div className="h-3.5 rounded" style={{ width: "75%", background: "rgba(140,110,80,0.06)" }} />
+        <div className="h-3 rounded mt-1" style={{ width: "85%", background: "rgba(140,110,80,0.06)" }} />
+        <div className="h-3 rounded" style={{ width: "60%", background: "rgba(140,110,80,0.05)" }} />
+      </div>
+    </div>
+  )
+}
+
+export function FoundersClient({ founders }: Props) {
   const [tab, setTab] = useState<"founders" | "news">("founders")
   const [region, setRegion] = useState<"all" | "india" | "global">("all")
+  const [news, setNews] = useState<NewsItem[]>([])
+  const [newsLoading, setNewsLoading] = useState(false)
+  const [newsFetched, setNewsFetched] = useState(false)
 
   const filteredFounders = founders.filter(f =>
     region === "all" ? true : f.region === region
   )
+
+  const fetchNews = useCallback(async () => {
+    setNewsLoading(true)
+    try {
+      const res = await fetch("/api/founders/news", { cache: "no-store" })
+      if (res.ok) {
+        const data = await res.json()
+        setNews(data.items ?? [])
+      }
+    } catch { /* keep empty */ }
+    finally {
+      setNewsLoading(false)
+      setNewsFetched(true)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (tab === "news" && !newsFetched) {
+      fetchNews()
+    }
+  }, [tab, newsFetched, fetchNews])
 
   return (
     <div>
@@ -225,7 +266,7 @@ export function FoundersClient({ founders, news }: Props) {
                 : { background: "transparent", color: "#7A6A57" }
             }
           >
-            {t === "founders" ? `Founders (${founders.length})` : `Latest News ${news.length > 0 ? `(${news.length})` : ""}`}
+            {t === "founders" ? `Founders (${founders.length})` : `Latest News${news.length > 0 ? ` (${news.length})` : ""}`}
           </button>
         ))}
       </div>
@@ -264,22 +305,51 @@ export function FoundersClient({ founders, news }: Props) {
 
       {tab === "news" && (
         <>
-          {news.length > 0 ? (
+          {newsLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {news.map((item, i) => (
-                <NewsCard key={i} item={item} />
-              ))}
+              {Array.from({ length: 9 }).map((_, i) => <NewsSkeletonCard key={i} />)}
             </div>
+          ) : news.length > 0 ? (
+            <>
+              <div className="flex items-center gap-2 mb-4">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ background: "#10b981" }} />
+                  <span className="relative inline-flex rounded-full h-2 w-2" style={{ background: "#10b981" }} />
+                </span>
+                <span className="text-xs font-medium" style={{ color: "#7A6A57" }}>
+                  {news.length} live stories from Google News
+                </span>
+                <button
+                  onClick={() => { setNewsFetched(false); fetchNews() }}
+                  className="ml-auto text-xs px-2.5 py-1 rounded-full font-medium transition-all"
+                  style={{ background: "rgba(140,110,80,0.06)", color: "#7A6A57" }}
+                >
+                  Refresh
+                </button>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {news.map((item, i) => (
+                  <NewsCard key={`${item.url}-${i}`} item={item} />
+                ))}
+              </div>
+            </>
           ) : (
             <div
               className="rounded-2xl py-16 text-center"
               style={{ background: "rgba(140,110,80,0.03)", border: "1px solid rgba(140,110,80,0.1)" }}
             >
               <p className="text-2xl mb-2">📰</p>
-              <p className="font-semibold mb-1" style={{ color: "#1C1611" }}>News unavailable right now</p>
-              <p className="text-sm" style={{ color: "#C4B0A0" }}>
-                We fetch from YourStory, Inc42, and Entrackr. Try again in a moment.
+              <p className="font-semibold mb-1" style={{ color: "#1C1611" }}>No stories fetched</p>
+              <p className="text-sm mb-4" style={{ color: "#C4B0A0" }}>
+                Google News RSS may be temporarily unavailable.
               </p>
+              <button
+                onClick={() => { setNewsFetched(false); fetchNews() }}
+                className="text-sm font-semibold px-4 py-2 rounded-xl"
+                style={{ background: "#1C1611", color: "#FAF7F2" }}
+              >
+                Try again
+              </button>
             </div>
           )}
         </>

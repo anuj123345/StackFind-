@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { Onest } from "next/font/google"
 import { Navbar } from "@/components/navbar"
+import { SearchModal } from "@/components/search/search-modal"
 import "./globals.css"
 
 const onest = Onest({
@@ -32,6 +33,7 @@ export default function RootLayout({
           <Navbar />
           <main>{children}</main>
         </div>
+        <SearchModal />
       </body>
     </html>
   )
