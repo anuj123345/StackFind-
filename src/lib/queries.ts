@@ -111,6 +111,62 @@ export async function getToolsByCategory(categorySlug: string): Promise<ToolWith
   return (data ?? []).map(flattenCategories)
 }
 
+export type PlaygroundTool = {
+  slug: string
+  name: string
+  tagline: string
+  website: string | null
+  logo_url: string | null
+  pricing_model: string
+  starting_price_usd: number | null
+  is_made_in_india: boolean
+  categorySlug: string
+  categoryName: string
+}
+
+const PLAYGROUND_CATEGORIES = [
+  'coding','backend-db','deployment','domain','payments',
+  'version-control','emails','auth','dns','analytics',
+  'error-tracking','redis','vector-db',
+]
+
+export async function getPlaygroundTools(): Promise<PlaygroundTool[]> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('tools')
+    .select('slug, name, tagline, website, logo_url, pricing_model, starting_price_usd, is_made_in_india, tool_categories!inner(categories!inner(slug, name))')
+    .eq('status', 'approved')
+    .in('tool_categories.categories.slug', PLAYGROUND_CATEGORIES)
+    .order('upvotes', { ascending: false })
+
+  if (!data) return []
+
+  // One row per tool×category — deduplicate keeping first (highest upvotes already ordered)
+  const seen = new Set<string>()
+  const result: PlaygroundTool[] = []
+  for (const row of data as any[]) {
+    for (const tc of row.tool_categories ?? []) {
+      const cat = tc.categories
+      if (!cat || !PLAYGROUND_CATEGORIES.includes(cat.slug)) continue
+      if (seen.has(row.slug)) continue
+      seen.add(row.slug)
+      result.push({
+        slug: row.slug,
+        name: row.name,
+        tagline: row.tagline,
+        website: row.website,
+        logo_url: row.logo_url,
+        pricing_model: row.pricing_model,
+        starting_price_usd: row.starting_price_usd,
+        is_made_in_india: row.is_made_in_india,
+        categorySlug: cat.slug,
+        categoryName: cat.name,
+      })
+    }
+  }
+  return result
+}
+
 export async function getToolStats(): Promise<{ total: number; madeInIndia: number; categories: number; freeOrFreemium: number }> {
   const supabase = await createClient()
   const [totalRes, indiaRes, catRes, freeRes] = await Promise.all([
