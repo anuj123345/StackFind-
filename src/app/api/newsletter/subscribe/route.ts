@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 
-function serviceClient() {
+// Use anon key — allow_public_insert RLS policy covers upserts without service role
+function anonClient() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return createClient<any>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   )
 }
 
@@ -18,7 +19,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid email" }, { status: 400 })
     }
 
-    const supabase = serviceClient()
+    const supabase = anonClient()
 
     // Insert — if email exists, update active flag
     const { error: upsertError } = await supabase
