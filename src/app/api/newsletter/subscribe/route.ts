@@ -5,8 +5,7 @@ function serviceClient() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return createClient<any>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    // Use anon key — newsletter_subscribers has public insert policy
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 }
 
