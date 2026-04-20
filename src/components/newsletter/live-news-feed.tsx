@@ -39,24 +39,48 @@ function timeAgo(dateStr: string): string {
   } catch { return "" }
 }
 
-// ─── Placeholder (no gradient, no glassmorphism) ──────────────────────────────
+// ─── Placeholder — publication favicon on tinted background ──────────────────
 
-function Placeholder({ source }: { source: string }) {
+function Placeholder({ source, url }: { source: string; url: string }) {
   const pal = placeholderPalette(source)
+  const [faviconError, setFaviconError] = useState(false)
+
+  let faviconSrc: string | null = null
+  try {
+    const domain = new URL(url).hostname
+    faviconSrc = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`
+  } catch {}
+
   return (
-    <div className="w-full h-full flex items-center justify-center" style={{ background: pal.bg }}>
+    <div className="w-full h-full flex flex-col items-center justify-center gap-2" style={{ background: pal.bg }}>
+      {faviconSrc && !faviconError ? (
+        <img
+          src={faviconSrc}
+          alt={source}
+          onError={() => setFaviconError(true)}
+          className="w-10 h-10 object-contain rounded-lg opacity-60"
+          style={{ imageRendering: "crisp-edges" }}
+        />
+      ) : (
+        <span
+          style={{
+            fontFamily: "'Bricolage Grotesque Variable', sans-serif",
+            fontWeight: 900,
+            fontSize: "1.5rem",
+            color: pal.text,
+            opacity: 0.4,
+            letterSpacing: "-0.03em",
+            userSelect: "none",
+          }}
+        >
+          {source.slice(0, 2).toUpperCase()}
+        </span>
+      )}
       <span
-        style={{
-          fontFamily: "'Bricolage Grotesque Variable', sans-serif",
-          fontWeight: 900,
-          fontSize: "clamp(2rem, 6vw, 3.5rem)",
-          color: pal.text,
-          opacity: 0.35,
-          letterSpacing: "-0.04em",
-          userSelect: "none",
-        }}
+        className="text-[10px] font-semibold uppercase tracking-widest px-2 text-center line-clamp-1"
+        style={{ color: pal.text, opacity: 0.5, maxWidth: "90%" }}
       >
-        {source.slice(0, 2).toUpperCase()}
+        {source}
       </span>
     </div>
   )
@@ -86,7 +110,7 @@ function HeroCard({ item }: { item: NewsItem }) {
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
           />
         ) : (
-          <Placeholder source={item.source} />
+          <Placeholder source={item.source} url={item.url} />
         )}
       </div>
       <div className="p-5 flex flex-col gap-3 flex-1">
@@ -149,7 +173,7 @@ function SideCard({ item }: { item: NewsItem }) {
             className="w-full h-full object-cover"
           />
         ) : (
-          <Placeholder source={item.source} />
+          <Placeholder source={item.source} url={item.url} />
         )}
       </div>
       <div className="flex flex-col gap-1.5 flex-1 min-w-0 justify-center">
@@ -196,7 +220,7 @@ function GridCard({ item }: { item: NewsItem }) {
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
           />
         ) : (
-          <Placeholder source={item.source} />
+          <Placeholder source={item.source} url={item.url} />
         )}
       </div>
       <div className="p-4 flex flex-col gap-2 flex-1">

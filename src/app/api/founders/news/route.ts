@@ -123,11 +123,13 @@ async function fetchGoogleNews(q: string): Promise<Omit<NewsItem, "image">[]> {
 
     while ((match = itemRe.exec(xml)) !== null && items.length < 6) {
       const block = match[1]
-      const title = decodeEntities(extractTag(block, "title"))
+      const rawTitle = decodeEntities(extractTag(block, "title"))
       const url = extractGoogleLink(block)
       const published = extractTag(block, "pubDate")
       const source = extractSource(block)
-      if (!title || !url) continue
+      if (!rawTitle || !url) continue
+      // Strip " - Publication Name" suffix Google News appends to every title
+      const title = rawTitle.replace(/\s[-–—]\s[^-–—|]+$/, "").trim() || rawTitle
       items.push({ title, url, source, published, summary: "" })
     }
 
