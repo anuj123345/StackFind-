@@ -66,6 +66,17 @@ async function resolveUrl(googleUrl: string): Promise<string> {
   }
 }
 
+// Detect Google News / Google app icon URLs — these are not article images
+function isGoogleIcon(url: string): boolean {
+  return (
+    url.includes("news.google.com") ||
+    url.includes("lh3.googleusercontent.com") ||
+    url.includes("googleusercontent.com/news") ||
+    url.includes("/news-icon") ||
+    url.includes("google.com/images")
+  )
+}
+
 // Fetch first 12KB of article, extract og:image
 async function fetchOgImage(articleUrl: string): Promise<string | null> {
   try {
@@ -83,12 +94,12 @@ async function fetchOgImage(articleUrl: string): Promise<string | null> {
     // og:image
     const og = /<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i.exec(html)
       ?? /<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i.exec(html)
-    if (og?.[1] && og[1].startsWith("http")) return og[1]
+    if (og?.[1] && og[1].startsWith("http") && !isGoogleIcon(og[1])) return og[1]
 
     // twitter:image fallback
     const tw = /<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i.exec(html)
       ?? /<meta[^>]+content=["']([^"']+)["'][^>]+name=["']twitter:image["']/i.exec(html)
-    if (tw?.[1] && tw[1].startsWith("http")) return tw[1]
+    if (tw?.[1] && tw[1].startsWith("http") && !isGoogleIcon(tw[1])) return tw[1]
 
     return null
   } catch {
@@ -153,11 +164,11 @@ export async function GET() {
   const withImages: NewsItem[] = await Promise.all(
     raw.map(async (item) => {
       try {
-        // Follow Google redirect to get real URL
         const realUrl = await resolveUrl(item.url)
-        // Fetch og:image from real article
-        const image = await fetchOgImage(realUrl)
-        return { ...item, url: realUrl, image }
+        // If redirect didn't leave Google's domain, don't bother scraping — it'll return the Google News app icon
+        const isStillGoogle = new URL(realUrl).hostname.includes("google.com")
+        const image = isStillGoogle ? null : await fetchOgImage(realUrl)
+        return { ...item, url: isStillGoogle ? item.url : realUrl, image }
       } catch {
         return { ...item, image: null }
       }
