@@ -37,6 +37,7 @@ const CATEGORIES = [
   { slug: "vector-db",       name: "Vector DB",       icon: "🧠" },
   { slug: "domain",          name: "Domain",          icon: "🌐" },
   { slug: "dns",             name: "DNS & CDN",       icon: "🔗" },
+  { slug: "others",          name: "Others",          icon: "✨" },
 ]
 
 const PRESET_STACKS: { name: string; emoji: string; description: string; slugs: string[] }[] = [
@@ -44,25 +45,29 @@ const PRESET_STACKS: { name: string; emoji: string; description: string; slugs: 
     name: "MVP SaaS",
     emoji: "🚀",
     description: "Ship a SaaS product fast",
-    slugs: ["vercel", "supabase", "clerk", "stripe", "resend"],
+    // coding + version control + deployment + backend/auth + payments + email + error tracking
+    slugs: ["cursor", "github", "vercel", "supabase", "clerk", "stripe", "resend", "sentry"],
   },
   {
     name: "AI App",
     emoji: "🤖",
     description: "Build an LLM-powered product",
-    slugs: ["vercel", "supabase", "upstash", "pinecone", "resend"],
+    // coding + version control + deployment + backend + auth + vector DB + cache + email
+    slugs: ["cursor", "github", "vercel", "supabase", "clerk", "pinecone", "upstash", "resend"],
   },
   {
     name: "Indian Startup",
     emoji: "🇮🇳",
     description: "Built for India, UPI + INR",
-    slugs: ["vercel", "supabase", "clerk", "razorpay", "resend"],
+    // coding + version control + deployment + backend + auth + INR payments + email + analytics
+    slugs: ["cursor", "github", "vercel", "supabase", "clerk", "razorpay", "resend", "posthog"],
   },
   {
     name: "Indie Hacker",
     emoji: "⚡",
-    description: "Minimal cost, max output",
-    slugs: ["railway", "pocketbase", "github", "stripe", "resend"],
+    description: "Minimal cost, maximum output",
+    // mostly free/open-source: coding + git + deployment + backend + auth + payments + email + analytics
+    slugs: ["cursor", "github", "railway", "pocketbase", "better-auth", "lemon-squeezy", "resend", "posthog"],
   },
 ]
 
@@ -295,34 +300,20 @@ export function PlaygroundClient({ tools, isAuthenticated }: Props) {
         body: JSON.stringify({ tools: stack, productIdea: idea }),
       })
 
+      let data: any
+      try {
+        data = await res.json()
+      } catch {
+        setError(`Server error ${res.status} — please try again`)
+        return
+      }
+
       if (!res.ok) {
-        // Try to parse JSON error, fall back to status text
-        let msg = `Server error ${res.status}`
-        try {
-          const data = await res.json()
-          msg = data.error ?? msg
-        } catch {}
-        setError(msg)
+        setError(data?.error ?? `Server error ${res.status}`)
         return
       }
 
-      if (!res.body) {
-        setError("No response stream received from server")
-        return
-      }
-
-      const reader = res.body.getReader()
-      const decoder = new TextDecoder()
-      let full = ""
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-        full += decoder.decode(value, { stream: true })
-        setOutput(full)
-      }
-      // Flush any remaining bytes
-      full += decoder.decode()
-      setOutput(full)
+      setOutput(data.plan ?? "")
       setTimeout(() => outputRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100)
     } catch (err: any) {
       setError(err?.message ?? "Network error — check your connection and try again")
@@ -739,9 +730,10 @@ export function PlaygroundClient({ tools, isAuthenticated }: Props) {
           {/* Output content */}
           <div className="px-6 py-5">
             {loading && !output && (
-              <div className="flex items-center gap-3 py-8 justify-center">
-                <Loader2 size={18} className="animate-spin" style={{ color: "#C4B0A0" }} />
-                <p className="text-sm" style={{ color: "#C4B0A0" }}>Claude is building your plan…</p>
+              <div className="flex flex-col items-center gap-3 py-12 justify-center">
+                <Loader2 size={22} className="animate-spin" style={{ color: "#6366f1" }} />
+                <p className="text-sm font-medium" style={{ color: "#7A6A57" }}>Building your plan…</p>
+                <p className="text-xs" style={{ color: "#C4B0A0" }}>Usually takes 5–10 seconds</p>
               </div>
             )}
             {output && <MarkdownOutput text={output} />}

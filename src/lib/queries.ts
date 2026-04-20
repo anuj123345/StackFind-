@@ -132,38 +132,45 @@ const PLAYGROUND_CATEGORIES = [
 
 export async function getPlaygroundTools(): Promise<PlaygroundTool[]> {
   const supabase = await createClient()
+
+  // Fetch ALL approved tools with their categories (left join so tools with no categories still appear)
   const { data } = await supabase
     .from('tools')
-    .select('slug, name, tagline, website, logo_url, pricing_model, starting_price_usd, is_made_in_india, tool_categories!inner(categories!inner(slug, name))')
+    .select('slug, name, tagline, website, logo_url, pricing_model, starting_price_usd, is_made_in_india, tool_categories(categories(slug, name))')
     .eq('status', 'approved')
-    .in('tool_categories.categories.slug', PLAYGROUND_CATEGORIES)
     .order('upvotes', { ascending: false })
 
   if (!data) return []
 
-  // One row per tool×category — deduplicate keeping first (highest upvotes already ordered)
   const seen = new Set<string>()
   const result: PlaygroundTool[] = []
+
   for (const row of data as any[]) {
-    for (const tc of row.tool_categories ?? []) {
-      const cat = tc.categories
-      if (!cat || !PLAYGROUND_CATEGORIES.includes(cat.slug)) continue
-      if (seen.has(row.slug)) continue
-      seen.add(row.slug)
-      result.push({
-        slug: row.slug,
-        name: row.name,
-        tagline: row.tagline,
-        website: row.website,
-        logo_url: row.logo_url,
-        pricing_model: row.pricing_model,
-        starting_price_usd: row.starting_price_usd,
-        is_made_in_india: row.is_made_in_india,
-        categorySlug: cat.slug,
-        categoryName: cat.name,
-      })
-    }
+    if (seen.has(row.slug)) continue
+
+    // Find the first matching playground category for this tool
+    const cats: { slug: string; name: string }[] = (row.tool_categories ?? [])
+      .map((tc: any) => tc.categories)
+      .filter(Boolean)
+
+    const playgroundCat = cats.find(c => PLAYGROUND_CATEGORIES.includes(c.slug))
+
+    seen.add(row.slug)
+    result.push({
+      slug: row.slug,
+      name: row.name,
+      tagline: row.tagline,
+      website: row.website,
+      logo_url: row.logo_url,
+      pricing_model: row.pricing_model,
+      starting_price_usd: row.starting_price_usd,
+      is_made_in_india: row.is_made_in_india,
+      // Tools not in a playground category go under "others"
+      categorySlug: playgroundCat?.slug ?? 'others',
+      categoryName: playgroundCat?.name ?? 'Others',
+    })
   }
+
   return result
 }
 
