@@ -12,7 +12,7 @@ export default function NewsletterPage() {
       <main className="pt-32 pb-8">
 
         {/* Hero */}
-        <div className="px-4 mb-14 text-center">
+        <div className="max-w-6xl mx-auto px-4 mb-10">
           <span
             className="text-[0.6875rem] font-semibold tracking-[0.14em] uppercase"
             style={{ color: "#C4B0A0" }}
@@ -20,17 +20,18 @@ export default function NewsletterPage() {
             Live · Updated every hour
           </span>
           <h1
-            className="font-black leading-tight mt-2 mb-4"
+            className="font-black leading-none mt-2 mb-3"
             style={{
               fontFamily: "'Bricolage Grotesque Variable', sans-serif",
-              fontSize: "clamp(2rem, 5vw, 3rem)",
+              fontSize: "clamp(2rem, 5vw, 3.25rem)",
               color: "#1C1611",
+              letterSpacing: "-0.02em",
             }}
           >
             AI News, right now
           </h1>
-          <p className="max-w-md mx-auto" style={{ color: "#7A6A57", fontSize: "1.0625rem", lineHeight: "1.6" }}>
-            Live stories from across the AI world — model launches, startup funding, research breakthroughs, and builder news.
+          <p className="max-w-xl" style={{ color: "#7A6A57", fontSize: "0.9375rem", lineHeight: "1.65" }}>
+            Model launches, startup funding, research breakthroughs, and builder news — live from across the AI world.
           </p>
         </div>
 
