@@ -72,7 +72,7 @@ export function Navbar() {
         </div>
 
         {/* Right */}
-        <div className="flex items-center gap-1.5 ml-auto">
+        <div className="flex items-center gap-2 ml-auto">
           <StackIndicator />
           <button
             onClick={() => window.dispatchEvent(new CustomEvent("open-search"))}
@@ -81,12 +81,6 @@ export function Navbar() {
           >
             <Search size={13} />
             <span className="text-[0.8125rem] font-medium">Search</span>
-            <kbd
-              className="text-[10px] font-medium px-1.5 py-0.5 rounded"
-              style={{ background: "rgba(140,110,80,0.08)", border: "1px solid rgba(140,110,80,0.12)", lineHeight: "1.4" }}
-            >
-              ⌘K
-            </kbd>
           </button>
           <button
             onClick={() => window.dispatchEvent(new CustomEvent("open-search"))}
@@ -104,7 +98,7 @@ export function Navbar() {
               title={`Sign out (${user.email})`}
             >
               <LogOut size={13} />
-              <span className="hidden sm:inline">Sign out</span>
+              <span className="hidden sm:inline whitespace-nowrap">Sign out</span>
             </button>
           ) : (
             <Link href="/login" className="btn-primary flex items-center gap-1.5 !py-2 !px-3.5 !text-[0.8125rem]">
