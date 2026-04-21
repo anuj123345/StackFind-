@@ -14,6 +14,7 @@ const NAV_LINKS = [
   { label: "🇮🇳 India",   href: "/made-in-india" },
   { label: "Founders",    href: "/founders" },
   { label: "Playground",  href: "/playground" },
+  { label: "Pricing",     href: "/pricing" },
   { label: "Newsletter",  href: "/newsletter" },
 ]
 

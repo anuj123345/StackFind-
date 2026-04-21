@@ -133,6 +133,14 @@ export function HeroSection({ stats }: HeroSectionProps) {
           >
             Browse without account
           </Link>
+          <Link
+            href="/pricing"
+            className="flex items-center gap-1.5 px-6 py-3.5 rounded-full font-medium text-[0.875rem] transition-all duration-200 hover:text-white group"
+            style={{ color: "rgba(250,247,242,0.45)" }}
+          >
+            View Pricing 
+            <ArrowRight size={13} className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
+          </Link>
         </motion.div>
 
         {/* Stats strip */}
