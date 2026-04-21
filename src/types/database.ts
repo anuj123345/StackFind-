@@ -46,7 +46,7 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['tools']['Row'], 'id' | 'created_at' | 'upvotes' | 'views'>
         Update: Partial<Database['public']['Tables']['tools']['Insert']>
-      }
+      },
       categories: {
         Row: {
           id: string
@@ -59,7 +59,7 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['categories']['Row'], 'id' | 'created_at' | 'tool_count'>
         Update: Partial<Database['public']['Tables']['categories']['Insert']>
-      }
+      },
       tool_categories: {
         Row: {
           tool_id: string
@@ -67,7 +67,7 @@ export interface Database {
         }
         Insert: Database['public']['Tables']['tool_categories']['Row']
         Update: Partial<Database['public']['Tables']['tool_categories']['Row']>
-      }
+      },
       founders: {
         Row: {
           id: string
@@ -83,7 +83,7 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['founders']['Row'], 'id' | 'created_at'>
         Update: Partial<Database['public']['Tables']['founders']['Insert']>
-      }
+      },
       billing_requests: {
         Row: {
           id: string
@@ -114,7 +114,7 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['upvotes']['Row'], 'created_at'>
         Update: never
-      }
+      },
       submissions: {
         Row: {
           id: string
@@ -128,7 +128,7 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['submissions']['Row'], 'id' | 'created_at'>
         Update: Partial<Database['public']['Tables']['submissions']['Insert']>
-      }
+      },
       newsletter_subs: {
         Row: {
           id: string
