@@ -227,6 +227,15 @@ function BrowserCard({ tool, inStack, onToggle, usdToInrRate }: {
             ) : tool.starting_price_usd ? (
               <span className="text-[9px]" style={{ color: "#C4B0A0" }}>₹{Math.round(tool.starting_price_usd * usdToInrRate)}/mo*</span>
             ) : null}
+            {tool.managed_billing_enabled && (
+              <div 
+                className="flex items-center gap-0.5 px-1 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-tight"
+                style={{ background: "rgba(99,102,241,0.08)", color: "#6366f1" }}
+                title="StackFind Managed INR Billing supported"
+              >
+                <Sparkles size={8} /> Managed
+              </div>
+            )}
             {tool.is_made_in_india && (
               <span className="text-[9px]">🇮🇳</span>
             )}
@@ -393,7 +402,12 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
 
   const totalCostInr = stack.reduce((sum, t) => {
     if (t.startingPriceInr) return sum + t.startingPriceInr
-    if (t.startingPriceUsd) return sum + (t.startingPriceUsd * usdToInrRate)
+    if (t.startingPriceUsd) {
+      const base = t.startingPriceUsd * usdToInrRate
+      // If managed, add the 5% fee (default behavior)
+      const markup = t.managedBillingEnabled ? 1.05 : 1.0
+      return sum + (base * markup)
+    }
     return sum
   }, 0)
 
@@ -424,6 +438,8 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
       pricingModel: tool.pricing_model,
       startingPriceUsd: tool.starting_price_usd,
       startingPriceInr: tool.starting_price_inr,
+      managedBillingEnabled: tool.managed_billing_enabled,
+      convenienceFeePercent: tool.convenience_fee_percent,
       categories: [tool.categoryName],
     })
   }, [toggleStack])
@@ -439,6 +455,8 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
           pricingModel: tool.pricing_model,
           startingPriceUsd: tool.starting_price_usd,
           startingPriceInr: tool.starting_price_inr,
+          managedBillingEnabled: tool.managed_billing_enabled,
+          convenienceFeePercent: tool.convenience_fee_percent,
           categories: [tool.categoryName],
         })
       }

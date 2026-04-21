@@ -11,6 +11,8 @@ export interface StackTool {
   pricingModel: string
   startingPriceUsd: number | null
   startingPriceInr: number | null
+  managedBillingEnabled?: boolean
+  convenienceFeePercent?: number
   categories: string[]
 }
 

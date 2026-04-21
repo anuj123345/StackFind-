@@ -151,11 +151,16 @@ export default async function ToolDetailPage({ params }: PageProps) {
                   <div className="flex-1 h-px" style={{ background: "rgba(140,110,80,0.1)" }} />
                 </div>
                 <PricingBreakdown 
+                  toolId={tool.id}
                   modelling={tool.pricing_modelling as any}
                   hasGstInvoice={tool.has_gst_invoice}
                   hasUpi={tool.has_upi}
                   hasInrBilling={tool.has_inr_billing}
                   startingPriceInr={tool.starting_price_inr}
+                  startingPriceUsd={tool.starting_price_usd}
+                  managedBillingEnabled={tool.managed_billing_enabled}
+                  inrPurchaseLink={tool.inr_purchase_link}
+                  convenienceFeePercent={tool.convenience_fee_percent}
                 />
               </div>
 

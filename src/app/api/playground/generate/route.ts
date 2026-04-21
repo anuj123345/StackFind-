@@ -43,7 +43,11 @@ export async function POST(req: NextRequest) {
       if (t.startingPriceInr) effectiveInr = t.startingPriceInr
       else if (t.startingPriceUsd) effectiveInr = Math.round(t.startingPriceUsd * usdToInrRate)
 
-      return `- ${t.name}: Verified INR: ${inrStr}, USD: ${usdStr}, (ESTIMATED TOTAL: ₹${effectiveInr}/mo). Tagline: ${t.tagline}`
+      const billingContext = t.managed_billing_enabled 
+        ? "Managed INR Billing Available (UPI/GST)" 
+        : (t.startingPriceInr ? "Native INR/UPI support" : "USD/International Only")
+
+      return `- ${t.name}: Price: ${inrStr} / ${usdStr}, (ESTIMATED TOTAL: ₹${effectiveInr}/mo). Billing: ${billingContext}. Tagline: ${t.tagline}`
     }).join("\n")
 
     const prompt = `You are a senior technical co-founder. A founder wants to build: "${productIdea.trim()}"
@@ -61,27 +65,34 @@ ${tools.map((t: any) => `### ${t.name}\nOne focused paragraph on exactly what th
 
 ## Cost Breakdown
 
-| Tool | Plan | Monthly Cost (₹) | 지원(Billing Status) |
-|------|------|------------------|----------------------|
+| Tool | Plan | Monthly Cost (₹) | Billing Status |
+|------|------|------------------|----------------|
 ${tools.map((t: any) => {
   let priceStr = "₹0"
   let billingStatus = "International"
+  
   if (t.startingPriceInr) {
     priceStr = `₹${t.startingPriceInr}`
-    billingStatus = "UPI/GST Support"
+    billingStatus = "Native INR/GST"
+  } else if (t.managed_billing_enabled) {
+    priceStr = `₹${Math.round(t.startingPriceUsd * usdToInrRate * 1.05)}*` // Including the 5% fee for transparency
+    billingStatus = "StackFind Managed (GST)"
   } else if (t.startingPriceUsd) {
     priceStr = `₹${Math.round(t.startingPriceUsd * usdToInrRate)}*`
   }
   return `| ${t.name} | ${t.startingPriceInr || t.startingPriceUsd ? 'Starting plan' : 'Free tier'} | ${priceStr} | ${billingStatus} |`
 }).join("\n")}
 
-*Prices marked with * are estimated based on $1 = ₹${usdToInrRate}
+*Prices marked with * are estimated based on $1 = ₹${usdToInrRate}. Managed billing includes a 5% platform fee.
 
 ## Launch Timeline
 - **Week 1–2:** [Setup, auth, database schema, core scaffolding]
 - **Week 3–4:** [Core feature implementation, key integrations]
 - **Week 5–6:** [Payments, emails, polish, staging deploy]
 - **Week 7–8:** [Beta users, feedback loop, production launch]
+
+## Managed Stack Advantage
+Explain briefly (2 sentences) if they use StackFind Managed Billing, how much they roughly save in GST input credit (18%) and the convenience of UPI for the whole stack.
 
 ## First 3 Steps
 1. [Specific first step — tool + action]

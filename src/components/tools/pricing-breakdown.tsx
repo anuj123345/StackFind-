@@ -1,6 +1,5 @@
-"use client"
-
-import { Check, Info, IndianRupee, FileText, CreditCard } from "lucide-react"
+import { useState } from "react"
+import { Check, Info, IndianRupee, FileText, CreditCard, ArrowRight, Loader2, Sparkles } from "lucide-react"
 
 interface PricingMetric {
   label: string
@@ -9,22 +8,159 @@ interface PricingMetric {
 }
 
 interface PricingBreakdownProps {
+  toolId: string
   modelling?: PricingMetric[]
   hasGstInvoice?: boolean
   hasUpi?: boolean
   hasInrBilling?: boolean
   startingPriceInr?: number | null
+  startingPriceUsd?: number | null
+  managedBillingEnabled?: boolean
+  inrPurchaseLink?: string | null
+  convenienceFeePercent?: number
 }
 
 export function PricingBreakdown({ 
+  toolId,
   modelling = [], 
   hasGstInvoice, 
   hasUpi, 
   hasInrBilling,
-  startingPriceInr 
+  startingPriceInr,
+  startingPriceUsd,
+  managedBillingEnabled,
+  inrPurchaseLink,
+  convenienceFeePercent = 5
 }: PricingBreakdownProps) {
+  const [requesting, setRequesting] = useState(false)
+  const [requested, setRequested] = useState(false)
+  const [error, setError] = useState("")
+
+  const handleRequestBilling = async () => {
+    setRequesting(true)
+    setError("")
+    try {
+      const res = await fetch("/api/billing/request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ toolId })
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Failed to submit request")
+      setRequested(true)
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setRequesting(false)
+    }
+  }
+
+  // transparency calculations
+  const usdToInrFallback = 84.0 // In detail page we usually pass from server
+  const baseInr = startingPriceInr || (startingPriceUsd ? Math.round(startingPriceUsd * usdToInrFallback) : 0)
+  
+  const fee = Math.round((baseInr * convenience_fee_percent) / 100)
+  const taxableAmount = baseInr + fee
+  const gst = Math.round(taxableAmount * 0.18)
+  const total = taxableAmount + gst
+
   return (
     <div className="space-y-6">
+      {/* ── Managed Billing CTA (Priority) ── */}
+      {managedBillingEnabled && (
+        <div 
+          className="rounded-2xl p-6 border shadow-sm relative overflow-hidden"
+          style={{ background: "#FFFFFF", borderColor: "rgba(99,102,241,0.25)" }}
+        >
+          <div className="absolute top-0 right-0 px-3 py-1 rounded-bl-xl bg-indigo-600 text-[10px] font-bold text-white uppercase tracking-widest">
+            StackFind Managed
+          </div>
+
+          <div className="flex items-center gap-2 mb-4">
+            <Sparkles size={16} className="text-indigo-600" />
+            <h3 
+              className="font-bold text-sm uppercase tracking-wider"
+              style={{ fontFamily: "'Bricolage Grotesque Variable', sans-serif", color: "#1C1611" }}
+            >
+              Order in INR with GST
+            </h3>
+          </div>
+
+          <div className="space-y-4">
+             {/* Transparency Breakdown */}
+             <div className="p-4 rounded-xl space-y-2" style={{ background: "rgba(140,110,80,0.03)" }}>
+                <div className="flex justify-between text-xs">
+                    <span style={{ color: "#7A6A57" }}>Tool Price (Est. Monthly)</span>
+                    <span className="font-medium">₹{baseInr.toLocaleString("en-IN")}</span>
+                </div>
+                <div className="flex justify-between text-xs">
+                    <span style={{ color: "#7A6A57" }}>Convenience Fee ({convenience_fee_percent}%)</span>
+                    <span className="font-medium">₹{fee.toLocaleString("en-IN")}</span>
+                </div>
+                <div className="flex justify-between text-xs border-t border-dashed border-stone-200 pt-2 pb-1">
+                    <span style={{ color: "#7A6A57" }}>Taxable Amount</span>
+                    <span className="font-medium">₹{taxableAmount.toLocaleString("en-IN")}</span>
+                </div>
+                <div className="flex justify-between text-xs">
+                    <span style={{ color: "#7A6A57" }}>GST (18%)</span>
+                    <span className="font-medium">₹{gst.toLocaleString("en-IN")}</span>
+                </div>
+                <div className="flex justify-between text-sm font-bold pt-2 border-t border-stone-200">
+                    <span style={{ color: "#1C1611" }}>Total Managed Bill</span>
+                    <span style={{ color: "#1C1611" }}>₹{total.toLocaleString("en-IN")}</span>
+                </div>
+             </div>
+
+             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]" style={{ color: "#7A6A57" }}>
+                <div className="flex items-center gap-2">
+                    <Check size={12} className="text-emerald-600" />
+                    GST Input Credit Enabled
+                </div>
+                <div className="flex items-center gap-2">
+                    <Check size={12} className="text-emerald-600" />
+                    Pay via UPI (GPay/Paytm)
+                </div>
+                <div className="flex items-center gap-2">
+                    <Check size={12} className="text-emerald-600" />
+                    No Intl. Card Required
+                </div>
+                <div className="flex items-center gap-2">
+                    <Check size={12} className="text-emerald-600" />
+                    Dedicated Account Manager
+                </div>
+             </div>
+
+             {inrPurchaseLink ? (
+               <a 
+                href={inrPurchaseLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 w-full py-3 rounded-xl font-bold text-sm bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+               >
+                Pay in INR now <ArrowRight size={14} />
+               </a>
+             ) : (
+               <button 
+                onClick={handleRequestBilling}
+                disabled={requesting || requested}
+                className={`flex items-center justify-center gap-2 w-full py-3 rounded-xl font-bold text-sm transition-all duration-200 ${
+                    requested ? "bg-emerald-50 text-emerald-600 border border-emerald-200" : "bg-indigo-600 text-white hover:bg-indigo-700"
+                }`}
+               >
+                 {requesting ? (
+                   <><Loader2 size={16} className="animate-spin" /> Submitting...</>
+                 ) : requested ? (
+                   <><Check size={16} /> Request Received!</>
+                 ) : (
+                   <><IndianRupee size={16} /> Request INR Billing Support</>
+                 )}
+               </button>
+             )}
+             {error && <p className="text-[10px] text-red-500 text-center">{error}</p>}
+          </div>
+        </div>
+      )}
+
       {/* ── India Billing Verification ── */}
       <div 
         className="rounded-2xl p-6 border"

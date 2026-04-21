@@ -38,6 +38,9 @@ export interface Database {
           views: number
           pricing_modelling: Json
           submitted_by: string | null
+          managed_billing_enabled: boolean
+          inr_purchase_link: string | null
+          convenience_fee_percent: number
           created_at: string
           approved_at: string | null
         }
@@ -80,6 +83,19 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['founders']['Row'], 'id' | 'created_at'>
         Update: Partial<Database['public']['Tables']['founders']['Insert']>
+      }
+      billing_requests: {
+        Row: {
+          id: string
+          user_id: string
+          tool_id: string
+          email: string
+          status: string
+          notes: string | null
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['billing_requests']['Row'], 'id' | 'created_at'>
+        Update: Partial<Database['public']['Tables']['billing_requests']['Row']>
       }
       upvotes: {
         Row: {
