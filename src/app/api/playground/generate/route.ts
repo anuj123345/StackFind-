@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server"
 import Anthropic from "@anthropic-ai/sdk"
 import { getIsAuthenticated } from "@/lib/auth"
+import { getUsdInrRate } from "@/lib/exchange"
 
 // Increase Vercel function timeout (works on Pro; Hobby ignores but we also use haiku which is fast)
 export const maxDuration = 60
@@ -14,6 +15,7 @@ function jsonError(msg: string, status = 400) {
 
 export async function POST(req: NextRequest) {
   try {
+    const usdToInrRate = await getUsdInrRate()
     const isAuthenticated = await getIsAuthenticated()
     if (!isAuthenticated) return jsonError("Sign in to use the Playground", 401)
 
@@ -33,15 +35,16 @@ export async function POST(req: NextRequest) {
 
     // Build a tight prompt
     const toolLines = tools.map((t: any) => {
-      const price = t.startingPriceUsd
-        ? `$${t.startingPriceUsd}/mo`
-        : t.pricingModel === "free" || t.pricingModel === "open_source" ? "Free" : "Paid"
-      return `- ${t.name} (${price}): ${t.tagline}`
-    }).join("\n")
+      const inrStr = t.startingPriceInr ? `₹${t.startingPriceInr}/mo` : "N/A"
+      const usdStr = t.startingPriceUsd ? `$${t.startingPriceUsd}/mo` : "N/A"
+      
+      // Calculate effective INR for the LLM's reference
+      let effectiveInr = 0
+      if (t.startingPriceInr) effectiveInr = t.startingPriceInr
+      else if (t.startingPriceUsd) effectiveInr = Math.round(t.startingPriceUsd * usdToInrRate)
 
-    const totalMin = tools.reduce((s: number, t: any) => s + (t.startingPriceUsd ?? 0), 0)
-    const freeTools = tools.filter((t: any) => !t.startingPriceUsd)
-    const paidTools = tools.filter((t: any) => t.startingPriceUsd)
+      return `- ${t.name}: Verified INR: ${inrStr}, USD: ${usdStr}, (ESTIMATED TOTAL: ₹${effectiveInr}/mo). Tagline: ${t.tagline}`
+    }).join("\n")
 
     const prompt = `You are a senior technical co-founder. A founder wants to build: "${productIdea.trim()}"
 
@@ -58,10 +61,21 @@ ${tools.map((t: any) => `### ${t.name}\nOne focused paragraph on exactly what th
 
 ## Cost Breakdown
 
-| Tool | Plan | Monthly Cost |
-|------|------|-------------|
-${paidTools.map((t: any) => `| ${t.name} | Starting plan | $${t.startingPriceUsd}/mo |`).join("\n")}${freeTools.length ? "\n" + freeTools.map((t: any) => `| ${t.name} | Free tier | $0/mo |`).join("\n") : ""}
-| **Total** | | **$${totalMin}/mo** |
+| Tool | Plan | Monthly Cost (₹) | 지원(Billing Status) |
+|------|------|------------------|----------------------|
+${tools.map((t: any) => {
+  let priceStr = "₹0"
+  let billingStatus = "International"
+  if (t.startingPriceInr) {
+    priceStr = `₹${t.startingPriceInr}`
+    billingStatus = "UPI/GST Support"
+  } else if (t.startingPriceUsd) {
+    priceStr = `₹${Math.round(t.startingPriceUsd * usdToInrRate)}*`
+  }
+  return `| ${t.name} | ${t.startingPriceInr || t.startingPriceUsd ? 'Starting plan' : 'Free tier'} | ${priceStr} | ${billingStatus} |`
+}).join("\n")}
+
+*Prices marked with * are estimated based on $1 = ₹${usdToInrRate}
 
 ## Launch Timeline
 - **Week 1–2:** [Setup, auth, database schema, core scaffolding]

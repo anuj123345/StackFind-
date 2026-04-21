@@ -36,6 +36,7 @@ export interface Database {
           featured_until: string | null
           upvotes: number
           views: number
+          pricing_modelling: Json
           submitted_by: string | null
           created_at: string
           approved_at: string | null

@@ -33,8 +33,10 @@ interface ToolCardProps {
   isMadeInIndia?: boolean
   hasInrBilling?: boolean
   hasUpi?: boolean
+  hasGstInvoice?: boolean
   categories?: string[]
   startingPriceUsd?: number | null
+  startingPriceInr?: number | null
 }
 
 const PRICING: Record<string, { label: string; bg: string; color: string }> = {
@@ -80,7 +82,13 @@ function ToolLogo({ name, website, logoUrl }: { name: string; website?: string |
 
 export function ToolCard({
   name, slug, tagline, website, logoUrl, pricingModel, upvotes,
-  isMadeInIndia, hasInrBilling, hasUpi, categories = [], startingPriceUsd = null,
+  isMadeInIndia,
+  hasInrBilling,
+  hasUpi,
+  hasGstInvoice,
+  categories = [],
+  startingPriceUsd = null,
+  startingPriceInr = null,
 }: ToolCardProps) {
   const p = PRICING[pricingModel] ?? PRICING.free
   const { toggle, isInStack } = useStack()
@@ -127,6 +135,9 @@ export function ToolCard({
                   {hasUpi && (
                     <span className="text-[9px] font-medium" style={{ color: "#C4B0A0" }}>· UPI</span>
                   )}
+                  {hasGstInvoice && (
+                    <span className="text-[9px] font-medium" style={{ color: "#C4B0A0" }}>· GST</span>
+                  )}
                 </div>
               </div>
             </div>
@@ -137,7 +148,15 @@ export function ToolCard({
                 onClick={(e) => {
                   e.preventDefault()
                   e.stopPropagation()
-                  toggle({ slug, name, tagline, website: website ?? null, logoUrl: logoUrl ?? null, pricingModel, startingPriceUsd, categories })
+                  toggle({
+                    slug, name, tagline,
+                    website: website ?? null,
+                    logoUrl: logoUrl ?? null,
+                    pricingModel,
+                    startingPriceUsd,
+                    startingPriceInr,
+                    categories
+                  })
                 }}
                 className="w-7 h-7 rounded-full flex items-center justify-center transition-all duration-200"
                 style={{

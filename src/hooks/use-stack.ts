@@ -10,6 +10,7 @@ export interface StackTool {
   logoUrl: string | null
   pricingModel: string
   startingPriceUsd: number | null
+  startingPriceInr: number | null
   categories: string[]
 }
 

@@ -290,6 +290,7 @@ export function ToolsDirectory({
                 hasUpi={tool.has_upi}
                 categories={tool.categoryNames}
                 startingPriceUsd={tool.starting_price_usd}
+                startingPriceInr={tool.starting_price_inr}
               />
             ))}
           </div>
@@ -317,6 +318,7 @@ export function ToolsDirectory({
                     hasInrBilling={tool.has_inr_billing}
                     hasUpi={tool.has_upi}
                     categories={tool.categoryNames}
+                    startingPriceInr={tool.starting_price_inr}
                   />
                 ))}
               </div>

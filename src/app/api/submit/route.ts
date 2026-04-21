@@ -119,7 +119,9 @@ export async function POST(req: NextRequest) {
     has_inr_billing,
     has_upi,
     has_gst_invoice,
-  } = body as Record<string, string | boolean | undefined>
+    starting_price_inr,
+    pricing_modelling,
+  } = body as Record<string, string | boolean | undefined | any[]>
 
   // Basic validation
   if (!name || typeof name !== "string" || name.trim().length < 2) {
@@ -197,6 +199,8 @@ export async function POST(req: NextRequest) {
     has_inr_billing: Boolean(has_inr_billing) || autoIndia,
     has_upi: Boolean(has_upi) || autoIndia,
     has_gst_invoice: Boolean(has_gst_invoice),
+    starting_price_inr: starting_price_inr ? Number(starting_price_inr) : null,
+    pricing_modelling: Array.isArray(pricing_modelling) ? pricing_modelling : [],
     has_india_support: autoIndia,
     auto_categories: categories,
     security_check: {

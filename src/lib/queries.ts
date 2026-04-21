@@ -119,6 +119,7 @@ export type PlaygroundTool = {
   logo_url: string | null
   pricing_model: string
   starting_price_usd: number | null
+  starting_price_inr: number | null
   is_made_in_india: boolean
   categorySlug: string
   categoryName: string
@@ -136,7 +137,7 @@ export async function getPlaygroundTools(): Promise<PlaygroundTool[]> {
   // Fetch ALL approved tools with their categories (left join so tools with no categories still appear)
   const { data } = await supabase
     .from('tools')
-    .select('slug, name, tagline, website, logo_url, pricing_model, starting_price_usd, is_made_in_india, tool_categories(categories(slug, name))')
+    .select('slug, name, tagline, website, logo_url, pricing_model, starting_price_usd, starting_price_inr, is_made_in_india, tool_categories(categories(slug, name))')
     .eq('status', 'approved')
     .order('upvotes', { ascending: false })
 
@@ -164,6 +165,7 @@ export async function getPlaygroundTools(): Promise<PlaygroundTool[]> {
       logo_url: row.logo_url,
       pricing_model: row.pricing_model,
       starting_price_usd: row.starting_price_usd,
+      starting_price_inr: row.starting_price_inr,
       is_made_in_india: row.is_made_in_india,
       // Tools not in a playground category go under "others"
       categorySlug: playgroundCat?.slug ?? 'others',

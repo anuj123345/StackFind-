@@ -171,10 +171,11 @@ function LogoBubble({ tool, size = 28 }: { tool: PlaygroundTool; size?: number }
 
 // ─── Browser tool card ───────────────────────────────────────────────────────
 
-function BrowserCard({ tool, inStack, onToggle }: {
+function BrowserCard({ tool, inStack, onToggle, usdToInrRate }: {
   tool: PlaygroundTool
   inStack: boolean
   onToggle: (tool: PlaygroundTool) => void
+  usdToInrRate: number
 }) {
   const p = PRICING_COLOR[tool.pricing_model] ?? PRICING_COLOR.freemium
   const logoSrc = getLogoUrl(tool.website, tool.logo_url)
@@ -221,9 +222,11 @@ function BrowserCard({ tool, inStack, onToggle }: {
             <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-md" style={{ background: p.bg, color: p.color }}>
               {PRICING_LABEL[tool.pricing_model]}
             </span>
-            {tool.starting_price_usd && (
-              <span className="text-[9px]" style={{ color: "#C4B0A0" }}>${tool.starting_price_usd}/mo</span>
-            )}
+            {tool.starting_price_inr ? (
+              <span className="text-[9px]" style={{ color: "#C4B0A0" }}>₹{tool.starting_price_inr}/mo</span>
+            ) : tool.starting_price_usd ? (
+              <span className="text-[9px]" style={{ color: "#C4B0A0" }}>₹{Math.round(tool.starting_price_usd * usdToInrRate)}/mo*</span>
+            ) : null}
             {tool.is_made_in_india && (
               <span className="text-[9px]">🇮🇳</span>
             )}
@@ -368,10 +371,11 @@ function PlaygroundLockWall({ tools }: { tools: PlaygroundTool[] }) {
 interface Props {
   tools: PlaygroundTool[]
   isAuthenticated: boolean
-  profile: any // Add profile data
+  profile: any
+  usdToInrRate: number
 }
 
-export function PlaygroundClient({ tools, isAuthenticated, profile }: Props) {
+export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate }: Props) {
   const { stack, add, remove, toggle: toggleStack, clear, isInStack } = useStack()
   const [activeCategory, setActiveCategory] = useState("all")
   const [search, setSearch] = useState("")
@@ -387,7 +391,11 @@ export function PlaygroundClient({ tools, isAuthenticated, profile }: Props) {
   const isPremium = profile?.is_premium_playground || false
   const hasReachedLimit = !isPremium && sessionUsage >= 10
 
-  const totalCost = stack.reduce((sum, t) => sum + (t.startingPriceUsd ?? 0), 0)
+  const totalCostInr = stack.reduce((sum, t) => {
+    if (t.startingPriceInr) return sum + t.startingPriceInr
+    if (t.startingPriceUsd) return sum + (t.startingPriceUsd * usdToInrRate)
+    return sum
+  }, 0)
 
   // Enrich presets with resolved tool data (for logo display)
   const presetsWithTools = useMemo(() =>
@@ -413,7 +421,9 @@ export function PlaygroundClient({ tools, isAuthenticated, profile }: Props) {
     toggleStack({
       slug: tool.slug, name: tool.name, tagline: tool.tagline,
       website: tool.website, logoUrl: tool.logo_url,
-      pricingModel: tool.pricing_model, startingPriceUsd: tool.starting_price_usd,
+      pricingModel: tool.pricing_model,
+      startingPriceUsd: tool.starting_price_usd,
+      startingPriceInr: tool.starting_price_inr,
       categories: [tool.categoryName],
     })
   }, [toggleStack])
@@ -426,7 +436,9 @@ export function PlaygroundClient({ tools, isAuthenticated, profile }: Props) {
         add({
           slug: tool.slug, name: tool.name, tagline: tool.tagline,
           website: tool.website, logoUrl: tool.logo_url,
-          pricingModel: tool.pricing_model, startingPriceUsd: tool.starting_price_usd,
+          pricingModel: tool.pricing_model,
+          startingPriceUsd: tool.starting_price_usd,
+          startingPriceInr: tool.starting_price_inr,
           categories: [tool.categoryName],
         })
       }
@@ -625,6 +637,7 @@ export function PlaygroundClient({ tools, isAuthenticated, profile }: Props) {
                       tool={tool}
                       inStack={isInStack(tool.slug)}
                       onToggle={handleToggle}
+                      usdToInrRate={usdToInrRate}
                     />
                   ))}
                 </div>
@@ -725,8 +738,14 @@ export function PlaygroundClient({ tools, isAuthenticated, profile }: Props) {
                       {stack.length} tool{stack.length !== 1 ? "s" : ""}
                     </span>
                     <span className="text-xs" style={{ color: "#C4B0A0" }}>·</span>
-                    <span className="text-xs font-semibold" style={{ color: totalCost === 0 ? "#059669" : "#1C1611" }}>
-                      {totalCost === 0 ? "Free to start" : `from $${totalCost}/mo`}
+                    <span className="text-xs font-semibold" style={{ color: totalCostInr === 0 ? "#059669" : "#1C1611" }}>
+                      { totalCostInr === 0
+                        ? "Free to start"
+                        : `from ₹${Math.round(totalCostInr)}/mo`
+                      }
+                    </span>
+                    <span className="text-[10px]" style={{ color: "#C4B0A0" }}>
+                      *Est. at $1 = ₹{usdToInrRate}
                     </span>
                   </>
                 )}
@@ -851,9 +870,11 @@ export function PlaygroundClient({ tools, isAuthenticated, profile }: Props) {
                             >
                               {PRICING_LABEL[tool.pricingModel]}
                             </span>
-                            {tool.startingPriceUsd && (
-                              <span className="text-[9px]" style={{ color: "#C4B0A0" }}>${tool.startingPriceUsd}/mo</span>
-                            )}
+                            {tool.startingPriceInr ? (
+                              <span className="text-[9px]" style={{ color: "#C4B0A0" }}>₹{tool.startingPriceInr}/mo</span>
+                            ) : tool.startingPriceUsd ? (
+                              <span className="text-[9px]" style={{ color: "#C4B0A0" }}>₹{Math.round(tool.startingPriceUsd * usdToInrRate)}/mo*</span>
+                            ) : null}
                           </div>
                         </div>
                         <button
@@ -877,17 +898,25 @@ export function PlaygroundClient({ tools, isAuthenticated, profile }: Props) {
                   <div className="flex items-center justify-between">
                     <span className="text-xs" style={{ color: "#A0907E" }}>Min. monthly</span>
                     <span className="text-sm font-black" style={{ color: "#1C1611" }}>
-                      {totalCost === 0 ? "Free" : `$${totalCost}/mo`}
+                      {totalCostInr === 0
+                        ? "Free"
+                        : `₹${Math.round(totalCostInr)}/mo`
+                      }
                     </span>
                   </div>
                   {/* Per-tool breakdown */}
-                  {stack.filter(t => t.startingPriceUsd).map(t => (
+                  {stack.filter(t => t.startingPriceInr || t.startingPriceUsd).map(t => (
                     <div key={t.slug} className="flex items-center justify-between">
                       <span className="text-[10px]" style={{ color: "#C4B0A0" }}>{t.name}</span>
-                      <span className="text-[10px] font-semibold tabular-nums" style={{ color: "#7A6A57" }}>${t.startingPriceUsd}/mo</span>
+                      <span className="text-[10px] font-semibold tabular-nums" style={{ color: "#7A6A57" }}>
+                        {t.startingPriceInr 
+                          ? `₹${t.startingPriceInr}` 
+                          : `₹${Math.round((t.startingPriceUsd ?? 0) * usdToInrRate)}*`
+                        }/mo
+                      </span>
                     </div>
                   ))}
-                  {stack.some(t => !t.startingPriceUsd) && (
+                  {stack.every(t => !t.startingPriceInr && !t.startingPriceUsd) && (
                     <div className="flex items-center justify-between">
                       <span className="text-[10px]" style={{ color: "#C4B0A0" }}>
                         {stack.filter(t => !t.startingPriceUsd).map(t => t.name).join(", ")}

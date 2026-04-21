@@ -67,6 +67,7 @@ export default async function MadeInIndiaPage() {
                 hasUpi={tool.has_upi}
                 categories={tool.categoryNames}
                 startingPriceUsd={tool.starting_price_usd}
+                startingPriceInr={tool.starting_price_inr}
               />
             ))}
           </div>

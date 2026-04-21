@@ -2,6 +2,7 @@ import { Footer } from "@/components/footer"
 import { PlaygroundClient } from "@/components/playground/playground-client"
 import { getPlaygroundTools, getUserProfile } from "@/lib/queries"
 import { getIsAuthenticated } from "@/lib/auth"
+import { getUsdInrRate } from "@/lib/exchange"
 import { redirect } from "next/navigation"
 
 export const dynamic = "force-dynamic"
@@ -14,9 +15,10 @@ export default async function PlaygroundPage() {
     redirect("/login?callbackUrlURI=/playground")
   }
 
-  const [tools, profile] = await Promise.all([
+  const [tools, profile, usdToInrRate] = await Promise.all([
     getPlaygroundTools(),
     getUserProfile(),
+    getUsdInrRate(),
   ])
 
   return (
@@ -27,6 +29,7 @@ export default async function PlaygroundPage() {
             tools={tools} 
             isAuthenticated={isAuthenticated} 
             profile={profile}
+            usdToInrRate={usdToInrRate}
           />
         </div>
       </main>
