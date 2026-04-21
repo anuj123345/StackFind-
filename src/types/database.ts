@@ -89,13 +89,22 @@ export interface Database {
           id: string
           user_id: string
           tool_id: string
-          email: string
+          email: string | null
           status: string
           notes: string | null
           created_at: string
         }
-        Insert: Omit<Database['public']['Tables']['billing_requests']['Row'], 'id' | 'created_at'>
-        Update: Partial<Database['public']['Tables']['billing_requests']['Row']>
+        Insert: {
+          user_id: string
+          tool_id: string
+          email?: string | null
+          status?: string
+          notes?: string | null
+        }
+        Update: {
+          status?: string
+          notes?: string | null
+        }
       }
       upvotes: {
         Row: {

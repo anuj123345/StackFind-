@@ -61,7 +61,7 @@ export function PricingBreakdown({
   const usdToInrFallback = 84.0 // In detail page we usually pass from server
   const baseInr = startingPriceInr || (startingPriceUsd ? Math.round(startingPriceUsd * usdToInrFallback) : 0)
   
-  const fee = Math.round((baseInr * convenience_fee_percent) / 100)
+  const fee = Math.round((baseInr * convenienceFeePercent) / 100)
   const taxableAmount = baseInr + fee
   const gst = Math.round(taxableAmount * 0.18)
   const total = taxableAmount + gst
@@ -96,7 +96,7 @@ export function PricingBreakdown({
                     <span className="font-medium">₹{baseInr.toLocaleString("en-IN")}</span>
                 </div>
                 <div className="flex justify-between text-xs">
-                    <span style={{ color: "#7A6A57" }}>Convenience Fee ({convenience_fee_percent}%)</span>
+                    <span style={{ color: "#7A6A57" }}>Convenience Fee ({convenienceFeePercent}%)</span>
                     <span className="font-medium">₹{fee.toLocaleString("en-IN")}</span>
                 </div>
                 <div className="flex justify-between text-xs border-t border-dashed border-stone-200 pt-2 pb-1">
