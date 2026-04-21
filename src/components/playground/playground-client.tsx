@@ -4,7 +4,7 @@ import { useState, useRef, useMemo, useCallback } from "react"
 import { useStack, type StackTool } from "@/hooks/use-stack"
 import { getLogoUrl } from "@/lib/logo"
 import type { PlaygroundTool } from "@/lib/queries"
-import { incrementPlaygroundUsage } from "@/lib/queries"
+import { incrementPlaygroundUsage } from "@/app/actions/usage"
 import { PlaygroundPaywall } from "./playground-paywall"
 import Link from "next/link"
 import {
@@ -453,7 +453,7 @@ export function PlaygroundClient({ tools, isAuthenticated, profile }: Props) {
       
       // Increment and update local state
       await incrementPlaygroundUsage()
-      setSessionUsage(prev => prev + 1)
+      setSessionUsage((prev: number) => prev + 1)
       
       setOutput(data.plan ?? "")
       setTimeout(() => outputRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100)

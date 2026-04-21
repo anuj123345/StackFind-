@@ -204,23 +204,3 @@ export async function getUserProfile() {
   
   return data
 }
-
-export async function incrementPlaygroundUsage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return
-
-  // Using rpc for atomic increment is preferred, but simple update works too
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('playground_usage_count')
-    .eq('id', user.id)
-    .single()
-
-  if (profile) {
-    await supabase
-      .from('profiles')
-      .update({ playground_usage_count: (profile.playground_usage_count || 0) + 1 })
-      .eq('id', user.id)
-  }
-}
