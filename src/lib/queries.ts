@@ -190,3 +190,37 @@ export async function getToolStats(): Promise<{ total: number; madeInIndia: numb
     freeOrFreemium: total > 0 ? Math.round(((freeRes.count ?? 0) / total) * 100) : 0,
   }
 }
+
+export async function getUserProfile() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
+
+  const { data } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', user.id)
+    .single()
+  
+  return data
+}
+
+export async function incrementPlaygroundUsage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return
+
+  // Using rpc for atomic increment is preferred, but simple update works too
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('playground_usage_count')
+    .eq('id', user.id)
+    .single()
+
+  if (profile) {
+    await supabase
+      .from('profiles')
+      .update({ playground_usage_count: (profile.playground_usage_count || 0) + 1 })
+      .eq('id', user.id)
+  }
+}

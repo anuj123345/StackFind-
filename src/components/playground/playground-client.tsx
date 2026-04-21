@@ -4,6 +4,8 @@ import { useState, useRef, useMemo, useCallback } from "react"
 import { useStack, type StackTool } from "@/hooks/use-stack"
 import { getLogoUrl } from "@/lib/logo"
 import type { PlaygroundTool } from "@/lib/queries"
+import { incrementPlaygroundUsage } from "@/lib/queries"
+import { PlaygroundPaywall } from "./playground-paywall"
 import Link from "next/link"
 import {
   FlaskConical, Trash2, X, Sparkles, Loader2, Plus, Check,
@@ -232,14 +234,144 @@ function BrowserCard({ tool, inStack, onToggle }: {
   )
 }
 
+// ─── Lock wall for guests ─────────────────────────────────────────────────────
+
+function PlaygroundLockWall({ tools }: { tools: PlaygroundTool[] }) {
+  const sampleTools = tools.slice(0, 9)
+
+  return (
+    <div>
+      {/* Blurred playground preview */}
+      <div
+        className="relative rounded-2xl overflow-hidden"
+        style={{ filter: "blur(5px)", pointerEvents: "none", userSelect: "none", opacity: 0.5 }}
+        aria-hidden
+      >
+        {/* Fake preset row */}
+        <div className="mb-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+            {PRESET_STACKS.map(preset => (
+              <div
+                key={preset.name}
+                className="rounded-2xl p-3.5"
+                style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(140,110,80,0.1)" }}
+              >
+                <div className="flex items-center gap-1 mb-3 flex-wrap">
+                  {[0,1,2,3,4].map(i => (
+                    <div key={i} className="w-6 h-6 rounded-lg" style={{ background: "rgba(140,110,80,0.12)" }} />
+                  ))}
+                </div>
+                <p className="text-xs font-bold" style={{ color: "#1C1611" }}>{preset.name}</p>
+                <p className="text-[10px] mt-0.5" style={{ color: "#C4B0A0" }}>{preset.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Fake tool browser */}
+        <div
+          className="rounded-2xl overflow-hidden"
+          style={{ background: "rgba(255,255,255,0.7)", border: "1px solid rgba(140,110,80,0.1)" }}
+        >
+          <div className="px-4 pt-4 pb-3" style={{ borderBottom: "1px solid rgba(140,110,80,0.07)" }}>
+            <div
+              className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl"
+              style={{ background: "rgba(140,110,80,0.04)", border: "1px solid rgba(140,110,80,0.1)" }}
+            >
+              <Search size={13} style={{ color: "#C4B0A0" }} />
+              <span className="text-sm" style={{ color: "#C4B0A0" }}>Search tools…</span>
+            </div>
+          </div>
+          <div className="p-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
+              {sampleTools.map((tool, i) => {
+                const p = PRICING_COLOR[tool.pricing_model] ?? PRICING_COLOR.freemium
+                const logoSrc = getLogoUrl(tool.website, tool.logo_url)
+                return (
+                  <div
+                    key={i}
+                    className="rounded-xl p-3"
+                    style={{ background: "rgba(255,255,255,0.6)", border: "1px solid rgba(140,110,80,0.09)" }}
+                  >
+                    <div className="flex items-start gap-2.5">
+                      <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden mt-0.5"
+                        style={{ background: "rgba(140,110,80,0.05)", border: "1px solid rgba(140,110,80,0.1)" }}>
+                        {logoSrc
+                          ? <img src={logoSrc} alt={tool.name} className="w-6 h-6 object-contain" />
+                          : <span className="text-xs font-black" style={{ color: "#7A6A57" }}>{tool.name[0]}</span>
+                        }
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold truncate mb-0.5" style={{ color: "#1C1611" }}>{tool.name}</p>
+                        <p className="text-[10px] leading-snug line-clamp-2 mb-1.5" style={{ color: "#A0907E" }}>{tool.tagline}</p>
+                        <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-md" style={{ background: p.bg, color: p.color }}>
+                          {PRICING_LABEL[tool.pricing_model]}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Lock overlay */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center" style={{ minHeight: 400 }}>
+        <div
+          className="rounded-2xl px-8 py-8 text-center w-full max-w-md mx-auto"
+          style={{
+            background: "#FFFFFF",
+            border: "1px solid rgba(140,110,80,0.14)",
+            boxShadow: "0 8px 48px rgba(140,110,80,0.18), 0 2px 12px rgba(140,110,80,0.1)",
+          }}
+        >
+          <div
+            className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4"
+            style={{ background: "rgba(99,102,241,0.08)" }}
+          >
+            <FlaskConical size={22} style={{ color: "#6366f1" }} />
+          </div>
+          <p
+            className="font-black mb-2 leading-tight"
+            style={{
+              fontFamily: "'Bricolage Grotesque Variable', sans-serif",
+              fontSize: "1.5rem",
+              color: "#1C1611",
+              letterSpacing: "-0.02em",
+            }}
+          >
+            Sign in to use the Playground
+          </p>
+          <p className="text-[0.875rem] mb-6 leading-relaxed" style={{ color: "#7A6A57" }}>
+            Build your stack, describe your idea, and get a complete build plan with timelines and cost breakdown.
+          </p>
+          <Link
+            href="/login"
+            className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl font-bold text-[0.9375rem] transition-all duration-200 hover:opacity-90"
+            style={{ background: "#6366f1", color: "#fff" }}
+          >
+            Sign in free <ArrowRight size={14} />
+          </Link>
+          <p className="text-[0.75rem] mt-3" style={{ color: "#C4B0A0" }}>
+            Free forever · No credit card
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Main component ──────────────────────────────────────────────────────────
 
 interface Props {
   tools: PlaygroundTool[]
   isAuthenticated: boolean
+  profile: any // Add profile data
 }
 
-export function PlaygroundClient({ tools, isAuthenticated }: Props) {
+export function PlaygroundClient({ tools, isAuthenticated, profile }: Props) {
   const { stack, add, remove, toggle: toggleStack, clear, isInStack } = useStack()
   const [activeCategory, setActiveCategory] = useState("all")
   const [search, setSearch] = useState("")
@@ -248,8 +380,12 @@ export function PlaygroundClient({ tools, isAuthenticated }: Props) {
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [sessionUsage, setSessionUsage] = useState(profile?.playground_usage_count || 0)
   const outputRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  const isPremium = profile?.is_premium_playground || false
+  const hasReachedLimit = !isPremium && sessionUsage >= 10
 
   const totalCost = stack.reduce((sum, t) => sum + (t.startingPriceUsd ?? 0), 0)
 
@@ -314,6 +450,11 @@ export function PlaygroundClient({ tools, isAuthenticated }: Props) {
         return
       }
       if (!res.ok) { setError(data?.error ?? `Server error ${res.status}`); return }
+      
+      // Increment and update local state
+      await incrementPlaygroundUsage()
+      setSessionUsage(prev => prev + 1)
+      
       setOutput(data.plan ?? "")
       setTimeout(() => outputRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100)
     } catch (err: any) {
@@ -329,7 +470,7 @@ export function PlaygroundClient({ tools, isAuthenticated }: Props) {
     setTimeout(() => setCopied(false), 2000)
   }
 
-  const canGenerate = isAuthenticated && idea.trim().length > 0 && stack.length > 0 && !loading
+  const canGenerate = isAuthenticated && idea.trim().length > 0 && stack.length > 0 && !loading && !hasReachedLimit
 
   return (
     <div>
@@ -351,14 +492,31 @@ export function PlaygroundClient({ tools, isAuthenticated }: Props) {
             letterSpacing: "-0.02em",
           }}
         >
-          What are you building?
+          {hasReachedLimit ? "Pro Access Required" : "What are you building?"}
         </h1>
         <p className="max-w-xl" style={{ color: "#7A6A57", fontSize: "0.9375rem", lineHeight: "1.65" }}>
-          Pick your stack, describe your idea — get a complete build plan with timelines and cost breakdown.
+          {hasReachedLimit 
+            ? "You've crafted some great stacks! Unlock Premium for unlimited builds and advanced Indian-market intelligence."
+            : "Pick your stack, describe your idea — get a complete build plan with timelines and cost breakdown."
+          }
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
+      {/* ── Guest lock wall ───────────────────────────────────────────── */}
+      {!isAuthenticated && (
+        <div className="relative">
+          <PlaygroundLockWall tools={tools} />
+        </div>
+      )}
+
+      {/* ── Paywall ── */}
+      {isAuthenticated && hasReachedLimit && (
+        <div className="mt-12 py-10">
+          <PlaygroundPaywall onUnlock={() => window.open("/payment", "_blank")} />
+        </div>
+      )}
+
+      {isAuthenticated && !hasReachedLimit && <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
 
         {/* ── Left: browser + input ──────────────────────────────────────── */}
         <div className="lg:col-span-2 space-y-4">
@@ -745,7 +903,7 @@ export function PlaygroundClient({ tools, isAuthenticated }: Props) {
             )}
           </div>
         </div>
-      </div>
+      </div>}
 
       {/* ── Output ────────────────────────────────────────────────────────── */}
       {(output || loading) && (

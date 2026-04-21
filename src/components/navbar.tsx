@@ -82,7 +82,7 @@ export function Navbar() {
 
           {/* Desktop nav links */}
           <div className="hidden md:flex items-center gap-0.5 flex-1">
-            {NAV_LINKS.map((link) => (
+            {NAV_LINKS.filter(link => link.href !== '/playground' || !!user).map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
@@ -200,7 +200,7 @@ export function Navbar() {
 
         {/* Nav links */}
         <div className="flex flex-col px-3 py-4 gap-1 flex-1 overflow-y-auto">
-          {NAV_LINKS.map(link => (
+          {NAV_LINKS.filter(link => link.href !== '/playground' || !!user).map(link => (
             <Link
               key={link.href}
               href={link.href}
