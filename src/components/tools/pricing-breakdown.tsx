@@ -1,3 +1,5 @@
+"use client"
+
 import { useState } from "react"
 import { Check, Info, IndianRupee, FileText, CreditCard, ArrowRight, Loader2, Sparkles } from "lucide-react"
 
