@@ -105,7 +105,7 @@ export interface Database {
           status?: string
           notes?: string | null
         }
-      }
+      },
       upvotes: {
         Row: {
           user_id: string
