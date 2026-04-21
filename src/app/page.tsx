@@ -3,6 +3,7 @@ import { CategoriesRow } from "@/components/home/categories-row"
 import { FeaturedTools } from "@/components/home/featured-tools"
 import { WhySection } from "@/components/home/why-section"
 import { LatestTools } from "@/components/home/latest-tools"
+import { PricingSection } from "@/components/home/pricing-section"
 import { NewsletterBanner } from "@/components/home/newsletter-banner"
 import { Footer } from "@/components/footer"
 import { getFeaturedTools, getLatestTools, getCategories, getToolStats } from "@/lib/queries"
@@ -22,6 +23,7 @@ export default async function HomePage() {
       <FeaturedTools tools={featuredTools} />
       <WhySection />
       <LatestTools tools={latestTools} />
+      <PricingSection />
       <NewsletterBanner />
       <Footer />
     </>
