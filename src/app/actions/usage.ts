@@ -19,13 +19,13 @@ export async function incrementPlaygroundUsage() {
   }
 
   // Increment usage count
-  const { error: updateError } = await supabase
+  const { error: updateError } = await (supabase
     .from('profiles')
     .update({ 
       playground_usage_count: (profile.playground_usage_count || 0) + 1,
       updated_at: new Date().toISOString()
     } as any)
-    .eq('id', user.id)
+    .eq('id', user.id) as any)
 
   if (updateError) {
     return { success: false, error: updateError.message }
