@@ -19,9 +19,9 @@ export async function incrementPlaygroundUsage() {
   }
 
   // Increment usage count
-  // @ts-ignore - Bypassing strict production type check for Supabase update
-  const { error: updateError } = await supabase
-    .from('profiles')
+  const { error: updateError } = await (supabase
+    .from('profiles') as any)
+    // @ts-ignore - Bypassing strict production type check for Supabase update
     .update({ 
       playground_usage_count: (profile.playground_usage_count || 0) + 1,
       updated_at: new Date().toISOString()
