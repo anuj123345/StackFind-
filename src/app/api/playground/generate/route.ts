@@ -112,77 +112,44 @@ Write a practical build plan. Use this EXACT format:
               ? process.env.NVIDIA_API_KEY_MOONSHOT_AI 
               : process.env.NVIDIA_API_KEY
             
-            console.log(`DEBUG: NVIDIA NIM (Direct Fetch) - isKimi: ${isKimi}, KeyFound: ${!!nvidiaKey}`)
             if (!nvidiaKey) throw new Error("No NVIDIA API key configured")
 
-            const response = await fetch("https://integrate.api.nvidia.com/v1/chat/completions", {
-              method: "POST",
-              headers: {
-                "Authorization": `Bearer ${nvidiaKey}`,
-                "Content-Type": "application/json",
-                "Accept": "text/event-stream"
-              },
-              body: JSON.stringify({
-                model: modelId.includes("/") ? modelId : "meta/llama-3.3-70b-instruct",
-                messages: [{ role: "user", content: prompt }],
-                temperature: isKimi ? 1.0 : 0.2,
-                top_p: isKimi ? 0.95 : 1.0,
-                max_tokens: isKimi ? 16384 : 1800,
-                stream: true,
-                chat_template_kwargs: isKimi ? { thinking: true } : undefined,
-                enable_thinking: isKimi ? true : undefined
-              })
+            const nimClient = new OpenAI({
+              apiKey: nvidiaKey,
+              baseURL: "https://integrate.api.nvidia.com/v1"
             })
 
-            if (!response.ok) {
-              const errData = await response.json().catch(() => ({}))
-              throw new Error(errData?.error?.message || `NVIDIA Error ${response.status}`)
-            }
+            const nimStream = await nimClient.chat.completions.create({
+              model: modelId.includes("/") ? modelId : "meta/llama-3.3-70b-instruct",
+              messages: [{ role: "user", content: prompt }],
+              temperature: isKimi ? 1.0 : 0.2,
+              top_p: isKimi ? 0.95 : 1.0,
+              max_tokens: isKimi ? 16384 : 1800,
+              stream: true,
+              // Use extra_body for non-standard parameters as required by NIM
+              extra_body: isKimi ? {
+                chat_template_kwargs: { thinking: true },
+                enable_thinking: true
+              } : undefined
+            })
 
-            const reader = response.body?.getReader()
-            if (!reader) throw new Error("NVIDIA response body is null")
-
-            const decoder = new TextDecoder()
-            let buffer = ""
             let hasStartedAnswer = false
 
-            while (true) {
-              const { done, value } = await reader.read()
-              if (done) break
-              
-              buffer += decoder.decode(value, { stream: true })
-              const lines = buffer.split("\n")
-              buffer = lines.pop() || ""
+            for await (const chunk of nimStream) {
+              const delta = chunk.choices[0]?.delta as any
+              const reasoning = delta?.reasoning_content
+              const content = delta?.content
 
-              for (const line of lines) {
-                const trimmed = line.trim()
-                if (!trimmed || trimmed === "data: [DONE]") continue
-                
-                if (trimmed.startsWith("data: ")) {
-                  const data = trimmed.slice(6)
-                  try {
-                    const parsed = JSON.parse(data)
-                    const delta = parsed.choices[0]?.delta
-
-                    // Extract Thinking (Reasoning) or Content
-                    const reasoning = delta?.reasoning_content
-                    const content = delta?.content
-
-                    if (reasoning) {
-                      controller.enqueue(encoder.encode(reasoning))
-                    } 
-                    else if (content) {
-                      // Transition from reasoning to final answer
-                      if (isKimi && !hasStartedAnswer) {
-                        controller.enqueue(encoder.encode("\n\n---\n\n"))
-                        hasStartedAnswer = true
-                      }
-                      controller.enqueue(encoder.encode(content))
-                    }
-                  } catch (e) {
-                    // Ignore malformed JSON
-                  }
+              if (reasoning) {
+                controller.enqueue(encoder.encode(reasoning))
+              } 
+              else if (content) {
+                // Transition from reasoning to final answer
+                if (isKimi && !hasStartedAnswer) {
+                  controller.enqueue(encoder.encode("\n\n---\n\n"))
+                  hasStartedAnswer = true
                 }
+                controller.enqueue(encoder.encode(content))
               }
             }
           }
