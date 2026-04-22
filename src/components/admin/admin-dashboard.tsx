@@ -488,7 +488,7 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
                             <td className="px-6 py-5">
                                <div className="flex items-center gap-3">
                                   {tool.logo_url ? (
-                                    <img src={tool.logo_url} alt="" className="w-8 h-8 rounded-lg bg-white/5" />
+                                    <img src={tool.logo_url ?? undefined} alt="" className="w-8 h-8 rounded-lg bg-white/5" />
                                   ) : (
                                     <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400 font-bold text-xs">{tool.name[0]}</div>
                                   )}
@@ -519,7 +519,7 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
                             </td>
                             <td className="px-6 py-5 text-right">
                                <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <a href={tool.website} target="_blank" className="p-2 rounded-lg hover:bg-white/5 text-white/30 hover:text-white transition-all"><ExternalLink size={14} /></a>
+                                  <a href={tool.website ?? "#"} target="_blank" className="p-2 rounded-lg hover:bg-white/5 text-white/30 hover:text-white transition-all"><ExternalLink size={14} /></a>
                                   <button onClick={() => handleDelete(tool.id, tool.name)} className="p-2 rounded-lg hover:bg-red-500/10 text-white/30 hover:text-red-400 transition-all"><Trash2 size={14} /></button>
                                </div>
                             </td>
@@ -551,8 +551,8 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
                                <div className="px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-[0.625rem] font-black text-indigo-400 tracking-widest uppercase">Subdomain Analysis Required</div>
                             </div>
                             <p className="text-sm text-white/60 mb-6 leading-relaxed max-w-2xl">{sub.tool_data.tagline}</p>
-                            <div className="flex flex-wrap gap-4 text-xs font-bold text-white/40 mb-8">
-                               <div className="flex items-center gap-1.5"><Globe size={12} /> {sub.tool_data.website}</div>
+                             <div className="flex flex-wrap gap-4 text-xs font-bold text-white/40 mb-8">
+                               <div className="flex items-center gap-1.5"><Globe size={12} /> {sub.tool_data.website ?? "N/A"}</div>
                                <div className="flex items-center gap-1.5"><Clock size={12} /> Received {new Date(sub.created_at).toLocaleDateString()}</div>
                                <div className="px-2 py-0.5 rounded bg-white/5 text-white/60">@{sub.email}</div>
                             </div>
@@ -604,7 +604,7 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
                       <div key={req.id} className="rounded-3xl bg-white/[0.02] border border-white/[0.08] p-6 hover:bg-white/[0.04] transition-all group">
                          <div className="flex items-center gap-4 mb-5">
                             <div className="w-14 h-14 rounded-2xl bg-white/5 p-2 flex items-center justify-center border border-white/10 group-hover:scale-105 transition-transform">
-                               {req.tool.logo_url ? <img src={req.tool.logo_url} className="w-full h-full object-contain" /> : <Database className="text-indigo-400" />}
+                               {req.tool.logo_url ? <img src={req.tool.logo_url ?? undefined} className="w-full h-full object-contain" /> : <Database className="text-indigo-400" />}
                             </div>
                             <div>
                                <div className="text-lg font-black tracking-tight">{req.tool.name}</div>
