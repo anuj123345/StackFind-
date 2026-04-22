@@ -9,6 +9,7 @@
 
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
+import { OpenAI } from "openai"
 import Anthropic from "@anthropic-ai/sdk"
 
 function serviceClient() {
@@ -76,11 +77,9 @@ export async function POST(req: NextRequest) {
     } catch { /* skip */ }
   }
 
-  if (!process.env.ANTHROPIC_API_KEY) {
-    return NextResponse.json({ error: "ANTHROPIC_API_KEY not set" }, { status: 500 })
+  if (!process.env.NVIDIA_API_KEY && !process.env.ANTHROPIC_API_KEY) {
+    return NextResponse.json({ error: "No AI provider configured" }, { status: 500 })
   }
-
-  const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
   const prompt = `Write a detailed product description for an AI tool. You MUST write exactly 3 full paragraphs separated by blank lines. Each paragraph must be 3-5 sentences. Total length: 200-300 words minimum.
 
@@ -100,15 +99,31 @@ Rules:
 - Do not use phrases like "In conclusion" or "Overall"
 - Be specific and concrete, not vague marketing language
 - Write all 3 paragraphs even if information is limited — use what you know about this tool`
-
+  let generated = ""
   try {
-    const message = await anthropic.messages.create({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 700,
-      messages: [{ role: "user", content: prompt }],
-    })
+    if (process.env.NVIDIA_API_KEY) {
+      const client = new OpenAI({
+        apiKey: process.env.NVIDIA_API_KEY,
+        baseURL: "https://integrate.api.nvidia.com/v1",
+      })
+      const completion = await client.chat.completions.create({
+        model: "meta/llama-3.3-70b-instruct",
+        max_tokens: 700,
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.2,
+      })
+      generated = completion.choices[0]?.message?.content?.trim() || ""
+    } else {
+      const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+      const message = await anthropic.messages.create({
+        model: "claude-3-5-haiku-20241022",
+        max_tokens: 700,
+        messages: [{ role: "user", content: prompt }],
+      })
+      generated = (message.content[0] as { type: string; text: string }).text.trim()
+    }
 
-    const generated = (message.content[0] as { type: string; text: string }).text.trim()
+    if (!generated) throw new Error("Empty response from AI")
 
     // Save to DB
     await supabase

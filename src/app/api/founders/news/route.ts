@@ -1,7 +1,7 @@
 /**
  * GET /api/founders/news
- * Fetches live AI news using Google News RSS.
- * Follows redirects + extracts og:image for each article.
+ * Fetches live AI news using Bing News RSS.
+ * Provides reliable thumbnails and clean article URLs.
  * Cached for 1 hour.
  */
 
@@ -18,12 +18,14 @@ export interface NewsItem {
   image: string | null
 }
 
-const GOOGLE_NEWS_QUERIES = [
-  "artificial+intelligence+startup+2025",
+const BING_NEWS_QUERIES = [
+  "artificial+intelligence+startup+2026",
   "LLM+foundation+model+launch",
   "India+AI+startup+funding",
   "OpenAI+Anthropic+Google+DeepMind+news",
 ]
+
+const CHROME_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
 function decodeEntities(s: string): string {
   return s
@@ -40,97 +42,53 @@ function extractTag(xml: string, tag: string): string {
   return ""
 }
 
-function extractSource(block: string): string {
-  const m = /<source[^>]*>([^<]+)<\/source>/i.exec(block)
-  return m ? m[1].trim() : "Google News"
-}
-
-function extractGoogleLink(block: string): string {
-  const linkTag = /<link>([^<]+)<\/link>/i.exec(block)
-  if (linkTag) return linkTag[1].trim()
-  return extractTag(block, "guid")
-}
-
-// Follow Google News redirect → get real article URL
-async function resolveUrl(googleUrl: string): Promise<string> {
+async function fetchBingNews(q: string): Promise<NewsItem[]> {
   try {
-    const res = await fetch(googleUrl, {
-      method: "HEAD",
-      redirect: "follow",
-      headers: { "User-Agent": "Mozilla/5.0 (compatible; StackFind/1.0)" },
-      signal: AbortSignal.timeout(4000),
-    })
-    return res.url !== googleUrl ? res.url : googleUrl
-  } catch {
-    return googleUrl
-  }
-}
-
-// Detect Google News / Google app icon URLs — these are not article images
-function isGoogleIcon(url: string): boolean {
-  return (
-    url.includes("news.google.com") ||
-    url.includes("lh3.googleusercontent.com") ||
-    url.includes("googleusercontent.com/news") ||
-    url.includes("/news-icon") ||
-    url.includes("google.com/images")
-  )
-}
-
-// Fetch first 12KB of article, extract og:image
-async function fetchOgImage(articleUrl: string): Promise<string | null> {
-  try {
-    const res = await fetch(articleUrl, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (compatible; StackFind/1.0)",
-        "Range": "bytes=0-12288",
-      },
-      signal: AbortSignal.timeout(4000),
-      redirect: "follow",
-    })
-    if (!res.ok) return null
-    const html = await res.text()
-
-    // og:image
-    const og = /<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i.exec(html)
-      ?? /<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i.exec(html)
-    if (og?.[1] && og[1].startsWith("http") && !isGoogleIcon(og[1])) return og[1]
-
-    // twitter:image fallback
-    const tw = /<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i.exec(html)
-      ?? /<meta[^>]+content=["']([^"']+)["'][^>]+name=["']twitter:image["']/i.exec(html)
-    if (tw?.[1] && tw[1].startsWith("http") && !isGoogleIcon(tw[1])) return tw[1]
-
-    return null
-  } catch {
-    return null
-  }
-}
-
-async function fetchGoogleNews(q: string): Promise<Omit<NewsItem, "image">[]> {
-  try {
-    const url = `https://news.google.com/rss/search?q=${q}&hl=en-US&gl=US&ceid=US:en`
+    const url = `https://www.bing.com/news/search?q=${q}&format=rss`
     const res = await fetch(url, {
-      headers: { "User-Agent": "Mozilla/5.0 (compatible; StackFind/1.0)" },
+      headers: { "User-Agent": CHROME_UA },
       signal: AbortSignal.timeout(8000),
     })
     if (!res.ok) return []
 
     const xml = await res.text()
-    const items: Omit<NewsItem, "image">[] = []
+    const items: NewsItem[] = []
     const itemRe = /<item>([\s\S]*?)<\/item>/gi
     let match: RegExpExecArray | null
 
-    while ((match = itemRe.exec(xml)) !== null && items.length < 6) {
+    while ((match = itemRe.exec(xml)) !== null && items.length < 10) {
       const block = match[1]
-      const rawTitle = decodeEntities(extractTag(block, "title"))
-      const url = extractGoogleLink(block)
+      const title = decodeEntities(extractTag(block, "title"))
+      const bingLink = extractTag(block, "link")
       const published = extractTag(block, "pubDate")
-      const source = extractSource(block)
-      if (!rawTitle || !url) continue
-      // Strip " - Publication Name" suffix Google News appends to every title
-      const title = rawTitle.replace(/\s[-–—]\s[^-–—|]+$/, "").trim() || rawTitle
-      items.push({ title, url, source, published, summary: "" })
+      const description = decodeEntities(extractTag(block, "description"))
+      
+      // Extract source name (Bing uses <News:Source>)
+      const sourceMatch = /<News:Source>([^<]+)<\/News:Source>/i.exec(block)
+      const source = sourceMatch ? sourceMatch[1].trim() : "Bing News"
+
+      // Extract thumbnail
+      const imageMatch = /<News:Image>([^<]+)<\/News:Image>/i.exec(block)
+      const image = imageMatch ? imageMatch[1].trim().replace(/&amp;/g, "&") : null
+
+      if (!title || !bingLink) continue
+
+      // Extract real URL from Bing click link
+      let realUrl = bingLink
+      try {
+        const u = new URL(bingLink.replace(/&amp;/g, "&"))
+        const p = new URLSearchParams(u.search)
+        if (p.has("url")) realUrl = p.get("url")!
+      } catch {}
+
+      items.push({ 
+        title, 
+        url: realUrl, 
+        source, 
+        published, 
+        summary: description, 
+        image 
+      })
     }
 
     return items
@@ -142,12 +100,12 @@ async function fetchGoogleNews(q: string): Promise<Omit<NewsItem, "image">[]> {
 export async function GET() {
   // 1. Fetch all RSS feeds in parallel
   const feedResults = await Promise.allSettled(
-    GOOGLE_NEWS_QUERIES.map(q => fetchGoogleNews(q))
+    BING_NEWS_QUERIES.map(q => fetchBingNews(q))
   )
 
   // 2. Dedupe by title
   const seen = new Set<string>()
-  const raw = feedResults
+  const items = feedResults
     .flatMap(r => r.status === "fulfilled" ? r.value : [])
     .filter(item => {
       const key = item.title.toLowerCase().slice(0, 60)
@@ -162,22 +120,7 @@ export async function GET() {
     })
     .slice(0, 16)
 
-  // 3. Resolve real URLs + fetch og:images in parallel (2s window each)
-  const withImages: NewsItem[] = await Promise.all(
-    raw.map(async (item) => {
-      try {
-        const realUrl = await resolveUrl(item.url)
-        // If redirect didn't leave Google's domain, don't bother scraping — it'll return the Google News app icon
-        const isStillGoogle = new URL(realUrl).hostname.includes("google.com")
-        const image = isStillGoogle ? null : await fetchOgImage(realUrl)
-        return { ...item, url: isStillGoogle ? item.url : realUrl, image }
-      } catch {
-        return { ...item, image: null }
-      }
-    })
-  )
-
-  return NextResponse.json({ items: withImages }, {
+  return NextResponse.json({ items }, {
     headers: { "Cache-Control": "s-maxage=3600, stale-while-revalidate=7200" },
   })
 }

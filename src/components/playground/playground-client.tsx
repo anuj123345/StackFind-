@@ -9,7 +9,7 @@ import { PlaygroundPaywall } from "./playground-paywall"
 import Link from "next/link"
 import {
   FlaskConical, Trash2, X, Sparkles, Loader2, Plus, Check,
-  Search, Copy, RotateCcw, DollarSign, ArrowRight,
+  Search, Copy, RotateCcw, DollarSign, ArrowRight, ChevronDown,
 } from "lucide-react"
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -23,6 +23,18 @@ const PRICING_COLOR: Record<string, { bg: string; color: string }> = {
   paid:        { bg: "rgba(217,119,6,0.1)",   color: "#D97706" },
   open_source: { bg: "rgba(59,130,246,0.1)",  color: "#3b82f6" },
 }
+
+const MODELS = [
+  { id: "meta/llama-3.3-70b-instruct",     name: "meta / llama-3.3-70b-instruct",     provider: "NVIDIA NIM" },
+  { id: "meta/llama-4-maverick-17b-128e-instruct", name: "meta / llama-4-maverick-17b", provider: "NVIDIA NIM" },
+  { id: "meta/llama-4-scout-17b-16e-instruct", name: "meta / llama-4-scout-17b",    provider: "NVIDIA NIM" },
+  { id: "moonshotai/kimi-k2.5",            name: "Moonshot / Kimi K2.5 (Reasoning)",  provider: "NVIDIA NIM" },
+  { id: "qwen/qwen2.5-coder-32b-instruct", name: "qwen / qwen2.5-coder-32b",       provider: "NVIDIA NIM" },
+  { id: "anthropic/claude-3-5-sonnet-20241022", name: "anthropic / claude-3.5-sonnet", provider: "Anthropic" },
+  { id: "anthropic/claude-3-5-haiku-20241022",  name: "anthropic / claude-3.5-haiku",  provider: "Anthropic" },
+  { id: "openai/gpt-4o",                   name: "openai / gpt-4o",                   provider: "OpenAI" },
+  { id: "openai/gpt-4o-mini",              name: "openai / gpt-4o-mini",              provider: "OpenAI" },
+]
 
 const CATEGORIES = [
   { slug: "all",             name: "All"            },
@@ -389,6 +401,7 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
   const [activeCategory, setActiveCategory] = useState("all")
   const [search, setSearch] = useState("")
   const [idea, setIdea] = useState("")
+  const [selectedModelId, setSelectedModelId] = useState(MODELS[0].id)
   const [output, setOutput] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
@@ -472,20 +485,44 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
       const res = await fetch("/api/playground/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tools: stack, productIdea: idea }),
+        body: JSON.stringify({ 
+          tools: stack, 
+          productIdea: idea,
+          modelId: selectedModelId
+        }),
       })
-      let data: any
-      try { data = await res.json() } catch {
-        setError(`Server error ${res.status} — please try again`)
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        setError(data?.error ?? `Server error ${res.status}`)
         return
       }
-      if (!res.ok) { setError(data?.error ?? `Server error ${res.status}`); return }
+
+      // Handle streaming response
+      const reader = res.body?.getReader()
+      if (!reader) { setError("Failed to start stream"); return }
+
+      const decoder = new TextDecoder()
+      setOutput("") // Clear previous output
       
       // Increment and update local state
       await incrementPlaygroundUsage()
       setSessionUsage((prev: number) => prev + 1)
-      
-      setOutput(data.plan ?? "")
+
+      let accumulatedText = ""
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        
+        const chunk = decoder.decode(value, { stream: true })
+        accumulatedText += chunk
+        setOutput(accumulatedText)
+        
+        // Auto-scroll as text arrives
+        if (outputRef.current) {
+          outputRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" })
+        }
+      }
       setTimeout(() => outputRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100)
     } catch (err: any) {
       setError(err?.message ?? "Network error — check your connection and try again")
@@ -531,6 +568,7 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
           }
         </p>
       </div>
+
 
       {/* ── Guest lock wall ───────────────────────────────────────────── */}
       {!isAuthenticated && (
@@ -770,6 +808,30 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
               </div>
 
               <div className="flex items-center gap-2">
+                {/* Model Selector Pill */}
+                {isAuthenticated && (
+                  <div className="relative group">
+                    <select
+                      value={selectedModelId}
+                      onChange={(e) => setSelectedModelId(e.target.value)}
+                      className="appearance-none pl-3.5 pr-8 py-2 rounded-xl text-[0.8125rem] font-bold cursor-pointer transition-all duration-200 outline-none border border-transparent hover:border-[#6366f1]/20"
+                      style={{ 
+                        background: "rgba(140,110,80,0.06)", 
+                        color: "#1C1611",
+                      }}
+                    >
+                      {MODELS.map(m => (
+                        <option key={m.id} value={m.id} className="text-black bg-white">
+                          {m.name.split(" / ")[1] || m.name}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none opacity-40">
+                      <ChevronDown size={10} />
+                    </div>
+                  </div>
+                )}
+
                 {output && !loading && (
                   <button
                     onClick={() => { setOutput(""); setIdea("") }}
@@ -783,7 +845,7 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
                 {!isAuthenticated ? (
                   <Link
                     href="/login"
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 hover:opacity-90"
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 hover:opacity-90 shadow-sm"
                     style={{ background: "#6366f1", color: "#fff" }}
                   >
                     Sign in to generate <ArrowRight size={13} />
@@ -792,16 +854,27 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
                   <button
                     onClick={generate}
                     disabled={!canGenerate}
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 disabled:opacity-35 disabled:cursor-not-allowed"
+                    title={!canGenerate ? 
+                      (stack.length === 0 ? "Add at least one tool to your stack" : 
+                       idea.trim().length === 0 ? "Describe your idea to generate a plan" : 
+                       hasReachedLimit ? "Usage limit reached" : "Please fill in all details") 
+                      : "Generate build plan"
+                    }
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 disabled:opacity-35 disabled:cursor-not-allowed group shadow-sm hover:shadow-md"
                     style={{
-                      background: canGenerate ? "#1C1611" : "#1C1611",
-                      color: "#FAF7F2",
+                      background: canGenerate ? "#1C1611" : "rgba(140,110,80,0.12)",
+                      color: canGenerate ? "#fff" : "#A0907E",
                     }}
                   >
-                    {loading
-                      ? <><Loader2 size={13} className="animate-spin" /> Generating…</>
-                      : <><Sparkles size={13} /> Generate plan</>
-                    }
+                    {loading ? (
+                      <><Loader2 size={13} className="animate-spin" /> Generating…</>
+                    ) : (
+                      <>
+                        <Sparkles size={13} className={canGenerate ? "text-[#6366f1] group-hover:scale-110 transition-transform" : "opacity-40"} />
+                        Generate plan
+                        <ArrowRight size={14} className={canGenerate ? "group-hover:translate-x-0.5 transition-transform" : "opacity-40"} />
+                      </>
+                    )}
                   </button>
                 )}
               </div>

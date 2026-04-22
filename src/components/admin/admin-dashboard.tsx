@@ -264,24 +264,18 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
   }
 
   return (
-    <div className="flex h-screen w-full overflow-hidden" style={{ background: "#050403", color: "#FAF7F2", fontFamily: "'Inter', system-ui, sans-serif" }}>
+    <div className="flex h-screen w-full overflow-hidden bg-[#FAF7F2] text-[#1C1611] font-sans selection:bg-indigo-50 selection:text-indigo-900">
       
-      {/* 🔮 Background Glows */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full opacity-[0.08]" style={{ background: "radial-gradient(circle, #6366f1 0%, transparent 70%)" }} />
-        <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full opacity-[0.05]" style={{ background: "radial-gradient(circle, #D97706 0%, transparent 70%)" }} />
-      </div>
-
-      {/* 🛰️ Glass Sidebar */}
-      <aside className="w-72 flex-shrink-0 relative z-20 flex flex-col border-r border-white/[0.06] backdrop-blur-3xl bg-black/40">
+      {/* 🛰️ Warm Sidebar */}
+      <aside className="w-72 flex-shrink-0 relative z-20 flex flex-col border-r border-[rgba(140,110,80,0.12)] bg-[#FAF7F2]/50 backdrop-blur-xl">
         <div className="p-8 pb-4">
           <div className="flex items-center gap-3 mb-10 group cursor-default">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20 group-hover:scale-110 transition-transform duration-300">
+            <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-600/10 group-hover:scale-110 transition-transform duration-300">
               <Zap size={20} className="text-white fill-white" />
             </div>
             <div>
-              <h1 className="text-[1.125rem] font-black tracking-[-0.03em] leading-none mb-1" style={{ fontFamily: "'Bricolage Grotesque Variable', sans-serif" }}>COMMAND</h1>
-              <p className="text-[0.625rem] font-bold tracking-[0.2em] text-white/30 uppercase">Operations Center</p>
+              <h1 className="text-[1.125rem] font-black tracking-[-0.03em] leading-none mb-1 text-[#1C1611]" style={{ fontFamily: "'Bricolage Grotesque Variable', sans-serif" }}>COMMAND</h1>
+              <p className="text-[0.625rem] font-bold tracking-[0.2em] text-[#7A6A57] uppercase">Operations Center</p>
             </div>
           </div>
 
@@ -293,21 +287,21 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
           </nav>
         </div>
 
-        <div className="mt-auto p-8 border-t border-white/[0.06]">
-          <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/[0.05] mb-6">
+        <div className="mt-auto p-8 border-t border-[rgba(140,110,80,0.12)]">
+          <div className="p-4 rounded-2xl bg-white border border-[rgba(140,110,80,0.08)] mb-6 shadow-sm">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-8 h-8 rounded-full bg-orange-500/20 flex items-center justify-center">
-                <Shield size={14} className="text-orange-500" />
+              <div className="w-8 h-8 rounded-full bg-orange-500/10 flex items-center justify-center">
+                <Shield size={14} className="text-orange-600" />
               </div>
-              <span className="text-xs font-bold text-white/80">Premium Admin</span>
+              <span className="text-xs font-bold text-[#7A6A57]">Premium Admin</span>
             </div>
-            <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-              <div className="h-full bg-orange-500 w-[85%] rounded-full animate-pulse" />
+            <div className="h-1.5 w-full bg-[#FAF7F2] rounded-full overflow-hidden border border-[rgba(140,110,80,0.08)]">
+              <div className="h-full bg-orange-500 w-[85%] rounded-full shadow-[0_0_8px_rgba(249,115,22,0.3)]" />
             </div>
           </div>
           <button 
             onClick={() => window.location.href = "/"}
-            className="flex items-center gap-3 w-full p-3 rounded-xl text-white/40 hover:text-white hover:bg-white/5 transition-all text-sm font-medium"
+            className="flex items-center gap-3 w-full p-3 rounded-xl text-[#7A6A57] hover:text-[#1C1611] hover:bg-white transition-all text-sm font-semibold border border-transparent hover:border-[rgba(140,110,80,0.12)]"
           >
             <LogOut size={16} /> Exit System
           </button>
@@ -320,13 +314,13 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
         {/* Top Action Bar */}
         <div className="flex items-center justify-between mb-12">
           <div>
-            <h2 className="text-[2rem] font-black tracking-[-0.04em] mb-1" style={{ fontFamily: "'Bricolage Grotesque Variable', sans-serif" }}>
+            <h2 className="text-[2rem] font-black tracking-[-0.04em] mb-1 text-[#1C1611]" style={{ fontFamily: "'Bricolage Grotesque Variable', sans-serif" }}>
               {tab === "command" && "System Pulse"}
               {tab === "tools" && "Registry Management"}
               {tab === "submissions" && "Moderation Queue"}
               {tab === "leads" && "Revenue Pipeline"}
             </h2>
-            <p className="text-sm text-white/40 font-medium capitalize">
+            <p className="text-sm text-[#7A6A57] font-medium capitalize">
               {tab} Dashboard — {new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </p>
           </div>
@@ -340,14 +334,14 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
                 <Plus size={16} /> New Deployment
               </button>
             )}
-            <div className="relative">
-              <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/20" />
+            <div className="relative group">
+              <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#C4B0A0] group-focus-within:text-indigo-500 transition-colors" />
               <input 
                 type="text" 
                 placeholder="Deep Search..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 py-2.5 rounded-full bg-white/[0.03] border border-white/[0.06] text-sm outline-none focus:border-indigo-500/50 transition-all w-64"
+                className="pl-11 pr-4 py-2.5 rounded-xl bg-white border border-[rgba(140,110,80,0.12)] text-sm outline-none focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/5 transition-all w-64 text-[#1C1611]"
               />
             </div>
           </div>
@@ -359,7 +353,7 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
             <>
               {/* Stats Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <HolographicStat 
+                <StatCard 
                   label="Market Reach" 
                   value={stats?.totalTools || "0"} 
                   trend="+12%" 
@@ -367,7 +361,7 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
                   color="indigo" 
                   desc="Total tool impressions/views"
                 />
-                <HolographicStat 
+                <StatCard 
                   label="Founder Network" 
                   value={stats?.totalUsers || "0"} 
                   trend="+8" 
@@ -375,7 +369,7 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
                   color="orange" 
                   desc="Verified SaaS founders"
                 />
-                <HolographicStat 
+                <StatCard 
                   label="Revenue Potential" 
                   value={`₹${stats?.totalLeads || "0"}`} 
                   trend="High Signal" 
@@ -383,7 +377,7 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
                   color="emerald" 
                   desc="Active billing leads in INR"
                 />
-                <HolographicStat 
+                <StatCard 
                   label="Platform Growth" 
                   value="98.2%" 
                   trend="Healthy" 
@@ -395,39 +389,39 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
 
               {/* Feed Card */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2 rounded-3xl bg-white/[0.02] border border-white/[0.06] p-8 backdrop-blur-sm relative overflow-hidden group">
-                  <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-125 transition-transform duration-700">
+                <div className="lg:col-span-2 rounded-3xl bg-white border border-[rgba(140,110,80,0.12)] p-8 shadow-sm relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-8 opacity-[0.03] text-[#7A6A57] group-hover:scale-125 transition-transform duration-700">
                     <Activity size={100} />
                   </div>
-                  <div className="flex items-center justify-between mb-8">
-                    <h3 className="text-lg font-bold flex items-center gap-2">
-                       <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <div className="flex items-center justify-between mb-8 relative z-10">
+                    <h3 className="text-lg font-bold flex items-center gap-2 text-[#1C1611]">
+                       <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                        Real-time Pulse
                     </h3>
-                    <button onClick={loadAnalytics} className="p-2 rounded-lg hover:bg-white/5 text-white/30 hover:text-white transition-all">
+                    <button onClick={loadAnalytics} className="p-2 rounded-lg hover:bg-[#FAF7F2] text-[#7A6A57] hover:text-indigo-600 transition-all border border-transparent hover:border-[rgba(140,110,80,0.12)]">
                       <RefreshCw size={16} className={statsLoading ? "animate-spin" : ""} />
                     </button>
                   </div>
 
-                  <div className="space-y-6">
+                  <div className="space-y-6 relative z-10">
                     <ActivityItem label="New User Registration" time="2 mins ago" status="Success" dot="indigo" />
                     <ActivityItem label="Managed Billing Inquiry" time="14 mins ago" status="In Progress" dot="orange" />
                     <ActivityItem label="Tool Moderation Completed" time="1 hour ago" status="Success" dot="emerald" />
                     <ActivityItem label="System Scan: Health Check" time="2 hours ago" status="Normal" dot="purple" />
                     <div className="pt-4 text-center">
-                       <button className="text-xs font-bold text-white/20 hover:text-white/60 transition-colors uppercase tracking-widest">View Full Event Log</button>
+                       <button className="text-[0.625rem] font-black text-[#C4B0A0] hover:text-[#7A6A57] transition-colors uppercase tracking-[0.2em]">View Full Event Log</button>
                     </div>
                   </div>
                 </div>
 
-                <div className="rounded-3xl bg-gradient-to-br from-indigo-900/40 to-purple-900/40 border border-white/[0.1] p-8 flex flex-col justify-between group h-full shadow-2xl shadow-indigo-500/10">
+                <div className="rounded-3xl bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100/50 p-8 flex flex-col justify-between group h-full shadow-sm">
                    <div>
-                     <h3 className="text-xl font-black mb-4 leading-tight">Your Dashboard is <span className="text-indigo-400">Battle-Ready.</span></h3>
-                     <p className="text-sm text-white/60 leading-relaxed">System metrics are nominal. You have {submissions.length} new tool submissions awaiting review and {billingRequests.length} pending billing leads.</p>
+                     <h3 className="text-xl font-black mb-4 leading-tight text-[#1C1611]">Your Dashboard is <span className="text-indigo-600">Battle-Ready.</span></h3>
+                     <p className="text-sm text-[#7A6A57] leading-relaxed font-medium">System metrics are nominal. You have {submissions.length} new tool submissions awaiting review and {billingRequests.length} pending billing leads.</p>
                    </div>
                    <div className="mt-12 space-y-3">
-                      <button onClick={() => setTab("submissions")} className="w-full py-4 rounded-2xl bg-white text-black font-black text-sm hover:scale-[1.02] transition-transform active:scale-[0.98]">Review Queue</button>
-                      <button onClick={() => setTab("leads")} className="w-full py-4 rounded-2xl bg-white/10 text-white font-bold text-sm border border-white/5 hover:bg-white/20 transition-all">Pipeline Growth</button>
+                      <button onClick={() => setTab("submissions")} className="w-full py-4 rounded-2xl bg-white text-[#1C1611] font-black text-sm border border-[rgba(140,110,80,0.12)] hover:border-indigo-200 hover:shadow-md transition-all active:scale-[0.98]">Review Queue</button>
+                      <button onClick={() => setTab("leads")} className="w-full py-4 rounded-2xl bg-indigo-600 text-white font-black text-sm hover:bg-indigo-500 shadow-lg shadow-indigo-600/10 transition-all">Pipeline Growth</button>
                    </div>
                 </div>
               </div>
@@ -437,9 +431,9 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
           {tab === "tools" && (
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                {showForm && (
-                 <div className="rounded-3xl bg-white/[0.03] border border-white/[0.1] p-8 backdrop-blur-xl">
-                    <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
-                       <Box size={18} className="text-indigo-400" />
+                 <div className="rounded-3xl bg-white border border-[rgba(140,110,80,0.12)] p-8 shadow-sm">
+                    <h3 className="text-lg font-bold mb-6 flex items-center gap-2 text-[#1C1611]">
+                       <Box size={18} className="text-indigo-600" />
                        Direct Tool Deployment
                     </h3>
                     <form onSubmit={handleAdd} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -464,63 +458,63 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
                        </div>
 
                        <div className="lg:col-span-3 flex justify-end gap-4 mt-4">
-                          <button type="button" onClick={() => setShowForm(false)} className="px-6 py-2.5 rounded-xl text-white/50 hover:text-white transition-colors">Cancel</button>
-                          <button type="submit" disabled={isPending} className="px-8 py-2.5 rounded-xl bg-white text-black font-black hover:scale-105 active:scale-95 transition-all shadow-xl shadow-white/10">Authorize Deployment</button>
+                          <button type="button" onClick={() => setShowForm(false)} className="px-6 py-2.5 rounded-xl text-[#7A6A57] hover:text-[#1C1611] transition-colors font-bold">Cancel</button>
+                          <button type="submit" disabled={isPending} className="px-8 py-2.5 rounded-xl bg-indigo-600 text-white font-black hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-600/10">Authorize Deployment</button>
                        </div>
                     </form>
                  </div>
                )}
 
-               <div className="rounded-3xl bg-white/[0.01] border border-white/[0.05] overflow-hidden">
+               <div className="rounded-3xl bg-white border border-[rgba(140,110,80,0.12)] overflow-hidden shadow-sm">
                   <table className="w-full text-left border-collapse">
-                    <thead className="bg-white/[0.02]">
+                    <thead className="bg-[#FAF7F2]">
                        <tr>
-                          <th className="px-6 py-4 text-[0.625rem] font-black uppercase tracking-widest text-white/30">Registry Item</th>
-                          <th className="px-6 py-4 text-[0.625rem] font-black uppercase tracking-widest text-white/30">Price Matrix</th>
-                          <th className="px-6 py-4 text-[0.625rem] font-black uppercase tracking-widest text-white/30">Market Status</th>
-                          <th className="px-6 py-4 text-[0.625rem] font-black uppercase tracking-widest text-white/30">Security</th>
-                          <th className="px-6 py-4 text-[0.625rem] font-black uppercase tracking-widest text-white/30 text-right">Ops</th>
+                          <th className="px-6 py-4 text-[0.625rem] font-black uppercase tracking-widest text-[#7A6A57]">Registry Item</th>
+                          <th className="px-6 py-4 text-[0.625rem] font-black uppercase tracking-widest text-[#7A6A57]">Price Matrix</th>
+                          <th className="px-6 py-4 text-[0.625rem] font-black uppercase tracking-widest text-[#7A6A57]">Market Status</th>
+                          <th className="px-6 py-4 text-[0.625rem] font-black uppercase tracking-widest text-[#7A6A57]">Security</th>
+                          <th className="px-6 py-4 text-[0.625rem] font-black uppercase tracking-widest text-[#7A6A57] text-right">Ops</th>
                        </tr>
                     </thead>
-                    <tbody className="divide-y divide-white/[0.04]">
+                    <tbody className="divide-y divide-[rgba(140,110,80,0.08)]">
                        {tools.filter(t => t.name.toLowerCase().includes(searchQuery.toLowerCase())).map(tool => (
-                         <tr key={tool.id} className="group hover:bg-white/[0.02] transition-colors">
+                         <tr key={tool.id} className="group hover:bg-[#FAF7F2]/50 transition-colors">
                             <td className="px-6 py-5">
                                <div className="flex items-center gap-3">
                                   {tool.logo_url ? (
-                                    <img src={tool.logo_url ?? undefined} alt="" className="w-8 h-8 rounded-lg bg-white/5" />
+                                    <img src={tool.logo_url ?? undefined} alt="" className="w-8 h-8 rounded-lg bg-white border border-[rgba(140,110,80,0.08)]" />
                                   ) : (
-                                    <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400 font-bold text-xs">{tool.name[0]}</div>
+                                    <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 font-bold text-xs flex items-center justify-center border border-indigo-100">{tool.name[0]}</div>
                                   )}
                                   <div>
-                                     <div className="text-sm font-bold text-white group-hover:text-indigo-400 transition-colors uppercase tracking-tight">{tool.name}</div>
-                                     <div className="text-[0.625rem] text-white/30 font-medium">/{tool.slug}</div>
+                                     <div className="text-sm font-bold text-[#1C1611] group-hover:text-indigo-600 transition-colors uppercase tracking-tight">{tool.name}</div>
+                                     <div className="text-[0.625rem] text-[#7A6A57] font-medium">/{tool.slug}</div>
                                   </div>
                                </div>
                             </td>
                             <td className="px-6 py-5">
-                               <div className="text-sm font-bold text-white/80">${tool.starting_price_usd ?? '0'}</div>
-                               <div className="text-[0.625rem] text-white/40 uppercase font-bold tracking-wider">{tool.pricing_model}</div>
+                               <div className="text-sm font-bold text-[#1C1611]">${tool.starting_price_usd ?? '0'}</div>
+                               <div className="text-[0.625rem] text-[#7A6A57] uppercase font-bold tracking-wider">{tool.pricing_model}</div>
                             </td>
                             <td className="px-6 py-5">
                                <span 
                                   className="px-2 py-0.5 rounded-full text-[0.625rem] font-black uppercase tracking-tighter"
-                                  style={{ background: `${STATUS_COLORS[tool.status]}20`, color: STATUS_COLORS[tool.status] }}
+                                  style={{ background: `${STATUS_COLORS[tool.status]}15`, color: STATUS_COLORS[tool.status] }}
                                >
                                   {tool.status}
                                </span>
                             </td>
                             <td className="px-6 py-5">
-                               <div className="flex gap-1.5 grayscale opacity-30 group-hover:grayscale-0 group-hover:opacity-100 transition-all">
-                                  {tool.is_made_in_india && <div className="w-1.5 h-1.5 rounded-full bg-orange-400" title="Made in India" />}
-                                  {tool.has_inr_billing && <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" title="INR Billing" />}
-                                  {tool.has_upi && <div className="w-1.5 h-1.5 rounded-full bg-indigo-400" title="UPI Support" />}
+                               <div className="flex gap-1.5 opacity-40 group-hover:opacity-100 transition-all">
+                                  {tool.is_made_in_india && <div className="w-1.5 h-1.5 rounded-full bg-orange-500" title="Made in India" />}
+                                  {tool.has_inr_billing && <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" title="INR Billing" />}
+                                  {tool.has_upi && <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" title="UPI Support" />}
                                </div>
                             </td>
                             <td className="px-6 py-5 text-right">
                                <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <a href={tool.website ?? "#"} target="_blank" className="p-2 rounded-lg hover:bg-white/5 text-white/30 hover:text-white transition-all"><ExternalLink size={14} /></a>
-                                  <button onClick={() => handleDelete(tool.id, tool.name)} className="p-2 rounded-lg hover:bg-red-500/10 text-white/30 hover:text-red-400 transition-all"><Trash2 size={14} /></button>
+                                  <a href={tool.website ?? "#"} target="_blank" className="p-2 rounded-lg hover:bg-white text-[#7A6A57] hover:text-[#1C1611] transition-all border border-transparent hover:border-[rgba(140,110,80,0.12)] shadow-sm"><ExternalLink size={14} /></a>
+                                  <button onClick={() => handleDelete(tool.id, tool.name)} className="p-2 rounded-lg hover:bg-red-50 text-[#7A6A57] hover:text-red-600 transition-all border border-transparent hover:border-red-100 shadow-sm"><Trash2 size={14} /></button>
                                </div>
                             </td>
                          </tr>
@@ -534,30 +528,30 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
           {tab === "submissions" && (
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                {submissions.length === 0 ? (
-                 <div className="flex flex-col items-center justify-center py-24 rounded-3xl border border-dashed border-white/10 bg-white/[0.01]">
-                    <div className="w-16 h-16 rounded-3xl bg-white/[0.03] flex items-center justify-center mb-6">
-                       <Check size={24} className="text-white/20" />
+                 <div className="flex flex-col items-center justify-center py-24 rounded-3xl border border-dashed border-[rgba(140,110,80,0.2)] bg-white/30">
+                    <div className="w-16 h-16 rounded-3xl bg-white flex items-center justify-center mb-6 shadow-sm border border-[rgba(140,110,80,0.1)]">
+                       <Check size={24} className="text-[#C4B0A0]" />
                     </div>
-                    <h4 className="text-xl font-bold mb-2">Queue Cleared</h4>
-                    <p className="text-sm text-white/40">No new submissions awaiting review.</p>
+                    <h4 className="text-xl font-bold mb-2 text-[#1C1611]">Queue Cleared</h4>
+                    <p className="text-sm text-[#7A6A57]">No new submissions awaiting review.</p>
                  </div>
                ) : (
                  <div className="grid grid-cols-1 gap-6">
                     {submissions.map(sub => (
-                      <div key={sub.id} className="rounded-3xl bg-white/[0.03] border border-white/[0.1] p-8 flex flex-col md:flex-row gap-8 backdrop-blur-sm group hover:border-indigo-500/30 transition-all">
+                      <div key={sub.id} className="rounded-3xl bg-white border border-[rgba(140,110,80,0.12)] p-8 flex flex-col md:flex-row gap-8 shadow-sm group hover:border-indigo-200 transition-all">
                          <div className="flex-1">
                             <div className="flex items-center gap-4 mb-4">
-                               <h3 className="text-2xl font-black font-heading tracking-tight underline decoration-indigo-500/20 underline-offset-4">{sub.tool_data.name}</h3>
-                               <div className="px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-[0.625rem] font-black text-indigo-400 tracking-widest uppercase">Subdomain Analysis Required</div>
+                               <h3 className="text-2xl font-black tracking-tight text-[#1C1611] underline decoration-indigo-500/10 underline-offset-4" style={{ fontFamily: "'Bricolage Grotesque Variable', sans-serif" }}>{sub.tool_data.name}</h3>
+                               <div className="px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-[0.625rem] font-black text-indigo-600 tracking-widest uppercase">Subdomain Analysis Required</div>
                             </div>
-                            <p className="text-sm text-white/60 mb-6 leading-relaxed max-w-2xl">{sub.tool_data.tagline}</p>
-                             <div className="flex flex-wrap gap-4 text-xs font-bold text-white/40 mb-8">
+                            <p className="text-sm text-[#7A6A57] mb-6 leading-relaxed max-w-2xl font-medium">{sub.tool_data.tagline}</p>
+                             <div className="flex flex-wrap gap-4 text-xs font-bold text-[#C4B0A0] mb-8">
                                <div className="flex items-center gap-1.5"><Globe size={12} /> {sub.tool_data.website ?? "N/A"}</div>
                                <div className="flex items-center gap-1.5"><Clock size={12} /> Received {new Date(sub.created_at).toLocaleDateString()}</div>
-                               <div className="px-2 py-0.5 rounded bg-white/5 text-white/60">@{sub.email}</div>
+                               <div className="px-2 py-0.5 rounded bg-[#FAF7F2] text-[#7A6A57] border border-[rgba(140,110,80,0.08)]">@{sub.email}</div>
                             </div>
                             
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 rounded-2xl bg-black/20 border border-white/5">
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 rounded-2xl bg-[#FAF7F2] border border-[rgba(140,110,80,0.08)]">
                                <SecurityIndicator label="India" active={sub.tool_data.is_made_in_india} />
                                <SecurityIndicator label="INR" active={sub.tool_data.has_inr_billing} />
                                <SecurityIndicator label="UPI" active={sub.tool_data.has_upi} />
@@ -569,14 +563,14 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
                             <button 
                                onClick={() => handleApproveSubmission(sub.id)}
                                disabled={isPending}
-                               className="w-full py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-sm transition-all shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2"
+                               className="w-full py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-sm transition-all shadow-lg shadow-emerald-600/10 flex items-center justify-center gap-2"
                             >
                                <ArrowUpRight size={16} /> Authorize Deployment
                             </button>
                             <button 
                                onClick={() => handleRejectSubmission(sub.id)}
                                disabled={isPending}
-                               className="w-full py-4 rounded-2xl bg-white/5 hover:bg-white/10 text-white/60 hover:text-red-400 font-bold text-sm transition-all border border-white/5"
+                               className="w-full py-4 rounded-2xl bg-white hover:bg-[#FAF7F2] text-[#7A6A57] hover:text-red-600 font-bold text-sm transition-all border border-[rgba(140,110,80,0.12)]"
                             >
                                Reject Submission
                             </button>
@@ -591,34 +585,34 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
           {tab === "leads" && (
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                {billingRequests.length === 0 ? (
-                 <div className="flex flex-col items-center justify-center py-24 rounded-3xl border border-dashed border-white/10 bg-white/[0.01]">
-                    <div className="w-16 h-16 rounded-3xl bg-white/[0.03] flex items-center justify-center mb-6">
-                       <PieChart size={24} className="text-white/20" />
+                 <div className="flex flex-col items-center justify-center py-24 rounded-3xl border border-dashed border-[rgba(140,110,80,0.2)] bg-white/30">
+                    <div className="w-16 h-16 rounded-3xl bg-white flex items-center justify-center mb-6 shadow-sm border border-[rgba(140,110,80,0.1)]">
+                       <PieChart size={24} className="text-[#C4B0A0]" />
                     </div>
-                    <h4 className="text-xl font-bold mb-2">No Active Interests</h4>
-                    <p className="text-sm text-white/40">The revenue pipeline is currently empty.</p>
+                    <h4 className="text-xl font-bold mb-2 text-[#1C1611]">No Active Interests</h4>
+                    <p className="text-sm text-[#7A6A57]">The revenue pipeline is currently empty.</p>
                  </div>
                ) : (
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {billingRequests.map(req => (
-                      <div key={req.id} className="rounded-3xl bg-white/[0.02] border border-white/[0.08] p-6 hover:bg-white/[0.04] transition-all group">
+                      <div key={req.id} className="rounded-3xl bg-white border border-[rgba(140,110,80,0.12)] p-6 hover:bg-[#FAF7F2]/30 transition-all group shadow-sm">
                          <div className="flex items-center gap-4 mb-5">
-                            <div className="w-14 h-14 rounded-2xl bg-white/5 p-2 flex items-center justify-center border border-white/10 group-hover:scale-105 transition-transform">
-                               {req.tool.logo_url ? <img src={req.tool.logo_url ?? undefined} className="w-full h-full object-contain" /> : <Database className="text-indigo-400" />}
+                            <div className="w-14 h-14 rounded-2xl bg-white p-2 flex items-center justify-center border border-[rgba(140,110,80,0.08)] group-hover:scale-105 transition-transform shadow-sm">
+                               {req.tool.logo_url ? <img src={req.tool.logo_url ?? undefined} className="w-full h-full object-contain" /> : <Database className="text-indigo-600" />}
                             </div>
                             <div>
-                               <div className="text-lg font-black tracking-tight">{req.tool.name}</div>
-                               <div className="text-xs font-bold text-indigo-400 tracking-wider">REVENUE LEAD</div>
+                               <div className="text-lg font-black tracking-tight text-[#1C1611]" style={{ fontFamily: "'Bricolage Grotesque Variable', sans-serif" }}>{req.tool.name}</div>
+                               <div className="text-[0.625rem] font-black text-indigo-600 tracking-[0.2em] uppercase">REVENUE LEAD</div>
                             </div>
                          </div>
-                         <div className="p-4 rounded-xl bg-black/40 border border-white/5 mb-6 text-sm text-white/60">
-                            <strong>Note:</strong> {req.notes || "No additional requirements specified."}
+                         <div className="p-4 rounded-xl bg-[#FAF7F2] border border-[rgba(140,110,80,0.08)] mb-6 text-sm text-[#7A6A57] font-medium leading-relaxed">
+                            <strong className="text-[#1C1611]">Note:</strong> {req.notes || "No additional requirements specified."}
                          </div>
                          <div className="flex items-center justify-between">
-                            <div className="text-xs font-bold text-white/30">Contact: <span className="text-white/80">{req.email}</span></div>
+                            <div className="text-[0.625rem] font-black text-[#C4B0A0] uppercase tracking-wider">Contact: <span className="text-[#1C1611] font-bold lowercase tracking-normal">{req.email}</span></div>
                             <button 
                                onClick={() => handleMarkProcessed(req.id)}
-                               className="px-5 py-2.5 rounded-xl bg-indigo-600/10 hover:bg-indigo-600 text-indigo-400 hover:text-white font-bold text-xs transition-all flex items-center gap-2"
+                               className="px-5 py-2.5 rounded-xl bg-indigo-50 hover:bg-indigo-600 text-indigo-600 hover:text-white font-bold text-xs transition-all flex items-center gap-2 border border-indigo-100"
                             >
                                <Check size={14} /> Process Request
                             </button>
@@ -634,10 +628,10 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
         {/* Flash Notification Layer */}
         {msg && (
           <div className="fixed bottom-10 right-10 z-[100] animate-in slide-in-from-right-10 duration-300">
-             <div className={`px-6 py-4 rounded-2xl shadow-2xl backdrop-blur-3xl border flex items-center gap-4 ${msg.type === 'ok' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>
-                {msg.type === 'ok' ? <ShieldCheck size={20} /> : <ShieldAlert size={20} />}
+             <div className={`px-6 py-4 rounded-2xl shadow-2xl backdrop-blur-3xl border flex items-center gap-4 ${msg.type === 'ok' ? 'bg-emerald-50 border-emerald-100 text-emerald-700' : 'bg-red-50 border-red-100 text-red-700'}`}>
+                {msg.type === 'ok' ? <Check size={20} className="text-emerald-600" /> : <ShieldAlert size={20} className="text-red-600" />}
                 <div>
-                   <p className="text-[0.625rem] font-black uppercase tracking-widest leading-none mb-1">Security Alert</p>
+                   <p className="text-[0.625rem] font-black uppercase tracking-widest leading-none mb-1 opacity-50">System Message</p>
                    <p className="text-sm font-bold">{msg.text}</p>
                 </div>
              </div>
@@ -652,14 +646,14 @@ function SidebarLink({ icon, label, active, onClick, count }: { icon: React.Reac
   return (
     <button 
       onClick={onClick}
-      className={`w-full flex items-center justify-between p-3.5 rounded-2xl transition-all duration-300 group ${active ? 'bg-white text-black font-black' : 'text-white/40 hover:text-white hover:bg-white/[0.03]'}`}
+      className={`w-full flex items-center justify-between p-3.5 rounded-xl transition-all duration-300 group ${active ? 'bg-white text-[#1C1611] font-bold shadow-sm border border-[rgba(140,110,80,0.12)]' : 'text-[#7A6A57] hover:text-[#1C1611] hover:bg-white/60'}`}
     >
       <div className="flex items-center gap-3">
-        <span className={active ? 'text-black' : 'text-white/30 group-hover:text-indigo-400 transition-colors'}>{icon}</span>
-        <span className="text-sm tracking-[-0.01em] uppercase font-bold text-[0.7rem]">{label}</span>
+        <span className={active ? 'text-indigo-600' : 'text-[#C4B0A0] group-hover:text-indigo-500 transition-colors'}>{icon}</span>
+        <span className="text-[0.7rem] tracking-wider uppercase font-black">{label}</span>
       </div>
       {count !== undefined && count > 0 && (
-        <span className={`px-2 py-0.5 rounded-lg text-[10px] font-black ${active ? 'bg-black text-white' : 'bg-red-500/20 text-red-400 border border-red-500/20'}`}>
+        <span className={`px-2 py-0.5 rounded-lg text-[10px] font-black ${active ? 'bg-indigo-600 text-white' : 'bg-red-50 text-red-600 border border-red-100'}`}>
           {count}
         </span>
       )}
@@ -667,41 +661,41 @@ function SidebarLink({ icon, label, active, onClick, count }: { icon: React.Reac
   )
 }
 
-function HolographicStat({ label, value, trend, icon, color, desc }: { label: string, value: string | number, trend: string, icon: React.ReactNode, color: string, desc: string }) {
+function StatCard({ label, value, trend, icon, color, desc }: { label: string, value: string | number, trend: string, icon: React.ReactNode, color: string, desc: string }) {
   const colorMap: any = {
-    indigo: "text-indigo-400 bg-indigo-500/10",
-    orange: "text-orange-400 bg-orange-500/10",
-    emerald: "text-emerald-400 bg-emerald-500/10",
-    purple: "text-purple-400 bg-purple-500/10"
+    indigo: "text-indigo-600 bg-indigo-50 border-indigo-100",
+    orange: "text-orange-600 bg-orange-50 border-orange-100",
+    emerald: "text-emerald-600 bg-emerald-50 border-emerald-100",
+    purple: "text-purple-600 bg-purple-50 border-purple-100"
   }
   return (
-    <div className="rounded-3xl bg-white/[0.02] border border-white/[0.06] p-6 hover:bg-white/[0.04] transition-all group relative overflow-hidden">
-      <div className="absolute top-0 right-0 p-4 opacity-[0.02] group-hover:scale-125 transition-transform duration-500">
+    <div className="rounded-3xl bg-white border border-[rgba(140,110,80,0.12)] p-6 hover:border-indigo-200 transition-all group relative overflow-hidden shadow-sm">
+      <div className="absolute top-0 right-0 p-4 opacity-[0.05] text-[#7A6A57] group-hover:scale-125 transition-transform duration-500">
         {icon}
       </div>
-      <div className="flex items-center justify-between mb-4">
-         <div className={`p-2.5 rounded-xl ${colorMap[color]}`}>{icon}</div>
-         <span className={`text-[10px] font-black px-2 py-1 rounded-lg ${colorMap[color]} tracking-tighter uppercase`}>{trend}</span>
+      <div className="flex items-center justify-between mb-4 relative z-10">
+         <div className={`p-2.5 rounded-xl border ${colorMap[color]}`}>{icon}</div>
+         <span className={`text-[10px] font-black px-2 py-1 rounded-lg border ${colorMap[color]} tracking-tighter uppercase`}>{trend}</span>
       </div>
-      <h4 className="text-[0.625rem] font-bold text-white/30 uppercase tracking-[0.1em] mb-1">{label}</h4>
-      <div className="text-2xl font-black text-white tracking-tight mb-2">{value}</div>
-      <p className="text-[10px] text-white/20 leading-tight font-medium">{desc}</p>
+      <h4 className="text-[0.625rem] font-bold text-[#7A6A57] uppercase tracking-[0.1em] mb-1 relative z-10">{label}</h4>
+      <div className="text-2xl font-black text-[#1C1611] tracking-tight mb-2 relative z-10">{value}</div>
+      <p className="text-[10px] text-[#C4B0A0] leading-tight font-medium relative z-10">{desc}</p>
     </div>
   )
 }
 
 function ActivityItem({ label, time, status, dot }: { label: string, time: string, status: string, dot: string }) {
-  const dots: any = { indigo: "bg-indigo-500 shadow-indigo-500/50", orange: "bg-orange-500 shadow-orange-500/50", emerald: "bg-emerald-500 shadow-emerald-500/50", purple: "bg-purple-500 shadow-purple-500/50" }
+  const dots: any = { indigo: "bg-indigo-500", orange: "bg-orange-500", emerald: "bg-emerald-500", purple: "bg-purple-500" }
   return (
     <div className="flex items-center justify-between group/item">
        <div className="flex items-center gap-4">
-          <div className={`w-2 h-2 rounded-full ${dots[dot]} shadow-[0_0_8px]`} />
+          <div className={`w-2 h-2 rounded-full ${dots[dot]} shadow-sm`} />
           <div>
-             <div className="text-sm font-bold text-white/80 group-hover/item:text-white transition-colors">{label}</div>
-             <div className="text-[10px] text-white/30">{time}</div>
+             <div className="text-sm font-bold text-[#1C1611] transition-colors">{label}</div>
+             <div className="text-[10px] text-[#7A6A57] font-medium">{time}</div>
           </div>
        </div>
-       <div className="text-[10px] font-black text-white/20 group-hover/item:text-white/40 uppercase tracking-widest">{status}</div>
+       <div className="text-[10px] font-black text-[#C4B0A0] group-hover/item:text-[#7A6A57] uppercase tracking-widest">{status}</div>
     </div>
   )
 }
@@ -709,14 +703,14 @@ function ActivityItem({ label, time, status, dot }: { label: string, time: strin
 function AdminInput({ label, value, onChange, placeholder, required, type = "text" }: { label: string, value: string, onChange: (v: string) => void, placeholder?: string, required?: boolean, type?: string }) {
   return (
     <div className="flex flex-col gap-2">
-      <label className="text-xs font-bold text-white/40 uppercase tracking-widest">{label}</label>
+      <label className="text-[0.625rem] font-black text-[#7A6A57] uppercase tracking-widest">{label}</label>
       <input 
         type={type}
         value={value}
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
         required={required}
-        className="px-4 py-3 rounded-xl bg-white/[0.03] border border-white/[0.06] text-sm outline-none focus:border-indigo-500/50 focus:bg-white/[0.05] transition-all"
+        className="px-4 py-3 rounded-xl bg-white border border-[rgba(140,110,80,0.12)] text-sm outline-none focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/5 transition-all text-[#1C1611] font-medium"
       />
     </div>
   )
@@ -725,14 +719,17 @@ function AdminInput({ label, value, onChange, placeholder, required, type = "tex
 function AdminSelect({ label, value, onChange, options }: { label: string, value: string, onChange: (v: string) => void, options: { value: string, label: string }[] }) {
   return (
     <div className="flex flex-col gap-2">
-      <label className="text-xs font-bold text-white/40 uppercase tracking-widest">{label}</label>
-      <select 
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        className="px-4 py-3 rounded-xl bg-white/[0.03] border border-white/[0.06] text-sm outline-none focus:border-indigo-500/50 focus:bg-white/[0.05] transition-all text-white appearance-none"
-      >
-        {options.map(o => <option key={o.value} value={o.value} className="bg-[#050403] text-white">{o.label}</option>)}
-      </select>
+      <label className="text-[0.625rem] font-black text-[#7A6A57] uppercase tracking-widest">{label}</label>
+      <div className="relative">
+        <select 
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          className="w-full px-4 py-3 rounded-xl bg-white border border-[rgba(140,110,80,0.12)] text-sm outline-none focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/5 transition-all text-[#1C1611] font-medium appearance-none"
+        >
+          {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+        </select>
+        <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#C4B0A0] pointer-events-none" />
+      </div>
     </div>
   )
 }
@@ -742,9 +739,9 @@ function AdminToggle({ label, active, onClick }: { label: string, active: boolea
     <button 
       type="button"
       onClick={onClick}
-      className={`flex flex-col items-center justify-center p-3 rounded-2xl border transition-all ${active ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-400' : 'bg-white/[0.02] border-white/[0.05] text-white/20'}`}
+      className={`flex flex-col items-center justify-center p-3 rounded-2xl border transition-all ${active ? 'bg-indigo-50 border-indigo-200 text-indigo-600 shadow-sm' : 'bg-white border-[rgba(140,110,80,0.12)] text-[#C4B0A0] hover:bg-[#FAF7F2]'}`}
     >
-       <div className={`w-3 h-3 rounded-full mb-2 ${active ? 'bg-indigo-400 shadow-[0_0_10px_rgba(129,140,248,0.5)]' : 'bg-white/10'}`} />
+       <div className={`w-3 h-3 rounded-full mb-2 ${active ? 'bg-indigo-600' : 'bg-[#C4B0A0]/20'}`} />
        <span className="text-[10px] font-black uppercase tracking-tighter whitespace-nowrap">{label}</span>
     </button>
   )
@@ -753,10 +750,10 @@ function AdminToggle({ label, active, onClick }: { label: string, active: boolea
 function SecurityIndicator({ label, active }: { label: string, active: boolean }) {
   return (
     <div className="flex items-center gap-2">
-       <div className={`w-3 h-3 rounded-full flex items-center justify-center ${active ? 'bg-emerald-500/20 text-emerald-500' : 'bg-red-500/20 text-red-500'}`}>
+       <div className={`w-3 h-3 rounded-full flex items-center justify-center ${active ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
           {active ? <Check size={8} strokeWidth={4} /> : <X size={8} strokeWidth={4} />}
        </div>
-       <span className="text-[0.625rem] font-black uppercase tracking-tight text-white/40">{label}</span>
+       <span className="text-[0.625rem] font-black uppercase tracking-tight text-[#7A6A57]">{label}</span>
     </div>
   )
 }

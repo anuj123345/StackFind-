@@ -1,9 +1,10 @@
 import { NextRequest } from "next/server"
+import { OpenAI } from "openai"
 import Anthropic from "@anthropic-ai/sdk"
 import { getIsAuthenticated } from "@/lib/auth"
 import { getUsdInrRate } from "@/lib/exchange"
 
-// Increase Vercel function timeout (works on Pro; Hobby ignores but we also use haiku which is fast)
+// Increase Vercel function timeout
 export const maxDuration = 60
 
 function jsonError(msg: string, status = 400) {
@@ -14,18 +15,18 @@ function jsonError(msg: string, status = 400) {
 }
 
 export async function POST(req: NextRequest) {
+  console.log("DEBUG: /api/playground/generate hit")
   try {
     const usdToInrRate = await getUsdInrRate()
     const isAuthenticated = await getIsAuthenticated()
     if (!isAuthenticated) return jsonError("Sign in to use the Playground", 401)
 
-    if (!process.env.ANTHROPIC_API_KEY) return jsonError("ANTHROPIC_API_KEY not configured", 500)
-
-    let tools: any[], productIdea: string
+    let tools: any[], productIdea: string, modelId: string = "meta/llama-3.3-70b-instruct"
     try {
       const body = await req.json()
       tools = body.tools
       productIdea = body.productIdea
+      if (body.modelId) modelId = body.modelId
     } catch {
       return jsonError("Invalid request body")
     }
@@ -33,12 +34,7 @@ export async function POST(req: NextRequest) {
     if (!tools?.length) return jsonError("Add at least one tool to your stack")
     if (!productIdea?.trim()) return jsonError("Describe what you want to build")
 
-    // Build a tight prompt
     const toolLines = tools.map((t: any) => {
-      const inrStr = t.startingPriceInr ? `₹${t.startingPriceInr}/mo` : "N/A"
-      const usdStr = t.startingPriceUsd ? `$${t.startingPriceUsd}/mo` : "N/A"
-      
-      // Calculate effective INR for the LLM's reference
       let effectiveInr = 0
       if (t.startingPriceInr) effectiveInr = t.startingPriceInr
       else if (t.startingPriceUsd) effectiveInr = Math.round(t.startingPriceUsd * usdToInrRate)
@@ -47,97 +43,166 @@ export async function POST(req: NextRequest) {
         ? "Managed INR Billing Available (UPI/GST)" 
         : (t.startingPriceInr ? "Native INR/UPI support" : "USD/International Only")
 
-      return `- ${t.name}: Price: ${inrStr} / ${usdStr}, (ESTIMATED TOTAL: ₹${effectiveInr}/mo). Billing: ${billingContext}. Tagline: ${t.tagline}`
+      return `- ${t.name}: Price: ${t.startingPriceInr ? `₹${t.startingPriceInr}/mo` : "N/A"} / ${t.startingPriceUsd ? `$${t.startingPriceUsd}/mo` : "N/A"}, (ESTIMATED TOTAL: ₹${effectiveInr}/mo). Billing: ${billingContext}. Tagline: ${t.tagline}`
     }).join("\n")
 
     const prompt = `You are a senior technical co-founder. A founder wants to build: "${productIdea.trim()}"
-
 Their stack (${tools.length} tools):
 ${toolLines}
 
-Write a practical build plan. Use this EXACT format, no deviations:
-
+Write a practical build plan. Use this EXACT format:
 ## Product Overview
-One paragraph (3 sentences max): what it is, who it's for, core value.
+[3 sentences max]
 
 ## How Each Tool Is Used
-${tools.map((t: any) => `### ${t.name}\nOne focused paragraph on exactly what this tool does in this specific product.`).join("\n\n")}
+[One paragraph per tool]
 
 ## Cost Breakdown
-
-| Tool | Plan | Monthly Cost (₹) | Billing Status |
-|------|------|------------------|----------------|
-${tools.map((t: any) => {
-  let priceStr = "₹0"
-  let billingStatus = "International"
-  
-  if (t.startingPriceInr) {
-    priceStr = `₹${t.startingPriceInr}`
-    billingStatus = "Native INR/GST"
-  } else if (t.managed_billing_enabled) {
-    priceStr = `₹${Math.round(t.startingPriceUsd * usdToInrRate * 1.05)}*`
-    billingStatus = "StackFind Managed (GST)"
-  } else if (t.startingPriceUsd) {
-    priceStr = `₹${Math.round(t.startingPriceUsd * usdToInrRate)}*`
-  }
-  return `| ${t.name} | ${t.startingPriceInr || t.startingPriceUsd ? 'Starting plan' : 'Free tier'} | ${priceStr} | ${billingStatus} |`
-}).join("\n")}
-
-*Prices marked with * are estimates (USD to INR @ ₹${usdToInrRate}). StackFind Managed includes a 5% service fee.
+[Markdown Table: Tool | Plan | Monthly Cost (₹) | Billing Status]
 
 ## Managed Stack Advantage
-Explain briefly: By using StackFind Managed Billing for the ${tools.filter((t: any) => t.managed_billing_enabled).length} international tools in this stack, the founder gets a valid Indian GST invoice. 
-CALCULATE: Total monthly spend on Managed tools is ₹[SUM]. 18% GST Input Credit savings = ₹[0.18 * SUM]. Mention this exact saving.
+[Savings calculation]
 
 ## Launch Timeline
-- **Week 1–2:** [Setup, auth, database schema, core scaffolding]
-- **Week 3–4:** [Core feature implementation, key integrations]
-- **Week 5–6:** [Payments, emails, polish, staging deploy]
-- **Week 7–8:** [Beta users, feedback loop, production launch]
+[8 weeks breakdown]
 
 ## First 3 Steps
-1. [Specific first step — tool + action]
-2. [Specific second step — tool + action]
-3. [Specific third step — tool + action]
+[3 direct actions]`
 
-Be direct. No filler. Do not use code blocks for the output itself.`
+    const encoder = new TextEncoder()
+    const stream = new ReadableStream({
+      async start(controller) {
+        controller.enqueue(encoder.encode("Thinking... \n\n"))
+        
+        try {
+          console.log("DEBUG: Playground Model:", modelId)
+          
+          if (modelId.startsWith("anthropic/") || (!process.env.NVIDIA_API_KEY && process.env.ANTHROPIC_API_KEY)) {
+            const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+            const actualModel = modelId.startsWith("anthropic/") ? modelId.replace("anthropic/", "") : "claude-3-5-haiku-20241022"
+            const anthropicStream = await anthropic.messages.create({
+              model: actualModel,
+              max_tokens: 1800,
+              messages: [{ role: "user", content: prompt }],
+              stream: true,
+            })
+            for await (const chunk of anthropicStream) {
+              if (chunk.type === 'content_block_delta' && (chunk.delta as any).text) {
+                controller.enqueue(encoder.encode((chunk.delta as any).text))
+              }
+            }
+          } 
+          else if (modelId.startsWith("openai/") && process.env.OPENAI_API_KEY) {
+            const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+            const openaiStream = await openai.chat.completions.create({
+              model: modelId.replace("openai/", ""),
+              messages: [{ role: "user", content: prompt }],
+              temperature: 0.2,
+              max_tokens: 1800,
+              stream: true,
+            })
+            for await (const chunk of openaiStream) {
+              const content = chunk.choices[0]?.delta?.content || ""
+              if (content) controller.enqueue(encoder.encode(content))
+            }
+          }
+          else {
+            const isKimi = modelId.includes("kimi")
+            const nvidiaKey = (isKimi && process.env.NVIDIA_API_KEY_MOONSHOT_AI) 
+              ? process.env.NVIDIA_API_KEY_MOONSHOT_AI 
+              : process.env.NVIDIA_API_KEY
+            
+            console.log(`DEBUG: NVIDIA NIM (Direct Fetch) - isKimi: ${isKimi}, KeyFound: ${!!nvidiaKey}`)
+            if (!nvidiaKey) throw new Error("No NVIDIA API key configured")
 
-    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+            const response = await fetch("https://integrate.api.nvidia.com/v1/chat/completions", {
+              method: "POST",
+              headers: {
+                "Authorization": `Bearer ${nvidiaKey}`,
+                "Content-Type": "application/json",
+                "Accept": "text/event-stream"
+              },
+              body: JSON.stringify({
+                model: modelId.includes("/") ? modelId : "meta/llama-3.3-70b-instruct",
+                messages: [{ role: "user", content: prompt }],
+                temperature: isKimi ? 1.0 : 0.2,
+                top_p: isKimi ? 0.95 : 1.0,
+                max_tokens: isKimi ? 16384 : 1800,
+                stream: true,
+                chat_template_kwargs: isKimi ? { thinking: true } : undefined,
+                enable_thinking: isKimi ? true : undefined
+              })
+            })
 
-    // Use a robust model choice
-    const message = await anthropic.messages.create({
-      model: "claude-3-5-haiku-20241022",
-      max_tokens: 1800,
-      messages: [{ role: "user", content: prompt }],
+            if (!response.ok) {
+              const errData = await response.json().catch(() => ({}))
+              throw new Error(errData?.error?.message || `NVIDIA Error ${response.status}`)
+            }
+
+            const reader = response.body?.getReader()
+            if (!reader) throw new Error("NVIDIA response body is null")
+
+            const decoder = new TextDecoder()
+            let buffer = ""
+            let hasStartedAnswer = false
+
+            while (true) {
+              const { done, value } = await reader.read()
+              if (done) break
+              
+              buffer += decoder.decode(value, { stream: true })
+              const lines = buffer.split("\n")
+              buffer = lines.pop() || ""
+
+              for (const line of lines) {
+                const trimmed = line.trim()
+                if (!trimmed || trimmed === "data: [DONE]") continue
+                
+                if (trimmed.startsWith("data: ")) {
+                  const data = trimmed.slice(6)
+                  try {
+                    const parsed = JSON.parse(data)
+                    const delta = parsed.choices[0]?.delta
+
+                    // Extract Thinking (Reasoning) or Content
+                    const reasoning = delta?.reasoning_content
+                    const content = delta?.content
+
+                    if (reasoning) {
+                      controller.enqueue(encoder.encode(reasoning))
+                    } 
+                    else if (content) {
+                      // Transition from reasoning to final answer
+                      if (isKimi && !hasStartedAnswer) {
+                        controller.enqueue(encoder.encode("\n\n---\n\n"))
+                        hasStartedAnswer = true
+                      }
+                      controller.enqueue(encoder.encode(content))
+                    }
+                  } catch (e) {
+                    // Ignore malformed JSON
+                  }
+                }
+              }
+            }
+          }
+          controller.close()
+        } catch (err: any) {
+          console.error("DEBUG: Stream Error:", err)
+          controller.enqueue(encoder.encode(`\n\n[Error: ${err.message}]`))
+          controller.close()
+        }
+      }
     })
 
-    const text = message.content
-      .filter((b: any) => b.type === "text")
-      .map((b: any) => b.text)
-      .join("")
-      .trim()
-
-    if (!text) throw new Error("Empty response from AI")
-
-    return new Response(JSON.stringify({ plan: text }), {
-      headers: { "Content-Type": "application/json" },
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Cache-Control": "no-cache",
+      }
     })
   } catch (err: any) {
     console.error("[playground/generate]", err)
-    
-    // Check for specific Anthropic errors
-    const isAuth = err?.status === 401
-    const isRateLimit = err?.status === 429
-    const isOverloaded = err?.status === 503 || err?.status === 529
-
-    const msg = isAuth
-      ? "Invalid Anthropic API key. Please check your environment variables."
-      : isRateLimit
-      ? "Anthropic rate limit hit. Please wait a minute and try again."
-      : isOverloaded
-      ? "Anthropic servers are currently overloaded. Please try again in a moment."
-      : err?.message ?? "Generation failed. Please try again."
-      
-    return jsonError(msg, err?.status || 500)
+    return jsonError(err.message || "Internal server error", 500)
   }
 }

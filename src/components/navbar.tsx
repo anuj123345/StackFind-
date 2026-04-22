@@ -27,7 +27,6 @@ export function Navbar() {
   const pathname = usePathname()
   const supabase = createClient()
 
-  if (pathname?.startsWith("/admin")) return null
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 20)
@@ -77,6 +76,8 @@ export function Navbar() {
     router.push("/")
     router.refresh()
   }
+
+  if (pathname?.startsWith("/admin")) return null
 
   return (
     <>
