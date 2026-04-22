@@ -1076,10 +1076,8 @@ function ToolSection({
                   <Trash2 size={13} />
                 </button>
               </div>
-                </div>
-              </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
       )}
     </div>
