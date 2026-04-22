@@ -7,6 +7,9 @@ import { getUsdInrRate } from "@/lib/exchange"
 // Increase Vercel function timeout
 export const maxDuration = 60
 
+// Version: 1.0.1-final-clean-sdk
+
+
 function jsonError(msg: string, status = 400) {
   return new Response(JSON.stringify({ error: msg }), {
     status,
