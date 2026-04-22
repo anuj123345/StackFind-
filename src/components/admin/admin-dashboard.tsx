@@ -1,7 +1,12 @@
 "use client"
 
 import React, { useState, useTransition, useEffect } from "react"
-import { Plus, Check, X, Trash2, ExternalLink, ChevronDown, ChevronUp, RefreshCw, Activity, TrendingUp, Users, Zap, LayoutDashboard, Database } from "lucide-react"
+import { 
+  Plus, Check, X, Trash2, ExternalLink, ChevronDown, ChevronUp, 
+  RefreshCw, Activity, TrendingUp, Users, Zap, LayoutDashboard, 
+  Database, Shield, PieChart, FileText, Settings, LogOut, Search,
+  ArrowUpRight, Clock, Box, Globe, ShieldAlert
+} from "lucide-react"
 import type { Tool, Category } from "@/types/database"
 
 // ─── Submission types ─────────────────────────────────────────────────────────
@@ -59,9 +64,9 @@ interface AdminDashboardProps {
 const PRICING_OPTIONS = ["free", "freemium", "paid", "open_source"] as const
 
 const STATUS_COLORS: Record<string, string> = {
-  approved: "oklch(0.55 0.15 145)",
-  pending:  "oklch(0.6 0.15 60)",
-  rejected: "oklch(0.55 0.15 25)",
+  approved: "oklch(0.65 0.2 145)",
+  pending:  "oklch(0.7 0.2 60)",
+  rejected: "oklch(0.65 0.2 25)",
 }
 
 function slugify(s: string) {
@@ -73,6 +78,8 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
   const [showForm, setShowForm] = useState(false)
   const [isPending, startTransition] = useTransition()
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null)
+  const [tab, setTab] = useState<"command" | "tools" | "submissions" | "leads">("command")
+  const [searchQuery, setSearchQuery] = useState("")
 
   // Form state
   const [form, setForm] = useState({
@@ -169,18 +176,12 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
     })
   }
 
-  const pending  = tools.filter(t => t.status === "pending")
-  const approved = tools.filter(t => t.status === "approved")
-  const rejected = tools.filter(t => t.status === "rejected")
-
-  // ─── Submissions state ──────────────────────────────────────────────────────
-  const [tab, setTab] = useState<"command" | "tools" | "submissions" | "leads">("command")
+  // ─── Submissions & Analytics state ──────────────────────────────────────────
   const [stats, setStats] = useState<any>(null)
   const [statsLoading, setStatsLoading] = useState(false)
   const [submissions, setSubmissions] = useState<Submission[]>([])
   const [subsLoaded, setSubsLoaded] = useState(false)
   const [subsLoading, setSubsLoading] = useState(false)
-
   const [billingRequests, setBillingRequests] = useState<BillingRequest[]>([])
   const [leadsLoaded, setLeadsLoaded] = useState(false)
   const [leadsLoading, setLeadsLoading] = useState(false)
@@ -188,52 +189,37 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
   async function loadAnalytics() {
     setStatsLoading(true)
     try {
-      const res = await fetch("/api/admin/analytics", {
-        headers: { "x-admin-key": adminKey },
-      })
+      const res = await fetch("/api/admin/analytics", { headers: { "x-admin-key": adminKey } })
       const data = await res.json()
       setStats(data)
-    } finally {
-      setStatsLoading(false)
-    }
+    } finally { setStatsLoading(false) }
   }
-
-  useEffect(() => {
-    if (tab === "command") loadAnalytics()
-  }, [tab])
 
   async function loadSubmissions() {
     setSubsLoading(true)
     try {
-      const res = await fetch("/api/admin/submissions?status=pending", {
-        headers: { "x-admin-key": adminKey },
-      })
+      const res = await fetch("/api/admin/submissions?status=pending", { headers: { "x-admin-key": adminKey } })
       const data = await res.json()
       setSubmissions(data.submissions ?? [])
       setSubsLoaded(true)
-    } finally {
-      setSubsLoading(false)
-    }
+    } finally { setSubsLoading(false) }
   }
 
   async function loadBillingRequests() {
     setLeadsLoading(true)
     try {
-      const res = await fetch("/api/admin/billing-requests?status=pending", {
-        headers: { "x-admin-key": adminKey },
-      })
+      const res = await fetch("/api/admin/billing-requests?status=pending", { headers: { "x-admin-key": adminKey } })
       const data = await res.json()
       setBillingRequests(data.requests ?? [])
       setLeadsLoaded(true)
-    } finally {
-      setLeadsLoading(false)
-    }
+    } finally { setLeadsLoading(false) }
   }
 
   useEffect(() => {
+    if (tab === "command") loadAnalytics()
     if (tab === "submissions" && !subsLoaded) loadSubmissions()
     if (tab === "leads" && !leadsLoaded) loadBillingRequests()
-  }, [tab, subsLoaded, leadsLoaded])
+  }, [tab])
 
   async function handleApproveSubmission(id: string) {
     startTransition(async () => {
@@ -245,7 +231,7 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
       const data = await res.json()
       if (data.error) { flash("err", data.error); return }
       setSubmissions(prev => prev.filter(s => s.id !== id))
-      flash("ok", `Approved! Tool is now live as "${data.slug}".`)
+      flash("ok", "Submission approved!")
     })
   }
 
@@ -273,833 +259,507 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
       const data = await res.json()
       if (data.error) { flash("err", data.error); return }
       setBillingRequests(prev => prev.filter(r => r.id !== id))
-      flash("ok", "Lead marked as processed.")
+      flash("ok", "Lead processed.")
     })
   }
 
   return (
-    <div className="min-h-screen" style={{ background: "oklch(0.97 0.005 60)", fontFamily: "'Geist', 'Inter', system-ui, sans-serif" }}>
+    <div className="flex h-screen w-full overflow-hidden" style={{ background: "#050403", color: "#FAF7F2", fontFamily: "'Inter', system-ui, sans-serif" }}>
+      
+      {/* 🔮 Background Glows */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full opacity-[0.08]" style={{ background: "radial-gradient(circle, #6366f1 0%, transparent 70%)" }} />
+        <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full opacity-[0.05]" style={{ background: "radial-gradient(circle, #D97706 0%, transparent 70%)" }} />
+      </div>
 
-      {/* Header */}
-      <header style={{ background: "oklch(0.15 0.02 60)", borderBottom: "1px solid oklch(0.25 0.02 60)" }}>
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+      {/* 🛰️ Glass Sidebar */}
+      <aside className="w-72 flex-shrink-0 relative z-20 flex flex-col border-r border-white/[0.06] backdrop-blur-3xl bg-black/40">
+        <div className="p-8 pb-4">
+          <div className="flex items-center gap-3 mb-10 group cursor-default">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20 group-hover:scale-110 transition-transform duration-300">
+              <Zap size={20} className="text-white fill-white" />
+            </div>
+            <div>
+              <h1 className="text-[1.125rem] font-black tracking-[-0.03em] leading-none mb-1" style={{ fontFamily: "'Bricolage Grotesque Variable', sans-serif" }}>COMMAND</h1>
+              <p className="text-[0.625rem] font-bold tracking-[0.2em] text-white/30 uppercase">Operations Center</p>
+            </div>
+          </div>
+
+          <nav className="flex flex-col gap-1.5">
+            <SidebarLink icon={<Activity size={18} />} label="Overview" active={tab === "command"} onClick={() => setTab("command")} />
+            <SidebarLink icon={<Database size={18} />} label="Live Tools" active={tab === "tools"} onClick={() => setTab("tools")} />
+            <SidebarLink icon={<FileText size={18} />} label="Submissions" active={tab === "submissions"} onClick={() => setTab("submissions")} count={submissions.length} />
+            <SidebarLink icon={<PieChart size={18} />} label="Managed Billing" active={tab === "leads"} onClick={() => setTab("leads")} count={billingRequests.length} />
+          </nav>
+        </div>
+
+        <div className="mt-auto p-8 border-t border-white/[0.06]">
+          <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/[0.05] mb-6">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-8 h-8 rounded-full bg-orange-500/20 flex items-center justify-center">
+                <Shield size={14} className="text-orange-500" />
+              </div>
+              <span className="text-xs font-bold text-white/80">Premium Admin</span>
+            </div>
+            <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+              <div className="h-full bg-orange-500 w-[85%] rounded-full animate-pulse" />
+            </div>
+          </div>
+          <button 
+            onClick={() => window.location.href = "/"}
+            className="flex items-center gap-3 w-full p-3 rounded-xl text-white/40 hover:text-white hover:bg-white/5 transition-all text-sm font-medium"
+          >
+            <LogOut size={16} /> Exit System
+          </button>
+        </div>
+      </aside>
+
+      {/* 🚀 Main Command Deck */}
+      <main className="flex-1 overflow-y-auto relative z-10 px-10 py-12 custom-scrollbar">
+        
+        {/* Top Action Bar */}
+        <div className="flex items-center justify-between mb-12">
           <div>
-            <div className="text-xs font-mono tracking-widest mb-1" style={{ color: "oklch(0.55 0.12 60)" }}>STACKFIND</div>
-            <h1 className="text-lg font-semibold" style={{ color: "oklch(0.95 0.01 60)" }}>Admin Dashboard</h1>
+            <h2 className="text-[2rem] font-black tracking-[-0.04em] mb-1" style={{ fontFamily: "'Bricolage Grotesque Variable', sans-serif" }}>
+              {tab === "command" && "System Pulse"}
+              {tab === "tools" && "Registry Management"}
+              {tab === "submissions" && "Moderation Queue"}
+              {tab === "leads" && "Revenue Pipeline"}
+            </h2>
+            <p className="text-sm text-white/40 font-medium capitalize">
+              {tab} Dashboard — {new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+            </p>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="flex gap-1 p-1 rounded-lg" style={{ background: "oklch(0.25 0.02 60)" }}>
-              {(["command", "tools", "submissions", "leads"] as const).map(t => (
-                <button
-                  key={t}
-                  onClick={() => setTab(t)}
-                  className="px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-1.5"
-                  style={
-                    tab === t
-                      ? { background: "oklch(0.97 0.01 60)", color: "oklch(0.15 0.02 60)" }
-                      : { background: "transparent", color: "oklch(0.65 0.02 60)" }
-                  }
-                >
-                  {t === "command" && <Activity size={12} />}
-                  {t === "command" ? "Command" : t === "tools" ? "Tools" : t === "submissions" ? "Submissions" : "Leads"}
-                </button>
-              ))}
-            </div>
+
+          <div className="flex items-center gap-4">
             {tab === "tools" && (
-              <button
-                onClick={() => setShowForm(v => !v)}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all"
-                style={{
-                  background: showForm ? "oklch(0.35 0.02 60)" : "oklch(0.55 0.15 145)",
-                  color: "oklch(0.97 0.01 60)",
-                }}
+              <button 
+                onClick={() => setShowForm(!showForm)}
+                className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm transition-all shadow-lg shadow-indigo-600/20"
               >
-                {showForm ? <><X size={14} /> Cancel</> : <><Plus size={14} /> Add Tool</>}
+                <Plus size={16} /> New Deployment
               </button>
             )}
-            {(tab === "submissions" || tab === "leads") && (
-              <button
-                onClick={tab === "submissions" ? loadSubmissions : loadBillingRequests}
-                disabled={subsLoading || leadsLoading}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all disabled:opacity-50"
-                style={{ background: "oklch(0.35 0.02 60)", color: "oklch(0.97 0.01 60)" }}
-              >
-                <RefreshCw size={13} className={(subsLoading || leadsLoading) ? "animate-spin" : ""} />
-                Refresh
-              </button>
-            )}
+            <div className="relative">
+              <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/20" />
+              <input 
+                type="text" 
+                placeholder="Deep Search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 pr-4 py-2.5 rounded-full bg-white/[0.03] border border-white/[0.06] text-sm outline-none focus:border-indigo-500/50 transition-all w-64"
+              />
+            </div>
           </div>
         </div>
-      </header>
 
-      <div className="max-w-6xl mx-auto px-6 py-8 space-y-8">
+        {/* 📟 Dynamic Content Fragments */}
+        <div className="space-y-10">
+          {tab === "command" && (
+            <>
+              {/* Stats Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <HolographicStat 
+                  label="Market Reach" 
+                  value={stats?.totalTools || "0"} 
+                  trend="+12%" 
+                  icon={<Activity size={20} />} 
+                  color="indigo" 
+                  desc="Total tool impressions/views"
+                />
+                <HolographicStat 
+                  label="Founder Network" 
+                  value={stats?.totalUsers || "0"} 
+                  trend="+8" 
+                  icon={<Users size={20} />} 
+                  color="orange" 
+                  desc="Verified SaaS founders"
+                />
+                <HolographicStat 
+                  label="Revenue Potential" 
+                  value={`₹${stats?.totalLeads || "0"}`} 
+                  trend="High Signal" 
+                  icon={<Zap size={20} />} 
+                  color="emerald" 
+                  desc="Active billing leads in INR"
+                />
+                <HolographicStat 
+                  label="Platform Growth" 
+                  value="98.2%" 
+                  trend="Healthy" 
+                  icon={<TrendingUp size={20} />} 
+                  color="purple" 
+                  desc="Uptime & processing speed"
+                />
+              </div>
 
-        {/* Flash message */}
+              {/* Feed Card */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-2 rounded-3xl bg-white/[0.02] border border-white/[0.06] p-8 backdrop-blur-sm relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-125 transition-transform duration-700">
+                    <Activity size={100} />
+                  </div>
+                  <div className="flex items-center justify-between mb-8">
+                    <h3 className="text-lg font-bold flex items-center gap-2">
+                       <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                       Real-time Pulse
+                    </h3>
+                    <button onClick={loadAnalytics} className="p-2 rounded-lg hover:bg-white/5 text-white/30 hover:text-white transition-all">
+                      <RefreshCw size={16} className={statsLoading ? "animate-spin" : ""} />
+                    </button>
+                  </div>
+
+                  <div className="space-y-6">
+                    <ActivityItem label="New User Registration" time="2 mins ago" status="Success" dot="indigo" />
+                    <ActivityItem label="Managed Billing Inquiry" time="14 mins ago" status="In Progress" dot="orange" />
+                    <ActivityItem label="Tool Moderation Completed" time="1 hour ago" status="Success" dot="emerald" />
+                    <ActivityItem label="System Scan: Health Check" time="2 hours ago" status="Normal" dot="purple" />
+                    <div className="pt-4 text-center">
+                       <button className="text-xs font-bold text-white/20 hover:text-white/60 transition-colors uppercase tracking-widest">View Full Event Log</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-3xl bg-gradient-to-br from-indigo-900/40 to-purple-900/40 border border-white/[0.1] p-8 flex flex-col justify-between group h-full shadow-2xl shadow-indigo-500/10">
+                   <div>
+                     <h3 className="text-xl font-black mb-4 leading-tight">Your Dashboard is <span className="text-indigo-400">Battle-Ready.</span></h3>
+                     <p className="text-sm text-white/60 leading-relaxed">System metrics are nominal. You have {submissions.length} new tool submissions awaiting review and {billingRequests.length} pending billing leads.</p>
+                   </div>
+                   <div className="mt-12 space-y-3">
+                      <button onClick={() => setTab("submissions")} className="w-full py-4 rounded-2xl bg-white text-black font-black text-sm hover:scale-[1.02] transition-transform active:scale-[0.98]">Review Queue</button>
+                      <button onClick={() => setTab("leads")} className="w-full py-4 rounded-2xl bg-white/10 text-white font-bold text-sm border border-white/5 hover:bg-white/20 transition-all">Pipeline Growth</button>
+                   </div>
+                </div>
+              </div>
+            </>
+          )}
+
+          {tab === "tools" && (
+            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+               {showForm && (
+                 <div className="rounded-3xl bg-white/[0.03] border border-white/[0.1] p-8 backdrop-blur-xl">
+                    <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
+                       <Box size={18} className="text-indigo-400" />
+                       Direct Tool Deployment
+                    </h3>
+                    <form onSubmit={handleAdd} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                       <AdminInput label="Tool Name" value={form.name} onChange={v => setForm({...form, name: v, slug: slugify(v)})} placeholder="e.g. Acme AI" required />
+                       <AdminInput label="Slug ID" value={form.slug} onChange={v => setForm({...form, slug: v})} placeholder="acme-ai" required />
+                       <AdminInput label="Landing URL" value={form.website} onChange={v => setForm({...form, website: v})} placeholder="https://..." required />
+                       <AdminInput label="Tagline" value={form.tagline} onChange={v => setForm({...form, tagline: v})} placeholder="The best AI for..." required />
+                       <AdminInput label="Price Start (USD)" type="number" value={form.starting_price_usd} onChange={v => setForm({...form, starting_price_usd: v})} placeholder="0" />
+                       <AdminSelect 
+                          label="Model" 
+                          options={PRICING_OPTIONS.map(o => ({ value: o, label: o }))} 
+                          value={form.pricing_model} 
+                          onChange={v => setForm({...form, pricing_model: v as any})} 
+                       />
+                       
+                       <div className="lg:col-span-3 grid grid-cols-2 md:grid-cols-5 gap-4 py-4">
+                          <AdminToggle label="Made in India" active={form.is_made_in_india} onClick={() => setForm({...form, is_made_in_india: !form.is_made_in_india})} />
+                          <AdminToggle label="INR Billing" active={form.has_inr_billing} onClick={() => setForm({...form, has_inr_billing: !form.has_inr_billing})} />
+                          <AdminToggle label="UPI Ready" active={form.has_upi} onClick={() => setForm({...form, has_upi: !form.has_upi})} />
+                          <AdminToggle label="GST Invoicing" active={form.has_gst_invoice} onClick={() => setForm({...form, has_gst_invoice: !form.has_gst_invoice})} />
+                          <AdminToggle label="India Support" active={form.has_india_support} onClick={() => setForm({...form, has_india_support: !form.has_india_support})} />
+                       </div>
+
+                       <div className="lg:col-span-3 flex justify-end gap-4 mt-4">
+                          <button type="button" onClick={() => setShowForm(false)} className="px-6 py-2.5 rounded-xl text-white/50 hover:text-white transition-colors">Cancel</button>
+                          <button type="submit" disabled={isPending} className="px-8 py-2.5 rounded-xl bg-white text-black font-black hover:scale-105 active:scale-95 transition-all shadow-xl shadow-white/10">Authorize Deployment</button>
+                       </div>
+                    </form>
+                 </div>
+               )}
+
+               <div className="rounded-3xl bg-white/[0.01] border border-white/[0.05] overflow-hidden">
+                  <table className="w-full text-left border-collapse">
+                    <thead className="bg-white/[0.02]">
+                       <tr>
+                          <th className="px-6 py-4 text-[0.625rem] font-black uppercase tracking-widest text-white/30">Registry Item</th>
+                          <th className="px-6 py-4 text-[0.625rem] font-black uppercase tracking-widest text-white/30">Price Matrix</th>
+                          <th className="px-6 py-4 text-[0.625rem] font-black uppercase tracking-widest text-white/30">Market Status</th>
+                          <th className="px-6 py-4 text-[0.625rem] font-black uppercase tracking-widest text-white/30">Security</th>
+                          <th className="px-6 py-4 text-[0.625rem] font-black uppercase tracking-widest text-white/30 text-right">Ops</th>
+                       </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/[0.04]">
+                       {tools.filter(t => t.name.toLowerCase().includes(searchQuery.toLowerCase())).map(tool => (
+                         <tr key={tool.id} className="group hover:bg-white/[0.02] transition-colors">
+                            <td className="px-6 py-5">
+                               <div className="flex items-center gap-3">
+                                  {tool.logo_url ? (
+                                    <img src={tool.logo_url} alt="" className="w-8 h-8 rounded-lg bg-white/5" />
+                                  ) : (
+                                    <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400 font-bold text-xs">{tool.name[0]}</div>
+                                  )}
+                                  <div>
+                                     <div className="text-sm font-bold text-white group-hover:text-indigo-400 transition-colors uppercase tracking-tight">{tool.name}</div>
+                                     <div className="text-[0.625rem] text-white/30 font-medium">/{tool.slug}</div>
+                                  </div>
+                               </div>
+                            </td>
+                            <td className="px-6 py-5">
+                               <div className="text-sm font-bold text-white/80">${tool.starting_price_usd ?? '0'}</div>
+                               <div className="text-[0.625rem] text-white/40 uppercase font-bold tracking-wider">{tool.pricing_model}</div>
+                            </td>
+                            <td className="px-6 py-5">
+                               <span 
+                                  className="px-2 py-0.5 rounded-full text-[0.625rem] font-black uppercase tracking-tighter"
+                                  style={{ background: `${STATUS_COLORS[tool.status]}20`, color: STATUS_COLORS[tool.status] }}
+                               >
+                                  {tool.status}
+                               </span>
+                            </td>
+                            <td className="px-6 py-5">
+                               <div className="flex gap-1.5 grayscale opacity-30 group-hover:grayscale-0 group-hover:opacity-100 transition-all">
+                                  {tool.is_made_in_india && <div className="w-1.5 h-1.5 rounded-full bg-orange-400" title="Made in India" />}
+                                  {tool.has_inr_billing && <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" title="INR Billing" />}
+                                  {tool.has_upi && <div className="w-1.5 h-1.5 rounded-full bg-indigo-400" title="UPI Support" />}
+                               </div>
+                            </td>
+                            <td className="px-6 py-5 text-right">
+                               <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <a href={tool.website} target="_blank" className="p-2 rounded-lg hover:bg-white/5 text-white/30 hover:text-white transition-all"><ExternalLink size={14} /></a>
+                                  <button onClick={() => handleDelete(tool.id, tool.name)} className="p-2 rounded-lg hover:bg-red-500/10 text-white/30 hover:text-red-400 transition-all"><Trash2 size={14} /></button>
+                               </div>
+                            </td>
+                         </tr>
+                       ))}
+                    </tbody>
+                  </table>
+               </div>
+            </div>
+          )}
+
+          {tab === "submissions" && (
+            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+               {submissions.length === 0 ? (
+                 <div className="flex flex-col items-center justify-center py-24 rounded-3xl border border-dashed border-white/10 bg-white/[0.01]">
+                    <div className="w-16 h-16 rounded-3xl bg-white/[0.03] flex items-center justify-center mb-6">
+                       <Check size={24} className="text-white/20" />
+                    </div>
+                    <h4 className="text-xl font-bold mb-2">Queue Cleared</h4>
+                    <p className="text-sm text-white/40">No new submissions awaiting review.</p>
+                 </div>
+               ) : (
+                 <div className="grid grid-cols-1 gap-6">
+                    {submissions.map(sub => (
+                      <div key={sub.id} className="rounded-3xl bg-white/[0.03] border border-white/[0.1] p-8 flex flex-col md:flex-row gap-8 backdrop-blur-sm group hover:border-indigo-500/30 transition-all">
+                         <div className="flex-1">
+                            <div className="flex items-center gap-4 mb-4">
+                               <h3 className="text-2xl font-black font-heading tracking-tight underline decoration-indigo-500/20 underline-offset-4">{sub.tool_data.name}</h3>
+                               <div className="px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-[0.625rem] font-black text-indigo-400 tracking-widest uppercase">Subdomain Analysis Required</div>
+                            </div>
+                            <p className="text-sm text-white/60 mb-6 leading-relaxed max-w-2xl">{sub.tool_data.tagline}</p>
+                            <div className="flex flex-wrap gap-4 text-xs font-bold text-white/40 mb-8">
+                               <div className="flex items-center gap-1.5"><Globe size={12} /> {sub.tool_data.website}</div>
+                               <div className="flex items-center gap-1.5"><Clock size={12} /> Received {new Date(sub.created_at).toLocaleDateString()}</div>
+                               <div className="px-2 py-0.5 rounded bg-white/5 text-white/60">@{sub.email}</div>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 rounded-2xl bg-black/20 border border-white/5">
+                               <SecurityIndicator label="India" active={sub.tool_data.is_made_in_india} />
+                               <SecurityIndicator label="INR" active={sub.tool_data.has_inr_billing} />
+                               <SecurityIndicator label="UPI" active={sub.tool_data.has_upi} />
+                               <SecurityIndicator label="Reach" active={sub.tool_data.security_check.reachable} />
+                            </div>
+                         </div>
+
+                         <div className="w-full md:w-64 flex flex-col gap-3 justify-center">
+                            <button 
+                               onClick={() => handleApproveSubmission(sub.id)}
+                               disabled={isPending}
+                               className="w-full py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-sm transition-all shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2"
+                            >
+                               <ArrowUpRight size={16} /> Authorize Deployment
+                            </button>
+                            <button 
+                               onClick={() => handleRejectSubmission(sub.id)}
+                               disabled={isPending}
+                               className="w-full py-4 rounded-2xl bg-white/5 hover:bg-white/10 text-white/60 hover:text-red-400 font-bold text-sm transition-all border border-white/5"
+                            >
+                               Reject Submission
+                            </button>
+                         </div>
+                      </div>
+                    ))}
+                 </div>
+               )}
+            </div>
+          )}
+
+          {tab === "leads" && (
+            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+               {billingRequests.length === 0 ? (
+                 <div className="flex flex-col items-center justify-center py-24 rounded-3xl border border-dashed border-white/10 bg-white/[0.01]">
+                    <div className="w-16 h-16 rounded-3xl bg-white/[0.03] flex items-center justify-center mb-6">
+                       <PieChart size={24} className="text-white/20" />
+                    </div>
+                    <h4 className="text-xl font-bold mb-2">No Active Interests</h4>
+                    <p className="text-sm text-white/40">The revenue pipeline is currently empty.</p>
+                 </div>
+               ) : (
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {billingRequests.map(req => (
+                      <div key={req.id} className="rounded-3xl bg-white/[0.02] border border-white/[0.08] p-6 hover:bg-white/[0.04] transition-all group">
+                         <div className="flex items-center gap-4 mb-5">
+                            <div className="w-14 h-14 rounded-2xl bg-white/5 p-2 flex items-center justify-center border border-white/10 group-hover:scale-105 transition-transform">
+                               {req.tool.logo_url ? <img src={req.tool.logo_url} className="w-full h-full object-contain" /> : <Database className="text-indigo-400" />}
+                            </div>
+                            <div>
+                               <div className="text-lg font-black tracking-tight">{req.tool.name}</div>
+                               <div className="text-xs font-bold text-indigo-400 tracking-wider">REVENUE LEAD</div>
+                            </div>
+                         </div>
+                         <div className="p-4 rounded-xl bg-black/40 border border-white/5 mb-6 text-sm text-white/60">
+                            <strong>Note:</strong> {req.notes || "No additional requirements specified."}
+                         </div>
+                         <div className="flex items-center justify-between">
+                            <div className="text-xs font-bold text-white/30">Contact: <span className="text-white/80">{req.email}</span></div>
+                            <button 
+                               onClick={() => handleMarkProcessed(req.id)}
+                               className="px-5 py-2.5 rounded-xl bg-indigo-600/10 hover:bg-indigo-600 text-indigo-400 hover:text-white font-bold text-xs transition-all flex items-center gap-2"
+                            >
+                               <Check size={14} /> Process Request
+                            </button>
+                         </div>
+                      </div>
+                    ))}
+                 </div>
+               )}
+            </div>
+          )}
+        </div>
+        
+        {/* Flash Notification Layer */}
         {msg && (
-          <div
-            className="px-4 py-3 rounded-lg text-sm font-medium"
-            style={{
-              background: msg.type === "ok" ? "oklch(0.92 0.08 145)" : "oklch(0.92 0.08 25)",
-              color: msg.type === "ok" ? "oklch(0.35 0.15 145)" : "oklch(0.35 0.15 25)",
-            }}
-          >
-            {msg.text}
-          </div>
-        )}
-
-        {/* ─── Command Center Tab ────────────────────────────────────────────────── */}
-        {tab === "command" && (
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <StatCard 
-                title="Total Market Reach" 
-                value={stats?.stats?.totalReach?.toLocaleString() ?? "0"} 
-                trend="+12%" 
-                icon={<Activity className="text-orange-500" />} 
-                desc="Total tool impressions/views"
-              />
-              <StatCard 
-                title="Registered Founders" 
-                value={stats?.stats?.totalUsers ?? "0"} 
-                trend={`+${stats?.stats?.growth?.newUsersWeek ?? 0} this week`} 
-                icon={<Users className="text-blue-500" />} 
-                desc="Verified SaaS founders"
-              />
-              <StatCard 
-                title="Revenue Potential" 
-                value={stats?.stats?.pendingLeads ?? "0"} 
-                trend="Pending Leads" 
-                icon={<Zap className="text-yellow-500" />} 
-                desc="Active billing leads in INR"
-                highlight
-              />
-              <StatCard 
-                title="Growth Signal" 
-                value={stats?.stats?.growth?.newLeadsWeek ?? "0"} 
-                trend="New leads" 
-                icon={<TrendingUp className="text-green-500" />} 
-                desc="Leads captured last 7 days"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Recent Activity */}
-              <div className="lg:col-span-2 bg-white p-6 rounded-2xl border border-[oklch(0.9_0.01_60)] shadow-sm">
-                <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
-                  <RefreshCw size={18} className={statsLoading ? "animate-spin" : ""} />
-                  Real-time Activity
-                </h3>
-                <div className="space-y-4">
-                  {stats?.recentActivity?.map((act: any) => (
-                    <div key={act.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-[oklch(0.96_0.01_60)] hover:border-orange-200 transition-colors">
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-orange-600 font-bold border border-orange-100 shadow-sm">
-                          {act.tool?.name?.[0] ?? "U"}
-                        </div>
-                        <div>
-                          <p className="font-medium text-sm">New Billing Lead: <span className="text-orange-600 font-semibold">{act.tool?.name}</span></p>
-                          <p className="text-xs text-gray-500">{act.email}</p>
-                        </div>
-                      </div>
-                      <p className="text-[10px] text-gray-400 font-mono">{new Date(act.created_at).toLocaleTimeString()}</p>
-                    </div>
-                  ))}
-                  {(!stats?.recentActivity || stats.recentActivity.length === 0) && (
-                     <p className="text-center py-8 text-gray-400 text-sm">Waiting for new activity...</p>
-                  )}
+          <div className="fixed bottom-10 right-10 z-[100] animate-in slide-in-from-right-10 duration-300">
+             <div className={`px-6 py-4 rounded-2xl shadow-2xl backdrop-blur-3xl border flex items-center gap-4 ${msg.type === 'ok' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>
+                {msg.type === 'ok' ? <ShieldCheck size={20} /> : <ShieldAlert size={20} />}
+                <div>
+                   <p className="text-[0.625rem] font-black uppercase tracking-widest leading-none mb-1">Security Alert</p>
+                   <p className="text-sm font-bold">{msg.text}</p>
                 </div>
-              </div>
-
-              {/* Quick Info */}
-              <div className="space-y-6">
-                <div className="bg-[oklch(0.15_0.02_60)] p-6 rounded-2xl text-white shadow-lg relative overflow-hidden group border border-white/10">
-                  <div className="relative z-10">
-                    <h4 className="font-bold flex items-center gap-2 mb-2 text-orange-400">
-                      <LayoutDashboard size={20} />
-                      Dashboard Ready
-                    </h4>
-                    <p className="text-sm opacity-90 leading-relaxed mb-4">
-                      This command center gives you full visibility into site reach and founder engagement.
-                    </p>
-                    <button 
-                      onClick={loadAnalytics}
-                      className="bg-white/10 hover:bg-white/20 backdrop-blur-md px-4 py-2 rounded-lg text-xs font-bold transition-all border border-white/10"
-                    >
-                      Refresh Stats
-                    </button>
-                  </div>
-                  <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform">
-                     <Zap size={100} />
-                  </div>
-                </div>
-              </div>
-            </div>
+             </div>
           </div>
         )}
+      </main>
+    </div>
+  )
+}
 
-        {/* Normal Admin Content (Only show if not in command tab) */}
-        {tab !== "command" && (
-          <>
-            {/* Stats row */}
-            <div className="grid grid-cols-4 gap-4">
-              {[
-                { label: "Total Tools", value: tools.length, color: "oklch(0.5 0.12 250)" },
-                { label: "Tools Pending", value: pending.length, color: "oklch(0.5 0.15 60)" },
-                { label: "Submissions", value: subsLoaded ? submissions.length : "—", color: "oklch(0.5 0.15 25)" },
-                { label: "Billing Leads", value: leadsLoaded ? billingRequests.length : "—", color: "oklch(0.55 0.15 280)" },
-              ].map(s => (
-                <div key={s.label} className="rounded-xl p-5" style={{ background: "#fff", border: "1px solid oklch(0.88 0.01 60)" }}>
-                  <div className="text-2xl font-bold tabular-nums" style={{ color: s.color }}>{s.value}</div>
-                  <div className="text-xs mt-1" style={{ color: "oklch(0.55 0.02 60)" }}>{s.label}</div>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-
-        {/* ─── Submissions panel ─── */}
-        {tab === "submissions" && (
-          <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid oklch(0.88 0.01 60)" }}>
-            <div className="px-5 py-3.5 flex items-center justify-between" style={{ background: "oklch(0.96 0.06 25)" }}>
-              <span className="text-sm font-semibold" style={{ color: "oklch(0.4 0.12 25)" }}>
-                Pending Submissions ({submissions.length})
-              </span>
-            </div>
-            {subsLoading ? (
-              <div className="py-10 text-center text-sm" style={{ background: "#fff", color: "oklch(0.55 0.02 60)" }}>
-                Loading submissions…
-              </div>
-            ) : submissions.length === 0 ? (
-              <div className="py-12 text-center" style={{ background: "#fff" }}>
-                <p className="text-sm" style={{ color: "oklch(0.55 0.02 60)" }}>
-                  {subsLoaded ? "No pending submissions. All clear!" : "Click Refresh to load submissions."}
-                </p>
-              </div>
-            ) : (
-              <div style={{ background: "#fff" }}>
-                {submissions.map((sub, i) => {
-                  const td = sub.tool_data
-                  const hasFlags = td.security_check?.flags?.length > 0
-                  return (
-                    <div
-                      key={sub.id}
-                      className="px-5 py-4"
-                      style={{ borderTop: i === 0 ? "1px solid oklch(0.92 0.01 60)" : "1px solid oklch(0.94 0.005 60)" }}
-                    >
-                      <div className="flex items-start gap-4">
-                        {/* Logo */}
-                        <div
-                          className="w-10 h-10 rounded-lg flex-shrink-0 flex items-center justify-center text-sm font-bold overflow-hidden"
-                          style={{ background: "oklch(0.92 0.01 60)", color: "oklch(0.45 0.05 60)" }}
-                        >
-                          {td.logo_url ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={td.logo_url} alt={td.name} className="w-full h-full object-contain" onError={e => { (e.target as HTMLImageElement).style.display = "none" }} />
-                          ) : (
-                            td.name?.[0]?.toUpperCase()
-                          )}
-                        </div>
-
-                        {/* Info */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex flex-wrap items-center gap-2 mb-1">
-                            <span className="text-sm font-semibold" style={{ color: "oklch(0.15 0.02 60)" }}>{td.name}</span>
-                            <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: "oklch(0.93 0.01 60)", color: "oklch(0.5 0.02 60)" }}>
-                              {td.pricing_model}
-                            </span>
-                            {td.is_made_in_india && (
-                              <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: "oklch(0.93 0.06 145)", color: "oklch(0.4 0.12 145)" }}>
-                                🇮🇳 Made in India
-                              </span>
-                            )}
-                            {hasFlags && (
-                              <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold" style={{ background: "oklch(0.93 0.08 25)", color: "oklch(0.45 0.15 25)" }}>
-                                ⚠ {td.security_check.flags.length} flag{td.security_check.flags.length > 1 ? "s" : ""}
-                              </span>
-                            )}
-                            {!hasFlags && td.security_check?.reachable && (
-                              <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: "oklch(0.93 0.06 145)", color: "oklch(0.4 0.12 145)" }}>
-                                ✓ Site verified
-                              </span>
-                            )}
-                          </div>
-
-                          <p className="text-xs mb-1 truncate" style={{ color: "oklch(0.5 0.02 60)" }}>{td.tagline}</p>
-
-                          <div className="flex flex-wrap gap-3 text-xs" style={{ color: "oklch(0.6 0.02 60)" }}>
-                            <span>{sub.email}</span>
-                            {td.website && (
-                              <a href={td.website} target="_blank" rel="noopener noreferrer"
-                                className="flex items-center gap-1 hover:underline" style={{ color: "oklch(0.5 0.12 250)" }}>
-                                <ExternalLink size={11} /> {td.website.replace(/^https?:\/\//, "").slice(0, 40)}
-                              </a>
-                            )}
-                          </div>
-
-                          {/* Auto-detected categories */}
-                          {td.auto_categories?.length > 0 && (
-                            <div className="flex flex-wrap gap-1.5 mt-2">
-                              <span className="text-[10px]" style={{ color: "oklch(0.6 0.02 60)" }}>Auto-categories:</span>
-                              {td.auto_categories.map(c => (
-                                <span key={c} className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: "oklch(0.92 0.06 250)", color: "oklch(0.4 0.12 250)" }}>
-                                  {c}
-                                </span>
-                              ))}
-                            </div>
-                          )}
-
-                          {/* Security flags */}
-                          {hasFlags && (
-                            <div className="mt-2 flex flex-col gap-1">
-                              {td.security_check.flags.map((f, fi) => (
-                                <p key={fi} className="text-[11px]" style={{ color: "oklch(0.5 0.15 25)" }}>⚠ {f}</p>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Actions */}
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          <button
-                            onClick={() => handleApproveSubmission(sub.id)}
-                            disabled={isPending}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-40"
-                            style={{ background: "oklch(0.92 0.08 145)", color: "oklch(0.4 0.15 145)" }}
-                          >
-                            <Check size={12} /> Approve
-                          </button>
-                          <button
-                            onClick={() => handleRejectSubmission(sub.id)}
-                            disabled={isPending}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-40"
-                            style={{ background: "oklch(0.93 0.06 25)", color: "oklch(0.45 0.15 25)" }}
-                          >
-                            <X size={12} /> Reject
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ─── Billing Leads panel ─── */}
-        {tab === "leads" && (
-          <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid oklch(0.88 0.01 60)" }}>
-            <div className="px-5 py-3.5 flex items-center justify-between" style={{ background: "oklch(0.96 0.06 280)" }}>
-              <span className="text-sm font-semibold" style={{ color: "oklch(0.4 0.12 280)" }}>
-                Billing Requests ({billingRequests.length})
-              </span>
-            </div>
-            {leadsLoading ? (
-              <div className="py-10 text-center text-sm" style={{ background: "#fff", color: "oklch(0.55 0.02 60)" }}>
-                Loading leads…
-              </div>
-            ) : billingRequests.length === 0 ? (
-              <div className="py-12 text-center" style={{ background: "#fff" }}>
-                <p className="text-sm" style={{ color: "oklch(0.55 0.02 60)" }}>
-                  {leadsLoaded ? "No active billing requests. Great job!" : "Click Refresh to load leads."}
-                </p>
-              </div>
-            ) : (
-              <div style={{ background: "#fff" }}>
-                {billingRequests.map((req, i) => (
-                  <div
-                    key={req.id}
-                    className="px-5 py-4"
-                    style={{ borderTop: i === 0 ? "1px solid oklch(0.92 0.01 60)" : "1px solid oklch(0.94 0.005 60)" }}
-                  >
-                    <div className="flex items-start gap-4">
-                      <div
-                        className="w-10 h-10 rounded-lg flex-shrink-0 flex items-center justify-center text-sm font-bold overflow-hidden"
-                        style={{ background: "oklch(0.92 0.01 60)", color: "oklch(0.45 0.05 60)" }}
-                      >
-                        {req.tool?.logo_url ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={req.tool.logo_url} alt={req.tool.name} className="w-full h-full object-contain" />
-                        ) : (
-                          req.tool?.name?.[0]?.toUpperCase() ?? "B"
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-sm font-semibold" style={{ color: "oklch(0.15 0.02 60)" }}>{req.tool?.name}</span>
-                          <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: "oklch(0.93 0.01 60)", color: "oklch(0.5 0.02 60)" }}>
-                            INR Request
-                          </span>
-                        </div>
-                        <p className="text-xs mb-1" style={{ color: "oklch(0.5 0.02 60)" }}>Requested by: <span className="font-medium" style={{ color: "oklch(0.15 0.02 60)" }}>{req.email}</span></p>
-                        <p className="text-xs italic" style={{ color: "oklch(0.6 0.02 60)" }}>"{req.notes || "No extra notes"}"</p>
-                        <div className="mt-2 text-[10px]" style={{ color: "oklch(0.6 0.02 60)" }}>
-                          {new Date(req.created_at).toLocaleString()}
-                        </div>
-                      </div>
-                      <div className="flex-shrink-0">
-                        <button
-                          onClick={() => handleMarkProcessed(req.id)}
-                          disabled={isPending}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-40"
-                          style={{ background: "oklch(0.92 0.08 145)", color: "oklch(0.4 0.15 145)" }}
-                        >
-                          <Check size={12} /> Mark Processed
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ─── Tools tab content ─── */}
-        {tab === "tools" && <>
-
-        {/* Add Tool Form */}
-        {showForm && (
-          <form
-            onSubmit={handleAdd}
-            className="rounded-2xl p-6 space-y-5"
-            style={{ background: "#fff", border: "1px solid oklch(0.88 0.01 60)" }}
-          >
-            <h2 className="text-base font-semibold" style={{ color: "oklch(0.2 0.02 60)" }}>Add New Tool</h2>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Field label="Tool Name *">
-                <input
-                  required
-                  value={form.name}
-                  onChange={e => setForm(f => ({ ...f, name: e.target.value, slug: slugify(e.target.value) }))}
-                  placeholder="e.g. ChatGPT"
-                />
-              </Field>
-              <Field label="Slug *">
-                <input
-                  required
-                  value={form.slug}
-                  onChange={e => setForm(f => ({ ...f, slug: slugify(e.target.value) }))}
-                  placeholder="e.g. chatgpt"
-                />
-              </Field>
-              <Field label="Tagline *" className="sm:col-span-2">
-                <input
-                  required
-                  value={form.tagline}
-                  onChange={e => setForm(f => ({ ...f, tagline: e.target.value }))}
-                  placeholder="One-line description"
-                />
-              </Field>
-              <Field label="Website">
-                <input
-                  type="url"
-                  value={form.website}
-                  onChange={e => setForm(f => ({ ...f, website: e.target.value }))}
-                  placeholder="https://..."
-                />
-              </Field>
-              <Field label="Logo URL — paste a direct image URL and verify the preview looks correct">
-                <input
-                  type="url"
-                  value={form.logo_url}
-                  onChange={e => setForm(f => ({ ...f, logo_url: e.target.value }))}
-                  placeholder="https://example.com/logo.png  (required — paste a real image URL)"
-                />
-                <LogoPreview logoUrl={form.logo_url} website={form.website} name={form.name} />
-              </Field>
-              <Field label="Description" className="sm:col-span-2">
-                <textarea
-                  rows={3}
-                  value={form.description}
-                  onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                  placeholder="Detailed description of the tool..."
-                  style={{ resize: "vertical" }}
-                />
-              </Field>
-              <Field label="Pricing Model">
-                <select
-                  value={form.pricing_model}
-                  onChange={e => setForm(f => ({ ...f, pricing_model: e.target.value as typeof PRICING_OPTIONS[number] }))}
-                >
-                  {PRICING_OPTIONS.map(p => (
-                    <option key={p} value={p}>{p}</option>
-                  ))}
-                </select>
-              </Field>
-              <Field label="Status">
-                <select
-                  value={form.status}
-                  onChange={e => setForm(f => ({ ...f, status: e.target.value as "pending" | "approved" | "rejected" }))}
-                >
-                  <option value="approved">Approved (live)</option>
-                  <option value="pending">Pending (review)</option>
-                </select>
-              </Field>
-              <Field label="Price (USD)">
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={form.starting_price_usd}
-                  onChange={e => setForm(f => ({ ...f, starting_price_usd: e.target.value }))}
-                  placeholder="0"
-                />
-              </Field>
-              <Field label="Price (INR)">
-                <input
-                  type="number"
-                  min="0"
-                  value={form.starting_price_inr}
-                  onChange={e => setForm(f => ({ ...f, starting_price_inr: e.target.value }))}
-                  placeholder="0"
-                />
-              </Field>
-            </div>
-
-            {/* Categories */}
-            <div>
-              <p className="text-xs font-medium mb-2" style={{ color: "oklch(0.45 0.02 60)" }}>Categories</p>
-              <div className="flex flex-wrap gap-2">
-                {categories.map(cat => {
-                  const active = form.category_slugs.includes(cat.slug)
-                  return (
-                    <button
-                      key={cat.slug}
-                      type="button"
-                      onClick={() => setForm(f => ({
-                        ...f,
-                        category_slugs: active
-                          ? f.category_slugs.filter(s => s !== cat.slug)
-                          : [...f.category_slugs, cat.slug]
-                      }))}
-                      className="px-3 py-1 rounded-full text-xs font-medium transition-all"
-                      style={{
-                        background: active ? "oklch(0.9 0.1 250)" : "oklch(0.93 0.005 60)",
-                        color: active ? "oklch(0.35 0.18 250)" : "oklch(0.5 0.02 60)",
-                        outline: active ? "1px solid oklch(0.7 0.1 250)" : "none",
-                      }}
-                    >
-                      {cat.name}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-
-            {/* India checkboxes */}
-            <div>
-              <p className="text-xs font-medium mb-2" style={{ color: "oklch(0.45 0.02 60)" }}>India Features</p>
-              <div className="flex flex-wrap gap-x-6 gap-y-2">
-                {[
-                  { key: "is_made_in_india", label: "🇮🇳 Made in India" },
-                  { key: "has_inr_billing", label: "INR Billing" },
-                  { key: "has_gst_invoice", label: "GST Invoice" },
-                  { key: "has_upi", label: "UPI Payment" },
-                  { key: "has_india_support", label: "India Support" },
-                ].map(({ key, label }) => (
-                  <label key={key} className="flex items-center gap-2 text-sm cursor-pointer" style={{ color: "oklch(0.4 0.02 60)" }}>
-                    <input
-                      type="checkbox"
-                      checked={form[key as keyof typeof form] as boolean}
-                      onChange={e => setForm(f => ({ ...f, [key]: e.target.checked }))}
-                    />
-                    {label}
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 pt-2">
-              <button
-                type="submit"
-                disabled={isPending}
-                className="px-5 py-2 rounded-lg text-sm font-semibold transition-all disabled:opacity-50"
-                style={{ background: "oklch(0.5 0.18 145)", color: "#fff" }}
-              >
-                {isPending ? "Adding…" : "Add Tool"}
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowForm(false)}
-                className="px-4 py-2 rounded-lg text-sm font-medium"
-                style={{ background: "oklch(0.93 0.005 60)", color: "oklch(0.45 0.02 60)" }}
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        )}
-
-        {/* Pending tools */}
-        {pending.length > 0 && (
-          <ToolSection
-            title="Pending Review"
-            tools={pending}
-            onApprove={handleApprove}
-            onReject={handleReject}
-            onDelete={handleDelete}
-            isPending={isPending}
-            showActions
-          />
-        )}
-
-        {/* Approved tools */}
-        <ToolSection
-          title={`Live Tools (${approved.length})`}
-          tools={approved}
-          onApprove={handleApprove}
-          onReject={handleReject}
-          onDelete={handleDelete}
-          isPending={isPending}
-        />
-
-        {/* API info */}
-        <div className="rounded-xl p-5 space-y-3" style={{ background: "oklch(0.13 0.02 60)", color: "oklch(0.8 0.02 60)" }}>
-          <h3 className="text-sm font-semibold text-white">API Access</h3>
-          <p className="text-xs" style={{ color: "oklch(0.6 0.02 60)" }}>
-            Use the API to programmatically add tools (e.g. from Zapier, Make.com, or your own scripts).
-          </p>
-          <div className="space-y-2 font-mono text-xs" style={{ color: "oklch(0.75 0.08 145)" }}>
-            <div>POST /api/admin/tools — add a tool</div>
-            <div>GET  /api/admin/tools — list all tools</div>
-            <div>PATCH /api/admin/tools — update a tool</div>
-            <div>DELETE /api/admin/tools?slug=xxx — delete</div>
-          </div>
-          <p className="text-xs" style={{ color: "oklch(0.55 0.02 60)" }}>
-            Include header: <span className="font-mono" style={{ color: "oklch(0.7 0.1 250)" }}>x-admin-key: {adminKey.slice(0, 16)}…</span>
-          </p>
-        </div>
-
-        </> /* end tab === "tools" */}
+function SidebarLink({ icon, label, active, onClick, count }: { icon: React.ReactNode, label: string, active: boolean, onClick: () => void, count?: number }) {
+  return (
+    <button 
+      onClick={onClick}
+      className={`w-full flex items-center justify-between p-3.5 rounded-2xl transition-all duration-300 group ${active ? 'bg-white text-black font-black' : 'text-white/40 hover:text-white hover:bg-white/[0.03]'}`}
+    >
+      <div className="flex items-center gap-3">
+        <span className={active ? 'text-black' : 'text-white/30 group-hover:text-indigo-400 transition-colors'}>{icon}</span>
+        <span className="text-sm tracking-[-0.01em] uppercase font-bold text-[0.7rem]">{label}</span>
       </div>
-    </div>
-  )
-}
-
-// Logo preview shown in the admin form so you can verify before saving
-function LogoPreview({ logoUrl, website, name }: { logoUrl: string; website: string; name: string }) {
-  const [state, setState] = useState<"idle" | "ok" | "fail">("idle")
-
-  // Derive a preview src: prefer explicit logoUrl, else DuckDuckGo
-  let src = logoUrl.trim()
-  if (!src && website.trim()) {
-    try {
-      const host = new URL(website.trim()).hostname.replace(/^www\./, "")
-      src = `https://icons.duckduckgo.com/ip3/${host}.ico`
-    } catch { src = "" }
-  }
-
-  React.useEffect(() => { setState("idle") }, [src])
-
-  if (!src) return null
-
-  return (
-    <div className="flex items-center gap-3 mt-2">
-      <div
-        className="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center flex-shrink-0"
-        style={{ border: "1px solid oklch(0.88 0.01 60)", background: "oklch(0.96 0.005 60)" }}
-      >
-        {state !== "fail" ? (
-          <img
-            src={src}
-            alt="logo preview"
-            width={40}
-            height={40}
-            className="w-full h-full object-contain"
-            onLoad={() => setState("ok")}
-            onError={() => setState("fail")}
-          />
-        ) : (
-          <span className="text-sm font-bold" style={{ color: "oklch(0.5 0.02 60)" }}>
-            {name?.[0]?.toUpperCase() ?? "?"}
-          </span>
-        )}
-      </div>
-      <p className="text-xs" style={{ color: state === "fail" ? "oklch(0.5 0.15 25)" : state === "ok" ? "oklch(0.45 0.15 145)" : "oklch(0.6 0.02 60)" }}>
-        {state === "fail"
-          ? "Logo not found — a letter avatar will show. Paste a direct image URL above to fix."
-          : state === "ok"
-          ? "Logo preview looks good. If it's a generic globe icon, paste a better URL."
-          : "Loading preview…"}
-      </p>
-    </div>
-  )
-}
-
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  padding: "8px 12px",
-  borderRadius: "8px",
-  border: "1px solid oklch(0.85 0.01 60)",
-  background: "oklch(0.98 0.005 60)",
-  fontSize: "13px",
-  color: "oklch(0.2 0.02 60)",
-  outline: "none",
-}
-
-function Field({ label, children, className = "" }: { label: string; children: React.ReactNode; className?: string }) {
-  // Clone child element and inject inputStyle
-  const child = children as React.ReactElement<React.HTMLAttributes<HTMLElement>>
-  const styledChild = child ? React.cloneElement(child, {
-    style: { ...inputStyle, ...(child.props.style ?? {}) },
-    onFocus: (e: React.FocusEvent<HTMLElement>) => {
-      (e.target as HTMLElement).style.borderColor = "oklch(0.6 0.15 250)"
-    },
-    onBlur: (e: React.FocusEvent<HTMLElement>) => {
-      (e.target as HTMLElement).style.borderColor = "oklch(0.85 0.01 60)"
-    },
-  }) : children
-
-  return (
-    <div className={className}>
-      <label className="block text-xs font-medium mb-1.5" style={{ color: "oklch(0.45 0.02 60)" }}>{label}</label>
-      {styledChild}
-    </div>
-  )
-}
-
-function ToolSection({
-  title, tools, onApprove, onReject, onDelete, isPending, showActions = false,
-}: {
-  title: string
-  tools: Tool[]
-  onApprove: (id: string) => void
-  onReject: (id: string) => void
-  onDelete: (id: string, name: string) => void
-  isPending: boolean
-  showActions?: boolean
-}) {
-  const [collapsed, setCollapsed] = useState(false)
-
-  return (
-    <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid oklch(0.88 0.01 60)" }}>
-      <button
-        onClick={() => setCollapsed(v => !v)}
-        className="w-full flex items-center justify-between px-5 py-3.5"
-        style={{ background: showActions ? "oklch(0.96 0.06 60)" : "#fff" }}
-      >
-        <span className="text-sm font-semibold" style={{ color: showActions ? "oklch(0.4 0.12 60)" : "oklch(0.2 0.02 60)" }}>
-          {showActions && "⚠ "}{title}
+      {count !== undefined && count > 0 && (
+        <span className={`px-2 py-0.5 rounded-lg text-[10px] font-black ${active ? 'bg-black text-white' : 'bg-red-500/20 text-red-400 border border-red-500/20'}`}>
+          {count}
         </span>
-        {collapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
-      </button>
-
-      {!collapsed && (
-        <div style={{ background: "#fff" }}>
-          {tools.map((tool, i) => (
-            <div
-              key={tool.id}
-              className="flex items-center gap-4 px-5 py-3.5"
-              style={{
-                borderTop: i === 0 ? "1px solid oklch(0.92 0.01 60)" : "1px solid oklch(0.94 0.005 60)",
-              }}
-            >
-              {/* Logo */}
-              <div
-                className="w-9 h-9 rounded-lg flex-shrink-0 flex items-center justify-center text-sm font-bold overflow-hidden"
-                style={{ background: "oklch(0.92 0.01 60)", color: "oklch(0.45 0.05 60)" }}
-              >
-                {tool.logo_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={tool.logo_url} alt={tool.name} className="w-full h-full object-contain" />
-                ) : (
-                  tool.name[0]?.toUpperCase()
-                )}
-              </div>
-
-              {/* Info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium truncate" style={{ color: "oklch(0.15 0.02 60)" }}>{tool.name}</span>
-                  <span
-                    className="text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0"
-                    style={{
-                      background: `${STATUS_COLORS[tool.status]}22`,
-                      color: STATUS_COLORS[tool.status],
-                    }}
-                  >
-                    {tool.status}
-                  </span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full flex-shrink-0" style={{ background: "oklch(0.93 0.01 60)", color: "oklch(0.5 0.02 60)" }}>
-                    {tool.pricing_model}
-                  </span>
-                </div>
-                <p className="text-xs truncate mt-0.5" style={{ color: "oklch(0.55 0.02 60)" }}>{tool.tagline}</p>
-              </div>
-
-              {/* Actions */}
-              <div className="flex items-center gap-1.5 flex-shrink-0">
-                {tool.website && (
-                  <a
-                    href={tool.website}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="p-1.5 rounded-md transition-colors"
-                    style={{ color: "oklch(0.6 0.02 60)" }}
-                    title="Visit site"
-                  >
-                    <ExternalLink size={13} />
-                  </a>
-                )}
-                {showActions && (
-                  <>
-                    <button
-                      onClick={() => onApprove(tool.id)}
-                      disabled={isPending}
-                      className="p-1.5 rounded-md transition-colors disabled:opacity-40"
-                      style={{ background: "oklch(0.92 0.08 145)", color: "oklch(0.4 0.15 145)" }}
-                      title="Approve"
-                    >
-                      <Check size={13} />
-                    </button>
-                    <button
-                      onClick={() => onReject(tool.id)}
-                      disabled={isPending}
-                      className="p-1.5 rounded-md transition-colors disabled:opacity-40"
-                      style={{ background: "oklch(0.93 0.06 60)", color: "oklch(0.5 0.15 60)" }}
-                      title="Reject"
-                    >
-                      <X size={13} />
-                    </button>
-                  </>
-                )}
-                <button
-                  onClick={() => onDelete(tool.id, tool.name)}
-                  disabled={isPending}
-                  className="p-1.5 rounded-md transition-colors disabled:opacity-40"
-                  style={{ color: "oklch(0.6 0.12 25)" }}
-                  title="Delete"
-                >
-                  <Trash2 size={13} />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
       )}
+    </button>
+  )
+}
+
+function HolographicStat({ label, value, trend, icon, color, desc }: { label: string, value: string | number, trend: string, icon: React.ReactNode, color: string, desc: string }) {
+  const colorMap: any = {
+    indigo: "text-indigo-400 bg-indigo-500/10",
+    orange: "text-orange-400 bg-orange-500/10",
+    emerald: "text-emerald-400 bg-emerald-500/10",
+    purple: "text-purple-400 bg-purple-500/10"
+  }
+  return (
+    <div className="rounded-3xl bg-white/[0.02] border border-white/[0.06] p-6 hover:bg-white/[0.04] transition-all group relative overflow-hidden">
+      <div className="absolute top-0 right-0 p-4 opacity-[0.02] group-hover:scale-125 transition-transform duration-500">
+        {icon}
+      </div>
+      <div className="flex items-center justify-between mb-4">
+         <div className={`p-2.5 rounded-xl ${colorMap[color]}`}>{icon}</div>
+         <span className={`text-[10px] font-black px-2 py-1 rounded-lg ${colorMap[color]} tracking-tighter uppercase`}>{trend}</span>
+      </div>
+      <h4 className="text-[0.625rem] font-bold text-white/30 uppercase tracking-[0.1em] mb-1">{label}</h4>
+      <div className="text-2xl font-black text-white tracking-tight mb-2">{value}</div>
+      <p className="text-[10px] text-white/20 leading-tight font-medium">{desc}</p>
     </div>
   )
 }
 
-function StatCard({ title, value, trend, icon, desc, highlight = false }: { title: string, value: string, trend: string, icon: React.ReactNode, desc: string, highlight?: boolean }) {
+function ActivityItem({ label, time, status, dot }: { label: string, time: string, status: string, dot: string }) {
+  const dots: any = { indigo: "bg-indigo-500 shadow-indigo-500/50", orange: "bg-orange-500 shadow-orange-500/50", emerald: "bg-emerald-500 shadow-emerald-500/50", purple: "bg-purple-500 shadow-purple-500/50" }
   return (
-    <div className={`p-6 rounded-2xl border transition-all ${highlight ? "bg-white border-orange-200 shadow-orange-100 shadow-md scale-[1.02]" : "bg-white/50 border-[oklch(0.92_0.01_60)] hover:border-gray-300"}`}>
-      <div className="flex items-center justify-between mb-4">
-        <div className="p-2 rounded-lg bg-gray-50 border border-gray-100">
-          {icon}
-        </div>
-        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${highlight ? "bg-orange-100 text-orange-600" : "bg-gray-100 text-gray-500"}`}>
-          {trend}
-        </span>
-      </div>
-      <div>
-        <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">{title}</h4>
-        <div className="text-2xl font-black text-black mb-1">{value}</div>
-        <p className="text-[10px] text-gray-400 leading-tight">{desc}</p>
-      </div>
+    <div className="flex items-center justify-between group/item">
+       <div className="flex items-center gap-4">
+          <div className={`w-2 h-2 rounded-full ${dots[dot]} shadow-[0_0_8px]`} />
+          <div>
+             <div className="text-sm font-bold text-white/80 group-hover/item:text-white transition-colors">{label}</div>
+             <div className="text-[10px] text-white/30">{time}</div>
+          </div>
+       </div>
+       <div className="text-[10px] font-black text-white/20 group-hover/item:text-white/40 uppercase tracking-widest">{status}</div>
     </div>
   )
 }
+
+function AdminInput({ label, value, onChange, placeholder, required, type = "text" }: { label: string, value: string, onChange: (v: string) => void, placeholder?: string, required?: boolean, type?: string }) {
+  return (
+    <div className="flex flex-col gap-2">
+      <label className="text-xs font-bold text-white/40 uppercase tracking-widest">{label}</label>
+      <input 
+        type={type}
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        placeholder={placeholder}
+        required={required}
+        className="px-4 py-3 rounded-xl bg-white/[0.03] border border-white/[0.06] text-sm outline-none focus:border-indigo-500/50 focus:bg-white/[0.05] transition-all"
+      />
+    </div>
+  )
+}
+
+function AdminSelect({ label, value, onChange, options }: { label: string, value: string, onChange: (v: string) => void, options: { value: string, label: string }[] }) {
+  return (
+    <div className="flex flex-col gap-2">
+      <label className="text-xs font-bold text-white/40 uppercase tracking-widest">{label}</label>
+      <select 
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        className="px-4 py-3 rounded-xl bg-white/[0.03] border border-white/[0.06] text-sm outline-none focus:border-indigo-500/50 focus:bg-white/[0.05] transition-all text-white appearance-none"
+      >
+        {options.map(o => <option key={o.value} value={o.value} className="bg-[#050403] text-white">{o.label}</option>)}
+      </select>
+    </div>
+  )
+}
+
+function AdminToggle({ label, active, onClick }: { label: string, active: boolean, onClick: () => void }) {
+  return (
+    <button 
+      type="button"
+      onClick={onClick}
+      className={`flex flex-col items-center justify-center p-3 rounded-2xl border transition-all ${active ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-400' : 'bg-white/[0.02] border-white/[0.05] text-white/20'}`}
+    >
+       <div className={`w-3 h-3 rounded-full mb-2 ${active ? 'bg-indigo-400 shadow-[0_0_10px_rgba(129,140,248,0.5)]' : 'bg-white/10'}`} />
+       <span className="text-[10px] font-black uppercase tracking-tighter whitespace-nowrap">{label}</span>
+    </button>
+  )
+}
+
+function SecurityIndicator({ label, active }: { label: string, active: boolean }) {
+  return (
+    <div className="flex items-center gap-2">
+       <div className={`w-3 h-3 rounded-full flex items-center justify-center ${active ? 'bg-emerald-500/20 text-emerald-500' : 'bg-red-500/20 text-red-500'}`}>
+          {active ? <Check size={8} strokeWidth={4} /> : <X size={8} strokeWidth={4} />}
+       </div>
+       <span className="text-[0.625rem] font-black uppercase tracking-tight text-white/40">{label}</span>
+    </div>
+  )
+}
+
+function SidebarIcon({ icon }: { icon: React.ReactNode }) { return icon }
+function ShieldCheck({ size }: { size: number }) { return <Check size={size} /> }

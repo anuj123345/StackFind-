@@ -27,6 +27,8 @@ export function Navbar() {
   const pathname = usePathname()
   const supabase = createClient()
 
+  if (pathname?.startsWith("/admin")) return null
+
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 20)
     window.addEventListener("scroll", handler, { passive: true })
