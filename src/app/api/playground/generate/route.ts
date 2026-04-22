@@ -72,6 +72,7 @@ Write a practical build plan. Use this EXACT format:
     const encoder = new TextEncoder()
     const stream = new ReadableStream({
       async start(controller) {
+        // Send initial heartbeat to prevent gateway timeouts
         controller.enqueue(encoder.encode("Thinking... \n\n"))
         
         try {
@@ -107,6 +108,7 @@ Write a practical build plan. Use this EXACT format:
             }
           }
           else {
+            // NVIDIA NIM / Moonshot Kimi K2.5
             const isKimi = modelId.includes("kimi")
             const nvidiaKey = (isKimi && process.env.NVIDIA_API_KEY_MOONSHOT_AI) 
               ? process.env.NVIDIA_API_KEY_MOONSHOT_AI 
@@ -126,7 +128,6 @@ Write a practical build plan. Use this EXACT format:
               top_p: isKimi ? 0.95 : 1.0,
               max_tokens: isKimi ? 16384 : 1800,
               stream: true,
-              // Use extra_body for non-standard parameters as required by NIM
               extra_body: isKimi ? {
                 chat_template_kwargs: { thinking: true },
                 enable_thinking: true
