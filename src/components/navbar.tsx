@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Search, Plus, Zap, LogOut, Menu, X } from "lucide-react"
+import { Search, Plus, Zap, LogOut, Menu, X, LayoutDashboard } from "lucide-react"
 import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter, usePathname } from "next/navigation"
@@ -21,6 +21,7 @@ const NAV_LINKS = [
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [user, setUser] = useState<User | null>(null)
+  const [isAdmin, setIsAdmin] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
@@ -42,9 +43,29 @@ export function Navbar() {
   }, [menuOpen])
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUser(data.user))
+    supabase.auth.getUser().then(({ data }) => {
+       setUser(data.user)
+       if (data.user) {
+          supabase
+            .from('profiles')
+            .select('is_admin')
+            .eq('id', data.user.id)
+            .single()
+            .then(({ data: profile }) => setIsAdmin(!!profile?.is_admin))
+       }
+    })
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
+      if (session?.user) {
+          supabase
+            .from('profiles')
+            .select('is_admin')
+            .eq('id', session.user.id)
+            .single()
+            .then(({ data: profile }) => setIsAdmin(!!profile?.is_admin))
+      } else {
+          setIsAdmin(false)
+      }
     })
     return () => subscription.unsubscribe()
   }, [])
@@ -137,6 +158,16 @@ export function Navbar() {
               </Link>
             )}
 
+            {isAdmin && (
+              <Link
+                href="/admin"
+                className="hidden md:flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[0.8125rem] font-bold transition-all duration-200 bg-orange-50 text-orange-600 hover:bg-orange-100 whitespace-nowrap border border-orange-200"
+              >
+                <LayoutDashboard size={13} />
+                Admin
+              </Link>
+            )}
+
             <Link
               href="/submit"
               className="hidden md:flex btn-primary items-center gap-1.5 !py-2 !px-3.5 !text-[0.8125rem]"
@@ -222,6 +253,16 @@ export function Navbar() {
           className="px-3 py-4 space-y-2"
           style={{ borderTop: "1px solid rgba(140,110,80,0.08)" }}
         >
+          {isAdmin && (
+            <Link
+              href="/admin"
+              className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-sm font-bold transition-colors bg-orange-50 text-orange-600 border border-orange-100"
+              onClick={() => setMenuOpen(false)}
+            >
+              <LayoutDashboard size={13} />
+              Admin Dashboard
+            </Link>
+          )}
           <Link
             href="/submit"
             className="btn-primary flex items-center justify-center gap-2 w-full !py-2.5 !text-[0.875rem]"

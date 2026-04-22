@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { getServerAdminStatus } from '@/lib/auth'
 import type { Tool, Category } from '@/types/database'
 
 // Tool with category names flattened
@@ -212,6 +213,9 @@ export async function getUserProfile() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
+
+  // Ensure admin status is synced if they are in the whitelist
+  await getServerAdminStatus()
 
   const { data } = await supabase
     .from('profiles')

@@ -1,6 +1,8 @@
 import { createClient } from "@supabase/supabase-js"
 import type { Database } from "@/types/database"
 import { AdminDashboard } from "@/components/admin/admin-dashboard"
+import { getServerAdminStatus } from "@/lib/auth"
+import { redirect } from "next/navigation"
 
 export const dynamic = "force-dynamic"
 
@@ -29,6 +31,12 @@ async function getAllCategories() {
 }
 
 export default async function AdminPage() {
+  // STRICT SECURITY: Check if user is admin via session/email first
+  const isAdmin = await getServerAdminStatus()
+  if (!isAdmin) {
+     redirect("/")
+  }
+
   const [tools, categories] = await Promise.all([getAllTools(), getAllCategories()])
   const adminKey = process.env.ADMIN_KEY ?? ""
 

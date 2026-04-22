@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useTransition, useEffect } from "react"
-import { Plus, Check, X, Trash2, ExternalLink, ChevronDown, ChevronUp, RefreshCw } from "lucide-react"
+import { Plus, Check, X, Trash2, ExternalLink, ChevronDown, ChevronUp, RefreshCw, Activity, TrendingUp, Users, Zap, LayoutDashboard, Database } from "lucide-react"
 import type { Tool, Category } from "@/types/database"
 
 // ─── Submission types ─────────────────────────────────────────────────────────
@@ -174,7 +174,9 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
   const rejected = tools.filter(t => t.status === "rejected")
 
   // ─── Submissions state ──────────────────────────────────────────────────────
-  const [tab, setTab] = useState<"tools" | "submissions" | "leads">("tools")
+  const [tab, setTab] = useState<"command" | "tools" | "submissions" | "leads">("command")
+  const [stats, setStats] = useState<any>(null)
+  const [statsLoading, setStatsLoading] = useState(false)
   const [submissions, setSubmissions] = useState<Submission[]>([])
   const [subsLoaded, setSubsLoaded] = useState(false)
   const [subsLoading, setSubsLoading] = useState(false)
@@ -182,6 +184,23 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
   const [billingRequests, setBillingRequests] = useState<BillingRequest[]>([])
   const [leadsLoaded, setLeadsLoaded] = useState(false)
   const [leadsLoading, setLeadsLoading] = useState(false)
+
+  async function loadAnalytics() {
+    setStatsLoading(true)
+    try {
+      const res = await fetch("/api/admin/analytics", {
+        headers: { "x-admin-key": adminKey },
+      })
+      const data = await res.json()
+      setStats(data)
+    } finally {
+      setStatsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (tab === "command") loadAnalytics()
+  }, [tab])
 
   async function loadSubmissions() {
     setSubsLoading(true)
@@ -269,20 +288,20 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
             <h1 className="text-lg font-semibold" style={{ color: "oklch(0.95 0.01 60)" }}>Admin Dashboard</h1>
           </div>
           <div className="flex items-center gap-3">
-            {/* Tab switcher */}
             <div className="flex gap-1 p-1 rounded-lg" style={{ background: "oklch(0.25 0.02 60)" }}>
-              {(["tools", "submissions", "leads"] as const).map(t => (
+              {(["command", "tools", "submissions", "leads"] as const).map(t => (
                 <button
                   key={t}
                   onClick={() => setTab(t)}
-                  className="px-3 py-1.5 rounded-md text-xs font-medium transition-all"
+                  className="px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-1.5"
                   style={
                     tab === t
                       ? { background: "oklch(0.97 0.01 60)", color: "oklch(0.15 0.02 60)" }
                       : { background: "transparent", color: "oklch(0.65 0.02 60)" }
                   }
                 >
-                  {t === "tools" ? "Tools" : t === "submissions" ? "Submissions" : "Leads"}
+                  {t === "command" && <Activity size={12} />}
+                  {t === "command" ? "Command" : t === "tools" ? "Tools" : t === "submissions" ? "Submissions" : "Leads"}
                 </button>
               ))}
             </div>
@@ -328,20 +347,116 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
           </div>
         )}
 
-        {/* Stats row */}
-        <div className="grid grid-cols-4 gap-4">
-          {[
-            { label: "Total Tools", value: tools.length, color: "oklch(0.5 0.12 250)" },
-            { label: "Tools Pending", value: pending.length, color: "oklch(0.5 0.15 60)" },
-            { label: "Submissions", value: subsLoaded ? submissions.length : "—", color: "oklch(0.5 0.15 25)" },
-            { label: "Billing Leads", value: leadsLoaded ? billingRequests.length : "—", color: "oklch(0.55 0.15 280)" },
-          ].map(s => (
-            <div key={s.label} className="rounded-xl p-5" style={{ background: "#fff", border: "1px solid oklch(0.88 0.01 60)" }}>
-              <div className="text-2xl font-bold tabular-nums" style={{ color: s.color }}>{s.value}</div>
-              <div className="text-xs mt-1" style={{ color: "oklch(0.55 0.02 60)" }}>{s.label}</div>
+        {/* ─── Command Center Tab ────────────────────────────────────────────────── */}
+        {tab === "command" && (
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <StatCard 
+                title="Total Market Reach" 
+                value={stats?.stats?.totalReach?.toLocaleString() ?? "0"} 
+                trend="+12%" 
+                icon={<Activity className="text-orange-500" />} 
+                desc="Total tool impressions/views"
+              />
+              <StatCard 
+                title="Registered Founders" 
+                value={stats?.stats?.totalUsers ?? "0"} 
+                trend={`+${stats?.stats?.growth?.newUsersWeek ?? 0} this week`} 
+                icon={<Users className="text-blue-500" />} 
+                desc="Verified SaaS founders"
+              />
+              <StatCard 
+                title="Revenue Potential" 
+                value={stats?.stats?.pendingLeads ?? "0"} 
+                trend="Pending Leads" 
+                icon={<Zap className="text-yellow-500" />} 
+                desc="Active billing leads in INR"
+                highlight
+              />
+              <StatCard 
+                title="Growth Signal" 
+                value={stats?.stats?.growth?.newLeadsWeek ?? "0"} 
+                trend="New leads" 
+                icon={<TrendingUp className="text-green-500" />} 
+                desc="Leads captured last 7 days"
+              />
             </div>
-          ))}
-        </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Recent Activity */}
+              <div className="lg:col-span-2 bg-white p-6 rounded-2xl border border-[oklch(0.9_0.01_60)] shadow-sm">
+                <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
+                  <RefreshCw size={18} className={statsLoading ? "animate-spin" : ""} />
+                  Real-time Activity
+                </h3>
+                <div className="space-y-4">
+                  {stats?.recentActivity?.map((act: any) => (
+                    <div key={act.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-[oklch(0.96_0.01_60)] hover:border-orange-200 transition-colors">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-orange-600 font-bold border border-orange-100 shadow-sm">
+                          {act.tool?.name?.[0] ?? "U"}
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm">New Billing Lead: <span className="text-orange-600 font-semibold">{act.tool?.name}</span></p>
+                          <p className="text-xs text-gray-500">{act.email}</p>
+                        </div>
+                      </div>
+                      <p className="text-[10px] text-gray-400 font-mono">{new Date(act.created_at).toLocaleTimeString()}</p>
+                    </div>
+                  ))}
+                  {(!stats?.recentActivity || stats.recentActivity.length === 0) && (
+                     <p className="text-center py-8 text-gray-400 text-sm">Waiting for new activity...</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Quick Info */}
+              <div className="space-y-6">
+                <div className="bg-[oklch(0.15_0.02_60)] p-6 rounded-2xl text-white shadow-lg relative overflow-hidden group border border-white/10">
+                  <div className="relative z-10">
+                    <h4 className="font-bold flex items-center gap-2 mb-2 text-orange-400">
+                      <LayoutDashboard size={20} />
+                      Dashboard Ready
+                    </h4>
+                    <p className="text-sm opacity-90 leading-relaxed mb-4">
+                      This command center gives you full visibility into site reach and founder engagement.
+                    </p>
+                    <button 
+                      onClick={loadAnalytics}
+                      className="bg-white/10 hover:bg-white/20 backdrop-blur-md px-4 py-2 rounded-lg text-xs font-bold transition-all border border-white/10"
+                    >
+                      Refresh Stats
+                    </button>
+                  </div>
+                  <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform">
+                     <Zap size={100} />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Normal Admin Content (Only show if not in command tab) */}
+        {tab !== "command" && (
+          <>
+            {/* Stats row */}
+            <div className="grid grid-cols-4 gap-4">
+              {[
+                { label: "Total Tools", value: tools.length, color: "oklch(0.5 0.12 250)" },
+                { label: "Tools Pending", value: pending.length, color: "oklch(0.5 0.15 60)" },
+                { label: "Submissions", value: subsLoaded ? submissions.length : "—", color: "oklch(0.5 0.15 25)" },
+                { label: "Billing Leads", value: leadsLoaded ? billingRequests.length : "—", color: "oklch(0.55 0.15 280)" },
+              ].map(s => (
+                <div key={s.label} className="rounded-xl p-5" style={{ background: "#fff", border: "1px solid oklch(0.88 0.01 60)" }}>
+                  <div className="text-2xl font-bold tabular-nums" style={{ color: s.color }}>{s.value}</div>
+                  <div className="text-xs mt-1" style={{ color: "oklch(0.55 0.02 60)" }}>{s.label}</div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
 
         {/* ─── Submissions panel ─── */}
         {tab === "submissions" && (
@@ -948,7 +1063,26 @@ function ToolSection({
                       title="Reject"
                     >
                       <X size={13} />
-                    </button>
+                    </button>{/* Stat Card Component */}
+function StatCard({ title, value, trend, icon, desc, highlight = false }: { title: string, value: string, trend: string, icon: React.ReactNode, desc: string, highlight?: boolean }) {
+  return (
+    <div className={`p-6 rounded-2xl border transition-all ${highlight ? "bg-white border-orange-200 shadow-orange-100 shadow-md scale-[1.02]" : "bg-white/50 border-[oklch(0.92_0.01_60)] hover:border-gray-300"}`}>
+      <div className="flex items-center justify-between mb-4">
+        <div className="p-2 rounded-lg bg-gray-50 border border-gray-100">
+          {icon}
+        </div>
+        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${highlight ? "bg-orange-100 text-orange-600" : "bg-gray-100 text-gray-500"}`}>
+          {trend}
+        </span>
+      </div>
+      <div>
+        <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">{title}</h4>
+        <div className="text-2xl font-black text-black mb-1">{value}</div>
+        <p className="text-[10px] text-gray-400 leading-tight">{desc}</p>
+      </div>
+    </div>
+  )
+}
                   </>
                 )}
                 <button
