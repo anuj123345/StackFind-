@@ -4,12 +4,23 @@ import type { Tool, Category } from '@/types/database'
 // Tool with category names flattened
 export type ToolWithCategoryNames = Tool & { categoryNames: string[] }
 
-function flattenCategories(tool: any): ToolWithCategoryNames {
+interface ToolWithRel {
+  tool_categories?: {
+    categories?: {
+      name: string
+      slug?: string
+    } | null
+  }[]
+}
+
+function flattenCategories<T extends Tool>(tool: T & ToolWithRel): T & { categoryNames: string[] } {
   const categoryNames: string[] = (tool.tool_categories ?? [])
-    .map((tc: any) => tc.categories?.name)
-    .filter(Boolean)
+    .map((tc) => tc.categories?.name)
+    .filter((n): n is string => !!n)
+  
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { tool_categories: _, ...rest } = tool
-  return { ...rest, categoryNames }
+  return { ...(rest as T), categoryNames }
 }
 
 export async function getFeaturedTools(limit = 6): Promise<ToolWithCategoryNames[]> {

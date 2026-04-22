@@ -7,7 +7,7 @@ export async function POST(req: NextRequest) {
     
     // Check auth
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
+    if (!user || !user.email) {
       return new Response(JSON.stringify({ error: "Please sign in to request billing support." }), {
         status: 401,
         headers: { "Content-Type": "application/json" },
@@ -27,9 +27,9 @@ export async function POST(req: NextRequest) {
       .from("billing_requests")
       .insert({
         user_id: user.id,
-        tool_id: toolId,
+        tool_id: toolId as string,
         email: user.email,
-        notes: notes || `Request for managed INR billing.`,
+        notes: (notes as string | null) || `Request for managed INR billing.`,
         status: "pending"
       })
 
