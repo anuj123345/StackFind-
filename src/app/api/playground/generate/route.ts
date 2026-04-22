@@ -124,7 +124,7 @@ Write a practical build plan. Use this EXACT format:
               baseURL: "https://integrate.api.nvidia.com/v1"
             })
 
-            const nimStream = await nimClient.chat.completions.create({
+            const nimStream: any = await nimClient.chat.completions.create({
               model: modelId.includes("/") ? modelId : "meta/llama-3.3-70b-instruct",
               messages: [{ role: "user", content: prompt }],
               temperature: isKimi ? 1.0 : 0.2,
