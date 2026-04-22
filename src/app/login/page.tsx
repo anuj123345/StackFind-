@@ -1,16 +1,19 @@
 "use client"
 
 import { useState, useEffect, Suspense } from "react"
-import { useSearchParams } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import Link from "next/link"
-import { ArrowRight } from "lucide-react"
+import { ArrowRight, Key, ShieldCheck } from "lucide-react"
 
 function LoginContent() {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const [email, setEmail] = useState("")
+  const [adminKey, setAdminKey] = useState("")
+  const [isAdminMode, setIsAdminMode] = useState(false)
   const [emailSent, setEmailSent] = useState(false)
-  const [loading, setLoading] = useState<"google" | "github" | "email" | null>(null)
+  const [loading, setLoading] = useState<"google" | "github" | "email" | "admin" | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -56,6 +59,32 @@ function LoginContent() {
     })
     setLoading(null)
     if (error) { setError(error.message) } else { setEmailSent(true) }
+  }
+
+  async function handleAdminKeyLogin(e: React.FormEvent) {
+    e.preventDefault()
+    if (!adminKey.trim()) return
+    setError(null)
+    setLoading("admin")
+
+    try {
+      const res = await fetch("/api/admin/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ adminKey: adminKey.trim() }),
+      })
+
+      const data = await res.json()
+      if (res.ok) {
+        router.push("/admin")
+      } else {
+        setError(data.error || "Invalid Admin Key")
+        setLoading(null)
+      }
+    } catch (err) {
+      setError("An unexpected error occurred")
+      setLoading(null)
+    }
   }
 
   return (
@@ -204,7 +233,6 @@ function LoginContent() {
                   }}
                   onFocus={e => (e.currentTarget.style.borderColor = "rgba(99,102,241,0.5)")}
                   onBlur={e => (e.currentTarget.style.borderColor = "rgba(250,247,242,0.1)")}
-                />
                 <button
                   type="submit"
                   disabled={loading !== null || !email.trim()}
@@ -223,6 +251,65 @@ function LoginContent() {
                   )}
                 </button>
               </form>
+
+              {/* Admin Portal Toggle */}
+              <div className="mt-4 pt-4 border-t border-white/[0.05]">
+                {isAdminMode ? (
+                  <form onSubmit={handleAdminKeyLogin} className="flex flex-col gap-2.5">
+                    <div className="relative">
+                      <input
+                        type="password"
+                        value={adminKey}
+                        onChange={e => setAdminKey(e.target.value)}
+                        placeholder="Enter Admin Access Key"
+                        required
+                        className="w-full px-4 py-3.5 pl-10 rounded-xl text-[0.9375rem] font-medium outline-none transition-all duration-200"
+                        style={{
+                          background: "rgba(217,119,6,0.05)",
+                          border: "1px solid rgba(217,119,6,0.15)",
+                          color: "#FAF7F2",
+                        }}
+                        onFocus={e => (e.currentTarget.style.borderColor = "rgba(217,119,6,0.5)")}
+                        onBlur={e => (e.currentTarget.style.borderColor = "rgba(217,119,6,0.15)")}
+                      />
+                      <Key size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-orange-500/50" />
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={loading !== null || !adminKey.trim()}
+                      className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl font-bold text-[0.9375rem] transition-all duration-200 disabled:opacity-50"
+                      style={{ background: "#D97706", color: "#fff" }}
+                      onMouseEnter={e => { if (!loading) e.currentTarget.style.background = "#B45309" }}
+                      onMouseLeave={e => { e.currentTarget.style.background = "#D97706" }}
+                    >
+                      {loading === "admin" ? <Spinner white /> : "Access Command Center"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIsAdminMode(false)}
+                      className="text-[0.75rem] font-medium text-center opacity-40 hover:opacity-100 transition-opacity"
+                      style={{ color: "#FAF7F2" }}
+                    >
+                      Back to regular sign in
+                    </button>
+                  </form>
+                ) : (
+                  <button
+                    onClick={() => setIsAdminMode(true)}
+                    className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-[0.75rem] font-bold tracking-wide uppercase transition-all duration-200"
+                    style={{ 
+                      background: "rgba(217,119,6,0.05)", 
+                      border: "1px solid rgba(217,119,6,0.1)",
+                      color: "#F59E0B" 
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.background = "rgba(217,119,6,0.08)")}
+                    onMouseLeave={e => (e.currentTarget.style.background = "rgba(217,119,6,0.05)")}
+                  >
+                    <ShieldCheck size={14} />
+                    Admin Access Portal
+                  </button>
+                )}
+              </div>
 
               {error && (
                 <p

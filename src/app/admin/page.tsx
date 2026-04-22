@@ -31,10 +31,10 @@ async function getAllCategories() {
 }
 
 export default async function AdminPage() {
-  // STRICT SECURITY: Check if user is admin via session/email first
+  // STRICT SECURITY: Check if user is admin via session/email/cookie first
   const isAdmin = await getServerAdminStatus()
   if (!isAdmin) {
-     redirect("/")
+     redirect("/login?next=/admin")
   }
 
   const [tools, categories] = await Promise.all([getAllTools(), getAllCategories()])
