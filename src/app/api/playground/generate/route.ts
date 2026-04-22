@@ -128,11 +128,12 @@ Write a practical build plan. Use this EXACT format:
               top_p: isKimi ? 0.95 : 1.0,
               max_tokens: isKimi ? 16384 : 1800,
               stream: true,
+              // Cast to any to bypass TypeScript build errors for extra_body in older SDK versions
               extra_body: isKimi ? {
                 chat_template_kwargs: { thinking: true },
                 enable_thinking: true
               } : undefined
-            })
+            } as any)
 
             let hasStartedAnswer = false
 
