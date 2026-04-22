@@ -1063,7 +1063,29 @@ function ToolSection({
                       title="Reject"
                     >
                       <X size={13} />
-                    </button>{/* Stat Card Component */}
+                    </button>
+                  </>
+                )}
+                <button
+                  onClick={() => onDelete(tool.id, tool.name)}
+                  disabled={isPending}
+                  className="p-1.5 rounded-md transition-colors disabled:opacity-40"
+                  style={{ color: "oklch(0.6 0.12 25)" }}
+                  title="Delete"
+                >
+                  <Trash2 size={13} />
+                </button>
+              </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function StatCard({ title, value, trend, icon, desc, highlight = false }: { title: string, value: string, trend: string, icon: React.ReactNode, desc: string, highlight?: boolean }) {
   return (
     <div className={`p-6 rounded-2xl border transition-all ${highlight ? "bg-white border-orange-200 shadow-orange-100 shadow-md scale-[1.02]" : "bg-white/50 border-[oklch(0.92_0.01_60)] hover:border-gray-300"}`}>
@@ -1080,25 +1102,6 @@ function StatCard({ title, value, trend, icon, desc, highlight = false }: { titl
         <div className="text-2xl font-black text-black mb-1">{value}</div>
         <p className="text-[10px] text-gray-400 leading-tight">{desc}</p>
       </div>
-    </div>
-  )
-}
-                  </>
-                )}
-                <button
-                  onClick={() => onDelete(tool.id, tool.name)}
-                  disabled={isPending}
-                  className="p-1.5 rounded-md transition-colors disabled:opacity-40"
-                  style={{ color: "oklch(0.6 0.12 25)" }}
-                  title="Delete"
-                >
-                  <Trash2 size={13} />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   )
 }
