@@ -75,7 +75,7 @@ ${tools.map((t: any) => {
     priceStr = `₹${t.startingPriceInr}`
     billingStatus = "Native INR/GST"
   } else if (t.managed_billing_enabled) {
-    priceStr = `₹${Math.round(t.startingPriceUsd * usdToInrRate * 1.05)}*` // Including the 5% fee for transparency
+    priceStr = `₹${Math.round(t.startingPriceUsd * usdToInrRate * 1.05)}*`
     billingStatus = "StackFind Managed (GST)"
   } else if (t.startingPriceUsd) {
     priceStr = `₹${Math.round(t.startingPriceUsd * usdToInrRate)}*`
@@ -83,7 +83,11 @@ ${tools.map((t: any) => {
   return `| ${t.name} | ${t.startingPriceInr || t.startingPriceUsd ? 'Starting plan' : 'Free tier'} | ${priceStr} | ${billingStatus} |`
 }).join("\n")}
 
-*Prices marked with * are estimated based on $1 = ₹${usdToInrRate}. Managed billing includes a 5% platform fee.
+*Prices marked with * are estimates (USD to INR @ ₹${usdToInrRate}). StackFind Managed includes a 5% service fee.
+
+## Managed Stack Advantage
+Explain briefly: By using StackFind Managed Billing for the ${tools.filter((t: any) => t.managed_billing_enabled).length} international tools in this stack, the founder gets a valid Indian GST invoice. 
+CALCULATE: Total monthly spend on Managed tools is ₹[SUM]. 18% GST Input Credit savings = ₹[0.18 * SUM]. Mention this exact saving.
 
 ## Launch Timeline
 - **Week 1–2:** [Setup, auth, database schema, core scaffolding]
@@ -91,21 +95,18 @@ ${tools.map((t: any) => {
 - **Week 5–6:** [Payments, emails, polish, staging deploy]
 - **Week 7–8:** [Beta users, feedback loop, production launch]
 
-## Managed Stack Advantage
-Explain briefly (2 sentences) if they use StackFind Managed Billing, how much they roughly save in GST input credit (18%) and the convenience of UPI for the whole stack.
-
 ## First 3 Steps
 1. [Specific first step — tool + action]
 2. [Specific second step — tool + action]
 3. [Specific third step — tool + action]
 
-Be direct. No filler. Write as if you've built this exact product before.`
+Be direct. No filler. Do not use code blocks for the output itself.`
 
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
-    // Use claude-haiku-4-5 — 3x faster than sonnet, stays within Vercel timeout
+    // Use a robust model choice
     const message = await anthropic.messages.create({
-      model: "claude-haiku-4-5-20251001",
+      model: "claude-3-5-haiku-20241022",
       max_tokens: 1800,
       messages: [{ role: "user", content: prompt }],
     })
@@ -114,17 +115,29 @@ Be direct. No filler. Write as if you've built this exact product before.`
       .filter((b: any) => b.type === "text")
       .map((b: any) => b.text)
       .join("")
+      .trim()
+
+    if (!text) throw new Error("Empty response from AI")
 
     return new Response(JSON.stringify({ plan: text }), {
       headers: { "Content-Type": "application/json" },
     })
   } catch (err: any) {
     console.error("[playground/generate]", err)
-    const msg = err?.status === 401
-      ? "Invalid Anthropic API key"
-      : err?.status === 429
-      ? "Anthropic rate limit hit — wait a moment and try again"
-      : err?.message ?? "Generation failed — please try again"
-    return jsonError(msg, 500)
+    
+    // Check for specific Anthropic errors
+    const isAuth = err?.status === 401
+    const isRateLimit = err?.status === 429
+    const isOverloaded = err?.status === 503 || err?.status === 529
+
+    const msg = isAuth
+      ? "Invalid Anthropic API key. Please check your environment variables."
+      : isRateLimit
+      ? "Anthropic rate limit hit. Please wait a minute and try again."
+      : isOverloaded
+      ? "Anthropic servers are currently overloaded. Please try again in a moment."
+      : err?.message ?? "Generation failed. Please try again."
+      
+    return jsonError(msg, err?.status || 500)
   }
 }

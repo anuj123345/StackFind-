@@ -37,6 +37,19 @@ interface Submission {
   created_at: string
 }
 
+interface BillingRequest {
+  id: string
+  tool_id: string
+  email: string
+  notes: string | null
+  status: "pending" | "processed"
+  created_at: string
+  tool: {
+    name: string
+    logo_url: string | null
+  }
+}
+
 interface AdminDashboardProps {
   tools: Tool[]
   categories: Pick<Category, "id" | "slug" | "name">[]
@@ -161,10 +174,14 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
   const rejected = tools.filter(t => t.status === "rejected")
 
   // ─── Submissions state ──────────────────────────────────────────────────────
-  const [tab, setTab] = useState<"tools" | "submissions">("tools")
+  const [tab, setTab] = useState<"tools" | "submissions" | "leads">("tools")
   const [submissions, setSubmissions] = useState<Submission[]>([])
   const [subsLoaded, setSubsLoaded] = useState(false)
   const [subsLoading, setSubsLoading] = useState(false)
+
+  const [billingRequests, setBillingRequests] = useState<BillingRequest[]>([])
+  const [leadsLoaded, setLeadsLoaded] = useState(false)
+  const [leadsLoading, setLeadsLoading] = useState(false)
 
   async function loadSubmissions() {
     setSubsLoading(true)
@@ -180,9 +197,24 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
     }
   }
 
+  async function loadBillingRequests() {
+    setLeadsLoading(true)
+    try {
+      const res = await fetch("/api/admin/billing-requests?status=pending", {
+        headers: { "x-admin-key": adminKey },
+      })
+      const data = await res.json()
+      setBillingRequests(data.requests ?? [])
+      setLeadsLoaded(true)
+    } finally {
+      setLeadsLoading(false)
+    }
+  }
+
   useEffect(() => {
     if (tab === "submissions" && !subsLoaded) loadSubmissions()
-  }, [tab])
+    if (tab === "leads" && !leadsLoaded) loadBillingRequests()
+  }, [tab, subsLoaded, leadsLoaded])
 
   async function handleApproveSubmission(id: string) {
     startTransition(async () => {
@@ -212,6 +244,20 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
     })
   }
 
+  async function handleMarkProcessed(id: string) {
+    startTransition(async () => {
+      const res = await fetch("/api/admin/billing-requests", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", "x-admin-key": adminKey },
+        body: JSON.stringify({ id, status: "processed" }),
+      })
+      const data = await res.json()
+      if (data.error) { flash("err", data.error); return }
+      setBillingRequests(prev => prev.filter(r => r.id !== id))
+      flash("ok", "Lead marked as processed.")
+    })
+  }
+
   return (
     <div className="min-h-screen" style={{ background: "oklch(0.97 0.005 60)", fontFamily: "'Geist', 'Inter', system-ui, sans-serif" }}>
 
@@ -225,7 +271,7 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
           <div className="flex items-center gap-3">
             {/* Tab switcher */}
             <div className="flex gap-1 p-1 rounded-lg" style={{ background: "oklch(0.25 0.02 60)" }}>
-              {(["tools", "submissions"] as const).map(t => (
+              {(["tools", "submissions", "leads"] as const).map(t => (
                 <button
                   key={t}
                   onClick={() => setTab(t)}
@@ -236,7 +282,7 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
                       : { background: "transparent", color: "oklch(0.65 0.02 60)" }
                   }
                 >
-                  {t === "tools" ? "Tools" : `Submissions`}
+                  {t === "tools" ? "Tools" : t === "submissions" ? "Submissions" : "Leads"}
                 </button>
               ))}
             </div>
@@ -252,14 +298,14 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
                 {showForm ? <><X size={14} /> Cancel</> : <><Plus size={14} /> Add Tool</>}
               </button>
             )}
-            {tab === "submissions" && (
+            {(tab === "submissions" || tab === "leads") && (
               <button
-                onClick={loadSubmissions}
-                disabled={subsLoading}
+                onClick={tab === "submissions" ? loadSubmissions : loadBillingRequests}
+                disabled={subsLoading || leadsLoading}
                 className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all disabled:opacity-50"
                 style={{ background: "oklch(0.35 0.02 60)", color: "oklch(0.97 0.01 60)" }}
               >
-                <RefreshCw size={13} className={subsLoading ? "animate-spin" : ""} />
+                <RefreshCw size={13} className={(subsLoading || leadsLoading) ? "animate-spin" : ""} />
                 Refresh
               </button>
             )}
@@ -287,8 +333,8 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
           {[
             { label: "Total Tools", value: tools.length, color: "oklch(0.5 0.12 250)" },
             { label: "Tools Pending", value: pending.length, color: "oklch(0.5 0.15 60)" },
-            { label: "Approved", value: approved.length, color: "oklch(0.45 0.15 145)" },
             { label: "Submissions", value: subsLoaded ? submissions.length : "—", color: "oklch(0.5 0.15 25)" },
+            { label: "Billing Leads", value: leadsLoaded ? billingRequests.length : "—", color: "oklch(0.55 0.15 280)" },
           ].map(s => (
             <div key={s.label} className="rounded-xl p-5" style={{ background: "#fff", border: "1px solid oklch(0.88 0.01 60)" }}>
               <div className="text-2xl font-bold tabular-nums" style={{ color: s.color }}>{s.value}</div>
@@ -421,6 +467,75 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
                     </div>
                   )
                 })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ─── Billing Leads panel ─── */}
+        {tab === "leads" && (
+          <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid oklch(0.88 0.01 60)" }}>
+            <div className="px-5 py-3.5 flex items-center justify-between" style={{ background: "oklch(0.96 0.06 280)" }}>
+              <span className="text-sm font-semibold" style={{ color: "oklch(0.4 0.12 280)" }}>
+                Billing Requests ({billingRequests.length})
+              </span>
+            </div>
+            {leadsLoading ? (
+              <div className="py-10 text-center text-sm" style={{ background: "#fff", color: "oklch(0.55 0.02 60)" }}>
+                Loading leads…
+              </div>
+            ) : billingRequests.length === 0 ? (
+              <div className="py-12 text-center" style={{ background: "#fff" }}>
+                <p className="text-sm" style={{ color: "oklch(0.55 0.02 60)" }}>
+                  {leadsLoaded ? "No active billing requests. Great job!" : "Click Refresh to load leads."}
+                </p>
+              </div>
+            ) : (
+              <div style={{ background: "#fff" }}>
+                {billingRequests.map((req, i) => (
+                  <div
+                    key={req.id}
+                    className="px-5 py-4"
+                    style={{ borderTop: i === 0 ? "1px solid oklch(0.92 0.01 60)" : "1px solid oklch(0.94 0.005 60)" }}
+                  >
+                    <div className="flex items-start gap-4">
+                      <div
+                        className="w-10 h-10 rounded-lg flex-shrink-0 flex items-center justify-center text-sm font-bold overflow-hidden"
+                        style={{ background: "oklch(0.92 0.01 60)", color: "oklch(0.45 0.05 60)" }}
+                      >
+                        {req.tool?.logo_url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={req.tool.logo_url} alt={req.tool.name} className="w-full h-full object-contain" />
+                        ) : (
+                          req.tool?.name?.[0]?.toUpperCase() ?? "B"
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-sm font-semibold" style={{ color: "oklch(0.15 0.02 60)" }}>{req.tool?.name}</span>
+                          <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: "oklch(0.93 0.01 60)", color: "oklch(0.5 0.02 60)" }}>
+                            INR Request
+                          </span>
+                        </div>
+                        <p className="text-xs mb-1" style={{ color: "oklch(0.5 0.02 60)" }}>Requested by: <span className="font-medium" style={{ color: "oklch(0.15 0.02 60)" }}>{req.email}</span></p>
+                        <p className="text-xs italic" style={{ color: "oklch(0.6 0.02 60)" }}>"{req.notes || "No extra notes"}"</p>
+                        <div className="mt-2 text-[10px]" style={{ color: "oklch(0.6 0.02 60)" }}>
+                          {new Date(req.created_at).toLocaleString()}
+                        </div>
+                      </div>
+                      <div className="flex-shrink-0">
+                        <button
+                          onClick={() => handleMarkProcessed(req.id)}
+                          disabled={isPending}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-40"
+                          style={{ background: "oklch(0.92 0.08 145)", color: "oklch(0.4 0.15 145)" }}
+                        >
+                          <Check size={12} /> Mark Processed
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>

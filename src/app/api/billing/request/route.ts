@@ -22,6 +22,15 @@ export async function POST(req: NextRequest) {
       })
     }
 
+    // Fetch tool name for the email
+    const { data: tool } = await supabase
+      .from("tools")
+      .select("name")
+      .eq("id", toolId)
+      .single()
+
+    const toolName = tool?.name || "Unknown Tool"
+
     // Capture the request
     const { error } = await supabase
       .from("billing_requests")
@@ -29,13 +38,31 @@ export async function POST(req: NextRequest) {
         user_id: user.id,
         tool_id: toolId as string,
         email: user.email,
-        notes: (notes as string | null) || `Request for managed INR billing.`,
+        notes: (notes as string | null) || `Request for managed INR billing for ${toolName}.`,
         status: "pending"
       })
 
     if (error) throw error
 
-    return new Response(JSON.stringify({ success: true, message: "Request received! We will get back to you shortly." }), {
+    // Send notifications (async, don't block the response)
+    const { sendBillingLeadNotification, sendUserBillingConfirmation } = await import("@/lib/email")
+    
+    // We fire and forget these to keep the API fast
+    sendBillingLeadNotification({
+      userEmail: user.email,
+      toolName,
+      notes: notes as string
+    }).catch(err => console.error("Admin Email failed", err))
+
+    sendUserBillingConfirmation({
+      userEmail: user.email,
+      toolName
+    }).catch(err => console.error("User Email failed", err))
+
+    return new Response(JSON.stringify({ 
+      success: true, 
+      message: "Request received! We've sent a confirmation email to you." 
+    }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     })
