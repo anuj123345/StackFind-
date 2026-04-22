@@ -233,6 +233,7 @@ function LoginContent() {
                   }}
                   onFocus={e => (e.currentTarget.style.borderColor = "rgba(99,102,241,0.5)")}
                   onBlur={e => (e.currentTarget.style.borderColor = "rgba(250,247,242,0.1)")}
+                />
                 <button
                   type="submit"
                   disabled={loading !== null || !email.trim()}
