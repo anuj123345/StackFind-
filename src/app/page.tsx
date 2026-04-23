@@ -24,48 +24,89 @@ export default async function HomePage() {
   }))
 
   return (
-    <main className="min-h-screen bg-[#1C1611]">
+    <main className="min-h-screen bg-[#1C1611] relative overflow-hidden">
       <Navbar />
       
-      {/* 1. Cinematic Hero (Scroll-Scrub) */}
-      <ScrubHero />
+      {/* Dynamic Background Elements */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <motion.div 
+          animate={{ 
+            x: [0, 100, 0], 
+            y: [0, 50, 0],
+            scale: [1, 1.2, 1]
+          }}
+          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+          className="absolute -top-[10%] -left-[10%] w-[50%] h-[50%] bg-indigo-500/10 blur-[120px] rounded-full" 
+        />
+        <motion.div 
+          animate={{ 
+            x: [0, -80, 0], 
+            y: [0, 120, 0],
+            scale: [1, 1.1, 1]
+          }}
+          transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+          className="absolute top-[40%] -right-[10%] w-[40%] h-[40%] bg-violet-500/10 blur-[120px] rounded-full" 
+        />
+        <motion.div 
+          animate={{ 
+            x: [0, 40, 0], 
+            y: [0, -60, 0],
+            scale: [1, 1.3, 1]
+          }}
+          transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
+          className="absolute -bottom-[10%] left-[20%] w-[60%] h-[60%] bg-emerald-500/5 blur-[120px] rounded-full" 
+        />
+      </div>
 
-      {/* 2. Features Bento Grid */}
-      <ServicesBento />
+      <div className="relative z-10">
+        {/* 1. Cinematic Hero (Scroll-Scrub) */}
+        <ScrubHero />
 
-      {/* 3. Dynamic Stats Section */}
-      <LiquidStats />
+        {/* 2. Features Bento Grid */}
+        <ServicesBento />
 
-      {/* 4. GST Savings Deep Dive */}
-      <section className="py-20 bg-[#F9F5F1] text-[#1C1611] rounded-[4rem] mx-4 lg:mx-10 my-10 shadow-2xl overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-20">
-            <h2 className="font-display text-4xl lg:text-7xl font-black mb-6">Stop burning 18% <br/> on every tool.</h2>
-            <p className="text-stone-500 max-w-2xl mx-auto text-xl">
-              Most Indian founders don't realize they can claim GST back on global SaaS. 
-              We've built the calculator to show you exactly how much you're leaving on the table.
-            </p>
+        {/* 3. Dynamic Stats Section */}
+        <LiquidStats />
+
+        {/* 4. GST Savings Deep Dive */}
+        <section className="py-20">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="text-center mb-12">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+              >
+                <h2 className="font-display text-4xl lg:text-7xl font-black mb-6 text-white leading-[1.1] tracking-tight">
+                  Stop burning 18% <br/> on every tool.
+                </h2>
+                <p className="text-stone-400 max-w-2xl mx-auto text-lg lg:text-xl">
+                  Most Indian founders don't realize they can claim GST back on global SaaS. 
+                  We've built the calculator to show you exactly how much you're leaving on the table.
+                </p>
+              </motion.div>
+            </div>
+            <SavingsCalculator />
           </div>
-          <SavingsCalculator />
+        </section>
+
+        {/* 5. Tool Categories (Restyled) */}
+        <div className="py-12">
+          <CategoriesRow categories={mappedCategories} />
         </div>
-      </section>
 
-      {/* 5. Tool Categories (Restyled) */}
-      <div className="py-20 px-6">
-        <CategoriesRow categories={mappedCategories} />
+        {/* 6. Pricing & Membership */}
+        <div className="py-12">
+          <PricingSection />
+        </div>
+
+        {/* 7. FAQ */}
+        <div className="py-12 border-t border-white/5">
+          <FAQ />
+        </div>
+
+        <Footer />
       </div>
-
-      {/* 6. Pricing & Membership */}
-      <div className="py-20">
-        <PricingSection />
-      </div>
-
-      {/* 7. FAQ */}
-      <div className="py-20 border-t border-white/5">
-        <FAQ />
-      </div>
-
-      <Footer />
     </main>
   )
 }
