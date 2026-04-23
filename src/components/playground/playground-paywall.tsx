@@ -1,6 +1,6 @@
 "use client"
 
-import { Sparkles, Check, ArrowRight, Zap, Calculator, Globe } from "lucide-react"
+import { Sparkles, Check, ArrowRight, Zap, Globe, Landmark } from "lucide-react"
 
 interface Props {
   onUnlock?: () => void
@@ -49,7 +49,7 @@ export function PlaygroundPaywall({ onUnlock }: Props) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left mb-10">
             {[
               { icon: Zap, text: "Unlimited Build Plans", sub: "Perfect for repeated iterations" },
-              { icon: Calculator, text: "Indian Cost Logic", sub: "Real-time GST & INR calculations" },
+              { icon: Landmark, text: "Build Plan Intelligence", sub: "Optimized tool selection logic" },
               { icon: Sparkles, text: "Advanced AI Plans", sub: "Powered by Sonnet 3.5 & GPT-4o" },
               { icon: Globe, text: "GTM Strategies", sub: "Custom go-to-market roadmaps" },
             ].map((feature, i) => (

@@ -71,7 +71,7 @@ function Sparkles({ className }: { className?: string }) {
 
 export function PricingSection() {
   return (
-    <section className="relative z-10 px-4 py-24 bg-[#F9F5F1]">
+    <section className="relative z-10 px-4 py-12 bg-[#F9F5F1]">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-16">
           <motion.div 

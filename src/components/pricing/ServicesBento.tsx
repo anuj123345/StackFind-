@@ -1,55 +1,39 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Search, FlaskConical, Calculator, Globe, ShieldCheck, Zap } from "lucide-react"
+import { Search, FlaskConical, Globe, ShieldCheck, Zap } from "lucide-react"
 import Link from "next/link"
 
 const features = [
   {
     title: "AI Playground",
-    description: "Design your entire stack in seconds with our AI-powered architect.",
+    description: "Design your entire stack in seconds with our high-fidelity AI architect. Built for Indian founders.",
     icon: FlaskConical,
     href: "/playground",
     color: "bg-indigo-500",
-    size: "lg:col-span-3 lg:row-span-2"
-  },
-  {
-    title: "GST Calculator",
-    description: "Claim your 18% tax credit. Calculate savings instantly.",
-    icon: Calculator,
-    href: "/pricing",
-    color: "bg-emerald-500",
-    size: "lg:col-span-2 lg:row-span-1"
+    size: "lg:col-span-3 lg:row-span-1"
   },
   {
     title: "Global Directory",
-    description: "5,000+ AI tools curated for the Indian ecosystem.",
+    description: "5,000+ AI tools meticulously curated for the Indian ecosystem.",
     icon: Search,
     href: "/tools",
     color: "bg-amber-500",
     size: "lg:col-span-2 lg:row-span-1"
-  },
-  {
-    title: "Managed Billing",
-    description: "Pay for global tools in INR via UPI. No international card needed.",
-    icon: ShieldCheck,
-    href: "/pricing",
-    color: "bg-rose-500",
-    size: "lg:col-span-5 lg:row-span-1"
   }
 ]
 
 export function ServicesBento() {
   return (
-    <section className="py-8 px-6 max-w-7xl mx-auto">
-      <div className="text-center mb-8">
-        <h2 className="font-display text-4xl lg:text-6xl font-black text-white mb-3 leading-tight tracking-tight">Designed for Founders.</h2>
-        <p className="text-stone-400 max-w-xl mx-auto text-lg opacity-80 leading-snug">
-          The infrastructure you need to scale your AI startup without the international billing friction.
+    <section className="py-4 px-6 max-w-7xl mx-auto">
+      <div className="text-center mb-6">
+        <h2 className="font-display text-4xl lg:text-6xl font-black text-white mb-2 leading-tight tracking-tight">Built for Founders.</h2>
+        <p className="text-stone-400 max-w-xl mx-auto text-lg lg:text-xl opacity-90 leading-snug">
+          The definitive platform to discover, design, and deploy your AI infrastructure.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-3">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
         {features.map((f, i) => (
           <motion.div
             key={i}
@@ -57,20 +41,20 @@ export function ServicesBento() {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.05, duration: 0.5 }}
             viewport={{ once: true }}
-            className={`${f.size} group relative p-5 rounded-2xl liquid-glass border border-white/5 overflow-hidden transition-all hover:bg-white/[0.04]`}
+            className={`${f.size} group relative p-8 rounded-3xl liquid-glass border border-white/5 overflow-hidden transition-all duration-500 hover:border-white/10 hover:bg-white/[0.04]`}
           >
             {/* Background Glow */}
-            <div className={`absolute top-0 right-0 w-32 h-32 ${f.color} opacity-[0.02] blur-[60px] group-hover:opacity-10 transition-opacity`} />
+            <div className={`absolute top-0 right-0 w-64 h-64 ${f.color} opacity-[0.03] blur-[100px] group-hover:opacity-[0.15] transition-opacity duration-700`} />
             
-            <div className="relative z-10 h-full flex flex-col justify-start">
-              <div className={`w-9 h-9 rounded-lg ${f.color}/10 flex items-center justify-center mb-3 border border-white/10`}>
-                <f.icon className="text-white" size={16} />
+            <div className="relative z-10 h-full flex flex-col justify-center">
+              <div className={`w-10 h-10 rounded-xl ${f.color}/10 flex items-center justify-center mb-6 border border-white/10 group-hover:scale-110 transition-transform duration-500`}>
+                <f.icon className="text-white" size={18} />
               </div>
-              <h3 className="text-xl font-black text-white mb-1 tracking-tight">{f.title}</h3>
-              <p className="text-stone-400 text-sm leading-snug opacity-90">{f.description}</p>
+              <h3 className="text-2xl lg:text-3xl font-black text-white mb-3 tracking-tighter">{f.title}</h3>
+              <p className="text-stone-400 text-base lg:text-lg font-medium leading-relaxed opacity-90 max-w-md">{f.description}</p>
               
-              <Link href={f.href} className="mt-4 inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-indigo-400 group/link transition-all hover:text-white">
-                Learn more <Zap size={10} className="transition-transform group-hover/link:translate-x-1" />
+              <Link href={f.href} className="mt-8 inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-indigo-400 group/link transition-all hover:text-white">
+                Launch Now <Zap size={12} className="transition-transform duration-500 group-hover/link:translate-x-1" />
               </Link>
             </div>
           </motion.div>
@@ -79,3 +63,4 @@ export function ServicesBento() {
     </section>
   )
 }
+

@@ -46,50 +46,40 @@ export function ScrubHero() {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
-            className="mb-5 inline-flex items-center gap-2 px-3 py-1.5 rounded-full liquid-glass-strong border border-white/10 text-[10px] font-bold uppercase tracking-widest text-indigo-400"
+            className="mb-4 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-[10px] font-black uppercase tracking-[0.3em] text-indigo-400"
           >
-            <Zap size={11} className="fill-indigo-400" />
-            Built for the Indian AI Founder
+            <Zap size={10} className="fill-indigo-400" />
+            AI-Native Stack Architect
           </motion.div>
 
-          <BlurText 
-            text="Find your stack. Build your future."
-            className="font-display text-5xl lg:text-8xl font-black text-white leading-[0.9] tracking-tighter mb-6"
-          />
+          <h1 className="font-display text-6xl lg:text-9xl font-black leading-[0.85] tracking-tighter mb-6 text-transparent bg-clip-text bg-gradient-to-br from-white via-white/90 to-indigo-400/50">
+            Find your stack. <br/> Build the future.
+          </h1>
 
           <motion.p
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.8, duration: 1 }}
-            className="max-w-2xl text-lg lg:text-xl text-stone-400 mb-8 leading-relaxed font-medium"
+            className="max-w-2xl text-lg lg:text-2xl text-stone-300 opacity-90 mb-8 leading-relaxed font-medium"
           >
-            The definitive directory for Indian founders to discover AI tools, 
-            optimize SaaS spend, and master managed billing.
+            The ultimate playground for Indian founders to discover curated AI tools, 
+            design production-ready stacks, and launch in seconds.
           </motion.p>
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1, duration: 1 }}
-            className="flex flex-col sm:flex-row items-center gap-4"
+            className="flex flex-col sm:flex-row items-center gap-6"
           >
             <Link 
               href="/playground" 
               className={cn(
                 buttonVariants({ variant: "hero" }), 
-                "bg-indigo-600 hover:bg-indigo-500 text-white border-none rounded-xl px-8 py-5 text-base font-black group shadow-2xl shadow-indigo-500/20 h-auto flex items-center gap-3"
+                "bg-indigo-600 hover:bg-indigo-500 text-white border-none rounded-2xl px-10 py-6 text-lg font-black group shadow-2xl shadow-indigo-500/30 h-auto flex items-center gap-4 transition-all hover:scale-105 active:scale-95"
               )}
             >
-              Launch Playground <ArrowRight size={18} className="transition-transform group-hover:translate-x-1" />
-            </Link>
-            <Link 
-              href="/pricing" 
-              className={cn(
-                buttonVariants({ variant: "ghost" }), 
-                "text-stone-400 hover:text-white px-8 py-5 text-base font-bold h-auto border border-white/5 rounded-xl hover:bg-white/5"
-              )}
-            >
-              View Cost Calculator
+              Launch Playground <ArrowRight size={20} className="transition-transform group-hover:translate-x-2" />
             </Link>
           </motion.div>
         </motion.div>

@@ -41,7 +41,7 @@ interface CategoriesRowProps {
 
 export function CategoriesRow({ categories }: CategoriesRowProps) {
   return (
-    <section className="relative z-10 px-4 py-8">
+    <section className="relative z-10 px-4 py-4">
       <div className="max-w-7xl mx-auto">
 
         {/* Section label + link */}
