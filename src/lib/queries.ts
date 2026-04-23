@@ -124,6 +124,7 @@ export async function getToolsByCategory(categorySlug: string): Promise<ToolWith
 }
 
 export type PlaygroundTool = {
+  id: string
   slug: string
   name: string
   tagline: string
@@ -174,6 +175,7 @@ export async function getPlaygroundTools(): Promise<PlaygroundTool[]> {
 
     seen.add(row.slug)
     result.push({
+      id: row.id,
       slug: row.slug,
       name: row.name,
       tagline: row.tagline,
@@ -233,13 +235,14 @@ export async function getToolsBySlugs(slugs: string[]): Promise<PlaygroundTool[]
   const supabase = await createClient()
   const { data } = await supabase
     .from('tools')
-    .select('slug, name, tagline, website, logo_url, pricing_model, starting_price_usd, starting_price_inr, is_made_in_india, managed_billing_enabled, convenience_fee_percent')
+    .select('id, slug, name, tagline, website, logo_url, pricing_model, starting_price_usd, starting_price_inr, is_made_in_india, managed_billing_enabled, convenience_fee_percent')
     .in('slug', slugs)
     .eq('status', 'approved')
 
   if (!data) return []
 
   return (data as any[]).map(row => ({
+    id: row.id,
     slug: row.slug,
     name: row.name,
     tagline: row.tagline,

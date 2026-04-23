@@ -22,15 +22,16 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    // Capture the request in DB
+    // Capture the request in DB - one row per tool to respect schema
     const { error } = await supabase
       .from("billing_requests")
-      .insert({
+      .insert(tools.map((t: any) => ({
         user_id: user.id,
-        email: user.email,
-        notes: `STACK PURCHASE: ${tools.map((t: any) => t.name).join(", ")}. Total INR: ₹${total}.`,
+        tool_id: t.id || "", // Fallback if ID is missing, but should be there
+        email: user.email as string,
+        notes: `STACK PURCHASE: ${tools.map((st: any) => st.name).join(", ")}. Total INR: ₹${total}.`,
         status: "pending"
-      })
+      })))
 
     if (error) {
       console.error("DB Insert Error:", error)
