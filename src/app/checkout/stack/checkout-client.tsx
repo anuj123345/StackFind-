@@ -162,7 +162,14 @@ export default function CheckoutClient({ tools, usdToInrRate, userEmail }: Props
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-sm" style={{ color: "#1C1611" }}>₹{priceInr}</p>
+                      <div className="flex items-center justify-end gap-1 mb-1">
+                        {tool.managed_billing_enabled && (
+                          <span className="text-[7px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100">
+                            Managed
+                          </span>
+                        )}
+                        <p className="font-bold text-sm" style={{ color: "#1C1611" }}>₹{priceInr}</p>
+                      </div>
                       <p className="text-[9px] opacity-50">/ month</p>
                     </div>
                   </div>
@@ -183,17 +190,35 @@ export default function CheckoutClient({ tools, usdToInrRate, userEmail }: Props
             })}
           </div>
 
-          <div className="p-5 rounded-2xl border-2 border-dashed border-[#6366f1]/20 bg-[#6366f1]/5">
-            <div className="flex gap-3">
-              <ShieldCheck className="text-[#6366f1] flex-shrink-0" size={20} />
-              <div>
-                <p className="text-xs font-bold mb-1" style={{ color: "#1C1611" }}>Why pay via StackFind?</p>
-                <ul className="text-[11px] space-y-1 list-disc pl-4" style={{ color: "#7A6A57" }}>
-                  <li>No International Credit Card required</li>
-                  <li>Get 18% GST Input Credit on every tool</li>
-                  <li>Pay via UPI, GPay, or PhonePe</li>
-                  <li>One place to manage all tool subscriptions</li>
-                </ul>
+          <div className="p-6 rounded-[2rem] bg-indigo-600 text-white shadow-xl shadow-indigo-100 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-16 -mt-16" />
+            <div className="relative z-10">
+              <div className="flex items-center gap-3 mb-4">
+                <ShieldCheck size={24} />
+                <h3 className="font-black text-lg">Managed Billing Bridge</h3>
+              </div>
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 size={16} className="mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-xs font-bold italic">Valid B2B GST Invoices</p>
+                    <p className="text-[10px] opacity-80">Claim 18% Input Credit back on your tax filings.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 size={16} className="mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-xs font-bold italic">UPI & NetBanking Support</p>
+                    <p className="text-[10px] opacity-80">Pay for global tools without an international credit card.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 size={16} className="mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-xs font-bold italic">Concierge Support</p>
+                    <p className="text-[10px] opacity-80">We handle the USD conversion and vendor support for you.</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
