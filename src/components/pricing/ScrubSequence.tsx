@@ -8,7 +8,7 @@ export type ScrubSequenceProps = {
   ext?: "jpg" | "webp";    // default "jpg"
   className?: string;
   /** Padding element the scrub reads its scroll range from. Should wrap the hero. */
-  scrollTargetRef: React.RefObject<HTMLElement>;
+  scrollTargetRef: React.RefObject<HTMLElement | null>;
 };
 
 const pad4 = (n: number) => String(n).padStart(4, "0");

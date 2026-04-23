@@ -1,11 +1,8 @@
 "use client"
 
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion"
+import { useState } from "react"
+import { motion, AnimatePresence } from "framer-motion"
+import { Plus, Minus } from "lucide-react"
 
 const faqs = [
   {
@@ -27,22 +24,43 @@ const faqs = [
 ]
 
 export function FAQ() {
+  const [openIndex, setOpenIndex] = useState<number | null>(null)
+
   return (
     <div className="max-w-3xl mx-auto px-6">
       <h2 className="text-3xl font-black text-white mb-10 tracking-tight">Frequently Asked Questions</h2>
-      <Accordion type="single" collapsible className="w-full">
+      <div className="space-y-4">
         {faqs.map((faq, i) => (
-          <AccordionItem key={i} value={`item-${i}`} className="border-white/5">
-            <AccordionTrigger className="text-white hover:text-indigo-400 transition-colors text-left py-6">
-              {faq.question}
-            </AccordionTrigger>
-            <AccordionContent className="text-stone-400 text-lg leading-relaxed pb-6">
-              {faq.answer}
-            </AccordionContent>
-            <div className="h-px w-full bg-white/5" />
-          </AccordionItem>
+          <div key={i} className="border-b border-white/5">
+            <button
+              onClick={() => setOpenIndex(openIndex === i ? null : i)}
+              className="w-full flex items-center justify-between text-white hover:text-indigo-400 transition-colors text-left py-6 focus:outline-none group"
+            >
+              <span className="text-lg font-medium">{faq.question}</span>
+              {openIndex === i ? (
+                <Minus size={20} className="text-indigo-500" />
+              ) : (
+                <Plus size={20} className="text-stone-500 group-hover:text-indigo-400 transition-colors" />
+              )}
+            </button>
+            <AnimatePresence>
+              {openIndex === i && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  className="overflow-hidden"
+                >
+                  <p className="text-stone-400 text-lg leading-relaxed pb-6">
+                    {faq.answer}
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         ))}
-      </Accordion>
+      </div>
     </div>
   )
 }

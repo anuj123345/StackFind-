@@ -4,7 +4,8 @@ import { useRef } from "react"
 import { motion, useScroll, useTransform } from "framer-motion"
 import { ScrubSequence } from "./ScrubSequence"
 import { BlurText } from "./BlurText"
-import { Button } from "@/components/ui/button"
+import { buttonVariants } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 import { Zap, ArrowRight } from "lucide-react"
 import Link from "next/link"
 
@@ -72,14 +73,24 @@ export function ScrubHero() {
             transition={{ delay: 1, duration: 1 }}
             className="flex flex-col sm:flex-row items-center gap-4"
           >
-            <Button asChild variant="hero" className="bg-indigo-600 hover:bg-indigo-500 text-white border-none rounded-2xl px-10 py-7 text-lg group shadow-2xl shadow-indigo-500/20">
-              <Link href="/playground" className="flex items-center gap-3">
-                Launch Playground <ArrowRight size={20} className="transition-transform group-hover:translate-x-1" />
-              </Link>
-            </Button>
-            <Button asChild variant="ghost" className="text-stone-400 hover:text-white px-10 py-7 text-lg">
-              <Link href="/pricing">View Cost Calculator</Link>
-            </Button>
+            <Link 
+              href="/playground" 
+              className={cn(
+                buttonVariants({ variant: "hero" }), 
+                "bg-indigo-600 hover:bg-indigo-500 text-white border-none rounded-2xl px-10 py-7 text-lg group shadow-2xl shadow-indigo-500/20 h-auto flex items-center gap-3"
+              )}
+            >
+              Launch Playground <ArrowRight size={20} className="transition-transform group-hover:translate-x-1" />
+            </Link>
+            <Link 
+              href="/pricing" 
+              className={cn(
+                buttonVariants({ variant: "ghost" }), 
+                "text-stone-400 hover:text-white px-10 py-7 text-lg h-auto"
+              )}
+            >
+              View Cost Calculator
+            </Link>
           </motion.div>
         </motion.div>
 
