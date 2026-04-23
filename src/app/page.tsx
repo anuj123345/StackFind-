@@ -37,7 +37,7 @@ export default async function HomePage() {
       <LiquidStats />
 
       {/* 4. GST Savings Deep Dive */}
-      <section className="py-32 bg-[#F9F5F1] text-[#1C1611] rounded-[4rem] mx-4 lg:mx-10 my-10 shadow-2xl overflow-hidden">
+      <section className="py-20 bg-[#F9F5F1] text-[#1C1611] rounded-[4rem] mx-4 lg:mx-10 my-10 shadow-2xl overflow-hidden">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-20">
             <h2 className="font-display text-4xl lg:text-7xl font-black mb-6">Stop burning 18% <br/> on every tool.</h2>
@@ -51,17 +51,17 @@ export default async function HomePage() {
       </section>
 
       {/* 5. Tool Categories (Restyled) */}
-      <div className="py-32 px-6">
+      <div className="py-20 px-6">
         <CategoriesRow categories={mappedCategories} />
       </div>
 
       {/* 6. Pricing & Membership */}
-      <div className="py-32">
+      <div className="py-20">
         <PricingSection />
       </div>
 
       {/* 7. FAQ */}
-      <div className="py-32 border-t border-white/5">
+      <div className="py-20 border-t border-white/5">
         <FAQ />
       </div>
 

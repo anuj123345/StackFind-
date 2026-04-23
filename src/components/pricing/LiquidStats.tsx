@@ -20,7 +20,7 @@ export function LiquidStats() {
   const x = useTransform(scrollYProgress, [0, 1], [100, -100])
 
   return (
-    <section ref={containerRef} className="py-40 bg-[#1C1611] overflow-hidden relative">
+    <section ref={containerRef} className="py-24 bg-[#1C1611] overflow-hidden relative">
       {/* Dynamic Background Text */}
       <motion.div 
         style={{ x }}

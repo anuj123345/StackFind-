@@ -22,7 +22,7 @@ export function ScrubHero() {
   const textY = useTransform(scrollYProgress, [0, 0.3], [0, -100])
 
   return (
-    <section ref={containerRef} className="relative h-[300vh] bg-[#1C1611]">
+    <section ref={containerRef} className="relative h-[180vh] bg-[#1C1611]">
       <div className="sticky top-0 h-screen w-full overflow-hidden">
         {/* The Scrubbing Canvas (Fallback to Gradient if no frames) */}
         <div className="absolute inset-0 z-0">

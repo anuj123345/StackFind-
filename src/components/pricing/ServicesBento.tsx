@@ -41,7 +41,7 @@ const features = [
 
 export function ServicesBento() {
   return (
-    <section className="py-32 px-6 max-w-7xl mx-auto">
+    <section className="py-20 px-6 max-w-7xl mx-auto">
       <div className="text-center mb-20">
         <h2 className="font-display text-4xl lg:text-6xl font-black text-white mb-6">Designed for Founders.</h2>
         <p className="text-stone-400 max-w-2xl mx-auto text-lg">
