@@ -195,24 +195,6 @@ function BenefitTag({ text }: { text: string }) {
   )
 }
 
-              <div className="mt-8 pt-8 border-t border-white/5 flex items-start gap-4">
-                <div className="w-10 h-10 rounded-full bg-indigo-500/10 flex items-center justify-center shrink-0">
-                  <Info size={18} className="text-indigo-400" />
-                </div>
-                <p className="text-[11px] text-stone-500 leading-relaxed italic">
-                  *Calculations based on fixed exchange rate of ₹{USD_TO_INR} / USD. 
-                  Actual savings may vary based on bank-specific markup policies and GST eligibility.
-                </p>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </div>
-    </div>
-  )
-}
-
 function BreakdownRow({ icon, label, value, desc, type }: { icon: any, label: string, value: string, desc: string, type: "save" | "cost" }) {
   return (
     <div className="flex items-center justify-between group/row">
