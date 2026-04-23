@@ -14,28 +14,57 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    const { tools, total } = await req.json()
-    if (!tools || !Array.isArray(tools) || tools.length === 0) {
+    const { tools: clientTools } = await req.json()
+    if (!clientTools || !Array.isArray(clientTools) || clientTools.length === 0) {
       return new Response(JSON.stringify({ error: "At least one tool is required." }), {
         status: 400,
         headers: { "Content-Type": "application/json" },
       })
     }
 
+    // ─── Server-Side Price Verification ────────────────────────────────────────
+    const { getUsdInrRate } = await import("@/lib/exchange")
+    const usdToInrRate = await getUsdInrRate()
+    
+    // Fetch fresh data for these tools to prevent price manipulation
+    const toolIds = clientTools.map((t: any) => t.id).filter(Boolean)
+    const { data: dbTools, error: fetchError } = await supabase
+      .from("tools")
+      .select("id, name, slug, starting_price_usd, starting_price_inr, convenience_fee_percent")
+      .in("id", toolIds)
+
+    if (fetchError || !dbTools || dbTools.length === 0) {
+      return new Response(JSON.stringify({ error: "Could not verify tool pricing." }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      })
+    }
+
+    // Recalculate Subtotal
+    const subtotal = dbTools.reduce((sum, tool) => {
+      const priceInr = tool.starting_price_inr || (tool.starting_price_usd ? Math.round(tool.starting_price_usd * usdToInrRate) : 0)
+      return sum + priceInr
+    }, 0)
+
+    // Calculate Fees (using the highest convenience fee from the selection or a default 5%)
+    const maxFeePercent = Math.max(...dbTools.map(t => t.convenience_fee_percent || 5))
+    const platformFee = Math.round(subtotal * (maxFeePercent / 100))
+    const gstAmount = Math.round((subtotal + platformFee) * 0.18)
+    const serverTotal = subtotal + platformFee + gstAmount
+
     // Capture the request in DB - one row per tool to respect schema
-    const { error } = await supabase
+    const { error: insertError } = await supabase
       .from("billing_requests")
-      .insert(tools.map((t: any) => ({
+      .insert(dbTools.map((t: any) => ({
         user_id: user.id,
-        tool_id: t.id || "", // Fallback if ID is missing, but should be there
+        tool_id: t.id,
         email: user.email as string,
-        notes: `STACK PURCHASE: ${tools.map((st: any) => st.name).join(", ")}. Total INR: ₹${total}.`,
+        notes: `STACK PURCHASE (VERIFIED): ${dbTools.map((st: any) => st.name).join(", ")}. Server Total INR: ₹${serverTotal}.`,
         status: "pending"
       })))
 
-    if (error) {
-      console.error("DB Insert Error:", error)
-      // We continue even if DB fails because email is more important for immediate lead capture
+    if (insertError) {
+      console.error("DB Insert Error:", insertError)
     }
 
     // Send notifications
@@ -44,14 +73,17 @@ export async function POST(req: NextRequest) {
     // We fire and forget these
     sendStackBillingLeadNotification({
       userEmail: user.email,
-      tools: tools.map((t: any) => ({ name: t.name, priceInr: t.priceInr })),
-      total
+      tools: dbTools.map((t: any) => ({ 
+        name: t.name, 
+        priceInr: t.starting_price_inr || (t.starting_price_usd ? Math.round(t.starting_price_usd * usdToInrRate) : 0) 
+      })),
+      total: serverTotal
     }).catch(err => console.error("Admin Email failed", err))
 
     sendUserStackBillingConfirmation({
       userEmail: user.email,
-      tools: tools.map((t: any) => t.name),
-      total
+      tools: dbTools.map((t: any) => t.name),
+      total: serverTotal
     }).catch(err => console.error("User Email failed", err))
 
     // ─── Razorpay Payment Link Generation ──────────────────────────────────────
@@ -64,10 +96,10 @@ export async function POST(req: NextRequest) {
       })
 
       const link: any = await razorpay.paymentLink.create({
-        amount: total * 100, // in paise
+        amount: serverTotal * 100, // in paise
         currency: "INR",
         accept_partial: false,
-        description: `Stack Purchase: ${tools.length} AI Tools`,
+        description: `Stack Purchase: ${dbTools.length} AI Tools (Verified)`,
         customer: {
           name: user.email.split("@")[0],
           email: user.email,
@@ -79,7 +111,7 @@ export async function POST(req: NextRequest) {
         reminder_enable: true,
         notes: {
           stack_purchase: "true",
-          tools: tools.map((t: any) => t.slug).join(",")
+          tools: dbTools.map((t: any) => t.slug).join(",")
         },
         callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/playground?payment=success`,
         callback_method: "get"
