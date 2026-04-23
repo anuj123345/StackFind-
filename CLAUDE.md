@@ -16,3 +16,8 @@
 - **Fonts**: Bricolage Grotesque (Display), Onest (Body).
 - **Icons**: Lucide React.
 - **Transitions**: Use Framer Motion for smooth entrances.
+
+## Recent Updates (2026-04-23)
+- **Playground Cleanup**: Removed non-functional models (Kimi, GPT-4o, GPT-4o-mini).
+- **Backend Optimization**: Refactored `api/playground/generate/route.ts` to use only Anthropic and NVIDIA NIM (Meta Llama/Qwen) providers.
+- **Storage Strategy**: Local scratch files and project data now prioritize the `D:` drive at `D:\claude projects folder\StackFind\.antigravity\.`

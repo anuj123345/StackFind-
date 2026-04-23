@@ -28,12 +28,9 @@ const MODELS = [
   { id: "meta/llama-3.3-70b-instruct",     name: "meta / llama-3.3-70b-instruct",     provider: "NVIDIA NIM" },
   { id: "meta/llama-4-maverick-17b-128e-instruct", name: "meta / llama-4-maverick-17b", provider: "NVIDIA NIM" },
   { id: "meta/llama-4-scout-17b-16e-instruct", name: "meta / llama-4-scout-17b",    provider: "NVIDIA NIM" },
-  { id: "moonshotai/kimi-k2.5",            name: "Moonshot / Kimi K2.5 (Reasoning)",  provider: "NVIDIA NIM" },
   { id: "qwen/qwen2.5-coder-32b-instruct", name: "qwen / qwen2.5-coder-32b",       provider: "NVIDIA NIM" },
   { id: "anthropic/claude-3-5-sonnet-20241022", name: "anthropic / claude-3.5-sonnet", provider: "Anthropic" },
   { id: "anthropic/claude-3-5-haiku-20241022",  name: "anthropic / claude-3.5-haiku",  provider: "Anthropic" },
-  { id: "openai/gpt-4o",                   name: "openai / gpt-4o",                   provider: "OpenAI" },
-  { id: "openai/gpt-4o-mini",              name: "openai / gpt-4o-mini",              provider: "OpenAI" },
 ]
 
 const CATEGORIES = [

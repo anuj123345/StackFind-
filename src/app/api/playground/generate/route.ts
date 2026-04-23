@@ -96,49 +96,22 @@ Write a practical build plan. Use this EXACT format:
               }
             }
           } 
-          else if (modelId.startsWith("openai/") && process.env.OPENAI_API_KEY) {
-            const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-            const openaiStream = await openai.chat.completions.create({
-              model: modelId.replace("openai/", ""),
-              messages: [{ role: "user", content: prompt }],
-              temperature: 0.2,
-              max_tokens: 1800,
-              stream: true,
-            })
-            for await (const chunk of openaiStream) {
-              const content = chunk.choices[0]?.delta?.content || ""
-              if (content) controller.enqueue(encoder.encode(content))
-            }
-          }
           else {
-            // NVIDIA NIM / Moonshot Kimi K2.5
-            const isKimi = modelId.includes("kimi")
-            const nvidiaKey = (isKimi && process.env.NVIDIA_API_KEY_MOONSHOT_AI) 
-              ? process.env.NVIDIA_API_KEY_MOONSHOT_AI 
-              : process.env.NVIDIA_API_KEY
+            if (!process.env.NVIDIA_API_KEY) throw new Error("No NVIDIA API key configured")
             
-            if (!nvidiaKey) throw new Error("No NVIDIA API key configured")
-
             const nimClient = new OpenAI({
-              apiKey: nvidiaKey,
+              apiKey: process.env.NVIDIA_API_KEY,
               baseURL: "https://integrate.api.nvidia.com/v1"
             })
 
             const nimStream: any = await nimClient.chat.completions.create({
               model: modelId.includes("/") ? modelId : "meta/llama-3.3-70b-instruct",
               messages: [{ role: "user", content: prompt }],
-              temperature: isKimi ? 1.0 : 0.2,
-              top_p: isKimi ? 0.95 : 1.0,
-              max_tokens: isKimi ? 16384 : 1800,
+              temperature: 0.2,
+              top_p: 1.0,
+              max_tokens: 1800,
               stream: true,
-              // Cast to any to bypass TypeScript build errors for extra_body in older SDK versions
-              extra_body: isKimi ? {
-                chat_template_kwargs: { thinking: true },
-                enable_thinking: true
-              } : undefined
             } as any)
-
-            let hasStartedAnswer = false
 
             for await (const chunk of nimStream) {
               const delta = chunk.choices[0]?.delta as any
@@ -149,11 +122,6 @@ Write a practical build plan. Use this EXACT format:
                 controller.enqueue(encoder.encode(reasoning))
               } 
               else if (content) {
-                // Transition from reasoning to final answer
-                if (isKimi && !hasStartedAnswer) {
-                  controller.enqueue(encoder.encode("\n\n---\n\n"))
-                  hasStartedAnswer = true
-                }
                 controller.enqueue(encoder.encode(content))
               }
             }
