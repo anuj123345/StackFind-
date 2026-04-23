@@ -1,5 +1,6 @@
 import { Suspense } from "react"
-import { getToolsBySlugs, getUserProfile } from "@/lib/queries"
+import { getToolsBySlugs } from "@/lib/queries"
+import { getServerUser } from "@/lib/auth"
 import { getUsdInrRate } from "@/lib/exchange"
 import CheckoutClient from "./checkout-client"
 import { redirect } from "next/navigation"
@@ -21,13 +22,13 @@ export default async function CheckoutStackPage({ searchParams }: PageProps) {
     redirect("/playground")
   }
 
-  const [tools, usdToInrRate, profile] = await Promise.all([
+  const [tools, usdToInrRate, user] = await Promise.all([
     getToolsBySlugs(slugs),
     getUsdInrRate(),
-    getUserProfile()
+    getServerUser()
   ])
 
-  if (!profile) {
+  if (!user) {
     // Force login if trying to pay
     redirect(`/login?callbackUrl=/checkout/stack?slugs=${params.slugs}`)
   }
@@ -38,7 +39,7 @@ export default async function CheckoutStackPage({ searchParams }: PageProps) {
         <CheckoutClient 
           tools={tools} 
           usdToInrRate={usdToInrRate} 
-          userEmail={profile.email}
+          userEmail={user.email}
         />
       </Suspense>
     </main>
