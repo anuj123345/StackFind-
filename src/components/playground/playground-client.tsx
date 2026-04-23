@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useRef, useMemo, useCallback } from "react"
+import { useState, useRef, useMemo, useCallback, useEffect } from "react"
+import { motion, AnimatePresence } from "framer-motion"
 import { useStack, type StackTool } from "@/hooks/use-stack"
 import { getLogoUrl } from "@/lib/logo"
 import type { PlaygroundTool } from "@/lib/queries"
@@ -380,6 +381,101 @@ function PlaygroundLockWall({ tools }: { tools: PlaygroundTool[] }) {
           </p>
         </div>
       </div>
+    </div>
+  )
+}
+
+
+// ─── Custom Model Selector ──────────────────────────────────────────────────
+
+function ModelSelector({ value, onChange }: { value: string; onChange: (id: string) => void }) {
+  const [isOpen, setIsOpen] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+  
+  const selectedModel = MODELS.find(m => m.id === value) || MODELS[0]
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
+
+  return (
+    <div className="relative" ref={containerRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2.5 pl-3.5 pr-2.5 py-2 rounded-xl text-[0.8125rem] font-bold transition-all duration-200 outline-none border border-transparent hover:border-[#6366f1]/30"
+        style={{ 
+          background: "rgba(140,110,80,0.06)", 
+          color: "#1C1611",
+        }}
+      >
+        <span className="truncate max-w-[120px] sm:max-w-none">
+          {selectedModel.name.split(" / ")[1] || selectedModel.name}
+        </span>
+        <motion.div
+          animate={{ rotate: isOpen ? 180 : 0 }}
+          transition={{ duration: 0.2, ease: "circOut" }}
+          className="opacity-40"
+        >
+          <ChevronDown size={12} />
+        </motion.div>
+      </button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: 8, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 4, scale: 0.95 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
+            className="absolute right-0 bottom-full mb-2 min-w-[220px] z-[100] rounded-2xl overflow-hidden shadow-2xl p-1.5"
+            style={{
+              background: "rgba(255, 255, 255, 0.92)",
+              backdropFilter: "blur(12px)",
+              border: "1px solid rgba(140, 110, 80, 0.15)",
+              boxShadow: "0 20px 50px rgba(0,0,0,0.15), 0 4px 12px rgba(0,0,0,0.05)",
+            }}
+          >
+            <div className="px-3 py-2 border-b border-black/[0.04] mb-1">
+              <p className="text-[10px] font-bold uppercase tracking-wider opacity-40">Select Model</p>
+            </div>
+            {MODELS.map(m => {
+              const isSelected = m.id === value
+              return (
+                <button
+                  key={m.id}
+                  onClick={() => { onChange(m.id); setIsOpen(false) }}
+                  className="w-full text-left px-3 py-2.5 rounded-xl transition-all duration-150 flex flex-col gap-0.5 group"
+                  style={{
+                    background: isSelected ? "#6366f1" : "transparent",
+                  }}
+                >
+                  <span 
+                    className="text-[0.8125rem] font-bold truncate"
+                    style={{ color: isSelected ? "#fff" : "#1C1611" }}
+                  >
+                    {m.name.split(" / ")[1] || m.name}
+                  </span>
+                  <div className="flex items-center justify-between">
+                    <span 
+                      className="text-[10px] font-medium opacity-60"
+                      style={{ color: isSelected ? "rgba(255,255,255,0.8)" : "#7A6A57" }}
+                    >
+                      {m.provider}
+                    </span>
+                    {isSelected && <Check size={10} className="text-white" />}
+                  </div>
+                </button>
+              )
+            })}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
@@ -807,26 +903,7 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
               <div className="flex items-center gap-2">
                 {/* Model Selector Pill */}
                 {isAuthenticated && (
-                  <div className="relative group">
-                    <select
-                      value={selectedModelId}
-                      onChange={(e) => setSelectedModelId(e.target.value)}
-                      className="appearance-none pl-3.5 pr-8 py-2 rounded-xl text-[0.8125rem] font-bold cursor-pointer transition-all duration-200 outline-none border border-transparent hover:border-[#6366f1]/20"
-                      style={{ 
-                        background: "rgba(140,110,80,0.06)", 
-                        color: "#1C1611",
-                      }}
-                    >
-                      {MODELS.map(m => (
-                        <option key={m.id} value={m.id} className="text-black bg-white">
-                          {m.name.split(" / ")[1] || m.name}
-                        </option>
-                      ))}
-                    </select>
-                    <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none opacity-40">
-                      <ChevronDown size={10} />
-                    </div>
-                  </div>
+                  <ModelSelector value={selectedModelId} onChange={setSelectedModelId} />
                 )}
 
                 {output && !loading && (
