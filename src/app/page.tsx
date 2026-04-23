@@ -8,6 +8,7 @@ import { SavingsCalculator } from "@/components/pricing/savings-calculator"
 import { FAQ } from "@/components/home/faq"
 import { CategoriesRow } from "@/components/home/categories-row"
 import { PricingSection } from "@/components/home/pricing-section"
+import { AmbientBackground } from "@/components/home/ambient-background"
 
 export default async function HomePage() {
   const supabase = await createClient()
@@ -27,36 +28,8 @@ export default async function HomePage() {
     <main className="min-h-screen bg-[#1C1611] relative overflow-hidden">
       <Navbar />
       
-      {/* Dynamic Background Elements */}
-      <div className="fixed inset-0 pointer-events-none z-0">
-        <motion.div 
-          animate={{ 
-            x: [0, 100, 0], 
-            y: [0, 50, 0],
-            scale: [1, 1.2, 1]
-          }}
-          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-          className="absolute -top-[10%] -left-[10%] w-[50%] h-[50%] bg-indigo-500/10 blur-[120px] rounded-full" 
-        />
-        <motion.div 
-          animate={{ 
-            x: [0, -80, 0], 
-            y: [0, 120, 0],
-            scale: [1, 1.1, 1]
-          }}
-          transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-          className="absolute top-[40%] -right-[10%] w-[40%] h-[40%] bg-violet-500/10 blur-[120px] rounded-full" 
-        />
-        <motion.div 
-          animate={{ 
-            x: [0, 40, 0], 
-            y: [0, -60, 0],
-            scale: [1, 1.3, 1]
-          }}
-          transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
-          className="absolute -bottom-[10%] left-[20%] w-[60%] h-[60%] bg-emerald-500/5 blur-[120px] rounded-full" 
-        />
-      </div>
+      {/* Dynamic Background Elements (Client Side) */}
+      <AmbientBackground />
 
       <div className="relative z-10">
         {/* 1. Cinematic Hero (Scroll-Scrub) */}
@@ -72,11 +45,7 @@ export default async function HomePage() {
         <section className="py-20">
           <div className="max-w-7xl mx-auto px-6">
             <div className="text-center mb-12">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-              >
+              <div>
                 <h2 className="font-display text-4xl lg:text-7xl font-black mb-6 text-white leading-[1.1] tracking-tight">
                   Stop burning 18% <br/> on every tool.
                 </h2>
@@ -84,7 +53,7 @@ export default async function HomePage() {
                   Most Indian founders don't realize they can claim GST back on global SaaS. 
                   We've built the calculator to show you exactly how much you're leaving on the table.
                 </p>
-              </motion.div>
+              </div>
             </div>
             <SavingsCalculator />
           </div>
