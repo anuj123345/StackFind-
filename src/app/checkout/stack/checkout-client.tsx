@@ -44,6 +44,7 @@ export default function CheckoutClient({ tools, usdToInrRate, userEmail }: Props
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           tools: tools.map(t => ({
+            id: t.id,
             slug: t.slug,
             name: t.name,
             priceInr: t.starting_price_inr || (t.starting_price_usd ? Math.round(t.starting_price_usd * usdToInrRate) : 0)
