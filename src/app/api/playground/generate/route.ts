@@ -24,6 +24,20 @@ export async function POST(req: NextRequest) {
     const isAuthenticated = await getIsAuthenticated()
     if (!isAuthenticated) return jsonError("Sign in to use the Playground", 401)
 
+    // Apply Rate Limiting (5 requests per minute)
+    try {
+      const { playgroundRateLimit } = await import("@/lib/ratelimit")
+      const identifier = isAuthenticated // use the user ID as the identifier
+      const { success } = await playgroundRateLimit.limit(identifier)
+      
+      if (!success) {
+        return jsonError("You're building too fast! Please wait a minute before generating another plan.", 429)
+      }
+    } catch (e) {
+      console.error("Rate limit error (likely missing env vars):", e)
+      // We continue if ratelimit fails (e.g. missing keys) to avoid blocking users
+    }
+
     let tools: any[], productIdea: string, modelId: string = "meta/llama-3.3-70b-instruct"
     try {
       const body = await req.json()
@@ -76,7 +90,7 @@ Write a practical build plan. Use this EXACT format:
     const stream = new ReadableStream({
       async start(controller) {
         // Send initial heartbeat to prevent gateway timeouts
-        controller.enqueue(encoder.encode("Thinking... \n\n"))
+        controller.enqueue(encoder.encode(" "))
         
         try {
           console.log("DEBUG: Playground Model:", modelId)

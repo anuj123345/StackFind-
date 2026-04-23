@@ -101,6 +101,21 @@ async function checkSite(url: string): Promise<SiteCheck> {
 // ─── Route handler ────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
+  // Apply Rate Limiting (3 submissions per hour per IP)
+  try {
+    const { submissionRateLimit, getIP } = await import("@/lib/ratelimit")
+    const ip = getIP(req)
+    const { success } = await submissionRateLimit.limit(ip)
+    
+    if (!success) {
+      return NextResponse.json({ 
+        error: "Too many submissions. Please wait an hour before submitting more tools." 
+      }, { status: 429 })
+    }
+  } catch (e) {
+    console.error("Rate limit error:", e)
+  }
+
   let body: Record<string, unknown>
   try {
     body = await req.json()
