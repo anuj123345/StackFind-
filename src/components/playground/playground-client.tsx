@@ -1101,7 +1101,7 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
                     Starting plan prices only. Actual cost scales with usage.
                   </p>
 
-                  {/* Buy Entire Stack Button */}
+                  {/* View Cost Breakdown Button */}
                   {stack.length > 0 && totalCostInr > 0 && (
                     <Link
                       href={`/checkout/stack?slugs=${stack.map(t => t.slug).join(",")}`}
@@ -1111,8 +1111,8 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
                         color: "#fff",
                       }}
                     >
-                      <DollarSign size={13} />
-                      Buy Entire Stack (managed)
+                      <Zap size={13} />
+                      View Cost Breakdown
                     </Link>
                   )}
                 </div>
