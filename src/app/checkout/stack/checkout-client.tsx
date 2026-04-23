@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react"
 import { motion } from "framer-motion"
-import { ArrowLeft, CreditCard, ShieldCheck, Zap, Info, CheckCircle2 } from "lucide-react"
+import { ArrowLeft, CreditCard, ShieldCheck, Zap, Info, CheckCircle2, ArrowUpRight } from "lucide-react"
 import Link from "next/link"
 import type { PlaygroundTool } from "@/lib/queries"
 import { getLogoUrl } from "@/lib/logo"
@@ -131,23 +131,53 @@ export default function CheckoutClient({ tools, usdToInrRate, userEmail }: Props
               const logoSrc = getLogoUrl(tool.website, tool.logo_url)
               const priceInr = tool.starting_price_inr || (tool.starting_price_usd ? Math.round(tool.starting_price_usd * usdToInrRate) : 0)
               
+              // Extract pricing modelling metrics
+              const plans = Array.isArray(tool.pricing_modelling) ? tool.pricing_modelling : []
+              const pricingLink = tool.website ? (tool.website.endsWith('/') ? tool.website + 'pricing' : tool.website + '/pricing') : null
+
               return (
                 <div 
                   key={tool.slug} 
-                  className="flex items-center gap-4 p-4 rounded-2xl transition-all"
+                  className="p-5 rounded-2xl transition-all"
                   style={{ background: "rgba(255,255,255,0.5)", border: "1px solid rgba(140,110,80,0.06)" }}
                 >
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-white border border-black/5 overflow-hidden flex-shrink-0">
-                    {logoSrc ? <img src={logoSrc} alt="" className="w-6 h-6 object-contain" /> : <span className="font-bold">{tool.name[0]}</span>}
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-white border border-black/5 overflow-hidden flex-shrink-0">
+                      {logoSrc ? <img src={logoSrc} alt="" className="w-6 h-6 object-contain" /> : <span className="font-bold">{tool.name[0]}</span>}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-bold text-sm" style={{ color: "#1C1611" }}>{tool.name}</h3>
+                      <div className="flex items-center gap-2">
+                        <p className="text-[10px] truncate" style={{ color: "#C4B0A0" }}>{tool.tagline}</p>
+                        {pricingLink && (
+                          <a 
+                            href={pricingLink} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="text-[9px] font-bold text-indigo-600 hover:underline flex items-center gap-0.5"
+                          >
+                            Pricing <ArrowUpRight size={8} />
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold text-sm" style={{ color: "#1C1611" }}>₹{priceInr}</p>
+                      <p className="text-[9px] opacity-50">/ month</p>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-sm" style={{ color: "#1C1611" }}>{tool.name}</h3>
-                    <p className="text-[10px] truncate" style={{ color: "#C4B0A0" }}>{tool.tagline}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-bold text-sm" style={{ color: "#1C1611" }}>₹{priceInr}</p>
-                    <p className="text-[9px] opacity-50">/ month</p>
-                  </div>
+
+                  {/* Plan Details */}
+                  {plans.length > 0 && (
+                    <div className="pl-14 grid grid-cols-2 gap-x-4 gap-y-2 border-t border-stone-100 pt-3">
+                      {plans.map((plan: any, i: number) => (
+                        <div key={i} className="flex flex-col">
+                          <span className="text-[8px] font-bold uppercase tracking-wider text-[#C4B0A0]">{plan.label}</span>
+                          <span className="text-[10px] font-medium text-[#7A6A57]">{plan.value} {plan.unit && <span className="text-[8px] opacity-60">/ {plan.unit}</span>}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )
             })}
