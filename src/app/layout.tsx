@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import { Onest } from "next/font/google"
 import { Navbar } from "@/components/navbar"
 import { SearchModal } from "@/components/search/search-modal"
-import { Analytics } from "@vercel/analytics/react"
+import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 
 const onest = Onest({
