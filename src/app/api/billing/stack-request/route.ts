@@ -63,11 +63,10 @@ export async function POST(req: NextRequest) {
         key_secret: process.env.RAZORPAY_KEY_SECRET!,
       })
 
-      const link = await razorpay.paymentLink.create({
+      const link: any = await razorpay.paymentLink.create({
         amount: total * 100, // in paise
         currency: "INR",
         accept_partial: false,
-        first_payment_min_amount: total * 100,
         description: `Stack Purchase: ${tools.length} AI Tools`,
         customer: {
           name: user.email.split("@")[0],
