@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
       if (t.startingPriceInr) effectiveInr = t.startingPriceInr
       else if (t.startingPriceUsd) effectiveInr = Math.round(t.startingPriceUsd * usdToInrRate)
 
-      const billingContext = t.managed_billing_enabled 
+      const billingContext = t.managedBillingEnabled 
         ? "INR Billing Available via UPI" 
         : "Standard USD Billing"
 

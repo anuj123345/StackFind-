@@ -61,7 +61,6 @@ export function LatestTools({ tools }: LatestToolsProps) {
                 isMadeInIndia={tool.is_made_in_india}
                 hasInrBilling={tool.has_inr_billing}
                 hasUpi={tool.has_upi}
-                hasGstInvoice={tool.has_gst_invoice}
                 categories={tool.categoryNames}
                 startingPriceInr={tool.starting_price_inr}
               />

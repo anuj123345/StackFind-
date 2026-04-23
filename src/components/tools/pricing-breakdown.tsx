@@ -25,7 +25,6 @@ interface PricingBreakdownProps {
 export function PricingBreakdown({ 
   toolId,
   modelling = [], 
-  hasGstInvoice, 
   hasUpi, 
   hasInrBilling,
   startingPriceInr,

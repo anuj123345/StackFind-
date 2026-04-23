@@ -153,7 +153,6 @@ export default async function ToolDetailPage({ params }: PageProps) {
                 <PricingBreakdown 
                   toolId={tool.id}
                   modelling={tool.pricing_modelling as any}
-                  hasGstInvoice={tool.has_gst_invoice}
                   hasUpi={tool.has_upi}
                   hasInrBilling={tool.has_inr_billing}
                   startingPriceInr={tool.starting_price_inr}
@@ -219,7 +218,6 @@ export default async function ToolDetailPage({ params }: PageProps) {
                     isMadeInIndia={t.is_made_in_india}
                     hasInrBilling={t.has_inr_billing}
                     hasUpi={t.has_upi}
-                    hasGstInvoice={t.has_gst_invoice}
                     categories={t.categoryNames}
                     startingPriceUsd={t.starting_price_usd}
                     startingPriceInr={t.starting_price_inr}
