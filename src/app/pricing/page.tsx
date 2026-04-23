@@ -15,8 +15,15 @@ export default function PricingPage() {
     <main className="min-h-screen bg-[#F9F5F1]">
       <Navbar />
       
-      {/* Managed Billing Intro Hero */}
-      <PricingHero />
+      {/* General Pricing Hero */}
+      <section className="pt-32 pb-20 px-6 text-center">
+        <h1 className="text-5xl lg:text-7xl font-black tracking-tight mb-6" style={{ color: "#1C1611" }}>
+          SaaS Cost <span className="text-indigo-600">Calculator</span>
+        </h1>
+        <p className="max-w-2xl mx-auto text-lg" style={{ color: "#7A6A57" }}>
+          Estimate your stack costs and learn how to optimize your SaaS spend with GST invoices and local payment methods.
+        </p>
+      </section>
 
       {/* Calculator Section */}
       <section className="bg-white/40 border-y border-stone-200">
@@ -27,16 +34,6 @@ export default function PricingPage() {
       <div className="py-12">
         <PricingSection />
       </div>
-
-      {/* Comparison Grid */}
-      <section className="bg-[#1C1611] text-white overflow-hidden relative">
-        {/* Background Glow */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-indigo-900/10 blur-[120px] pointer-events-none" />
-        
-        <div className="relative z-10">
-          <ComparisonGrid />
-        </div>
-      </section>
 
       <Footer />
     </main>

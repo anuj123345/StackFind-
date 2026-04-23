@@ -14,93 +14,17 @@ interface Props {
 }
 
 export default function CheckoutClient({ tools, usdToInrRate, userEmail }: Props) {
-  const [loading, setLoading] = useState(false)
-  const [success, setSuccess] = useState(false)
-
-  const { subtotal, fee, gst, total } = useMemo(() => {
+  const { totalMonthlyInr } = useMemo(() => {
     let baseInr = 0
     tools.forEach(t => {
       if (t.starting_price_inr) baseInr += t.starting_price_inr
       else if (t.starting_price_usd) baseInr += t.starting_price_usd * usdToInrRate
     })
 
-    const feeAmt = baseInr * 0.05
-    const gstAmt = (baseInr + feeAmt) * 0.18
-    const totalAmt = baseInr + feeAmt + gstAmt
-
     return {
-      subtotal: Math.round(baseInr),
-      fee: Math.round(feeAmt),
-      gst: Math.round(gstAmt),
-      total: Math.round(totalAmt)
+      totalMonthlyInr: Math.round(baseInr)
     }
   }, [tools, usdToInrRate])
-
-  async function handlePayment() {
-    setLoading(true)
-    try {
-      const response = await fetch("/api/billing/stack-request", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          tools: tools.map(t => ({
-            id: t.id,
-            slug: t.slug,
-            name: t.name,
-            priceInr: t.starting_price_inr || (t.starting_price_usd ? Math.round(t.starting_price_usd * usdToInrRate) : 0)
-          })),
-          total
-        })
-      })
-
-      const data = await response.json()
-      if (data.success) {
-        if (data.paymentLink) {
-          // Real-time payment: redirect to Razorpay
-          window.location.href = data.paymentLink
-        } else {
-          // Fallback: show success screen
-          setSuccess(true)
-        }
-      } else {
-        alert(data.error || "Failed to submit request")
-      }
-    } catch (error) {
-      console.error("Payment Error:", error)
-      alert("Something went wrong. Please try again.")
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  if (success) {
-    return (
-      <div className="min-h-[80vh] flex items-center justify-center p-6">
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="max-w-md w-full text-center p-10 rounded-3xl"
-          style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(140,110,80,0.1)", backdropFilter: "blur(20px)" }}
-        >
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <CheckCircle2 className="text-green-600" size={32} />
-          </div>
-          <h1 className="text-2xl font-black mb-3" style={{ color: "#1C1611" }}>Payment Request Sent!</h1>
-          <p className="text-sm mb-8" style={{ color: "#7A6A57" }}>
-            We've received your request to purchase the **{tools.length} tool stack**. 
-            An invoice with the payment link has been sent to **{userEmail}**.
-          </p>
-          <Link 
-            href="/playground" 
-            className="inline-block px-8 py-3 rounded-xl font-bold text-sm transition-all hover:scale-105 active:scale-95"
-            style={{ background: "#6366f1", color: "#fff" }}
-          >
-            Back to Playground
-          </Link>
-        </motion.div>
-      </div>
-    )
-  }
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-12 lg:py-20">
@@ -118,12 +42,11 @@ export default function CheckoutClient({ tools, usdToInrRate, userEmail }: Props
           <div className="flex items-center gap-3 mb-2">
             <Zap size={18} style={{ color: "#6366f1" }} />
             <h1 className="text-2xl font-black tracking-tight" style={{ color: "#1C1611" }}>
-              Managed Stack Checkout
+              Stack Cost Preview
             </h1>
           </div>
           <p className="text-sm leading-relaxed" style={{ color: "#7A6A57" }}>
-            Pay for your entire AI stack in **INR via UPI/Netbanking**. 
-            We handle the international USD payments for you and provide a single GST-compliant invoice.
+            Review the estimated monthly cost for your selected tools. Use the official links below to purchase each tool directly from the vendor.
           </p>
 
           <div className="space-y-3 pt-4">
@@ -162,14 +85,7 @@ export default function CheckoutClient({ tools, usdToInrRate, userEmail }: Props
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="flex items-center justify-end gap-1 mb-1">
-                        {tool.managed_billing_enabled && (
-                          <span className="text-[7px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100">
-                            Managed
-                          </span>
-                        )}
-                        <p className="font-bold text-sm" style={{ color: "#1C1611" }}>₹{priceInr}</p>
-                      </div>
+                      <p className="font-bold text-sm" style={{ color: "#1C1611" }}>₹{priceInr}</p>
                       <p className="text-[9px] opacity-50">/ month</p>
                     </div>
                   </div>
@@ -190,95 +106,53 @@ export default function CheckoutClient({ tools, usdToInrRate, userEmail }: Props
             })}
           </div>
 
-          <div className="p-6 rounded-[2rem] bg-indigo-600 text-white shadow-xl shadow-indigo-100 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-16 -mt-16" />
+          <div className="p-6 rounded-[2rem] bg-stone-900 text-white shadow-xl shadow-stone-100 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-2xl -mr-16 -mt-16" />
             <div className="relative z-10">
               <div className="flex items-center gap-3 mb-4">
-                <ShieldCheck size={24} />
-                <h3 className="font-black text-lg">Managed Billing Bridge</h3>
+                <Info size={24} />
+                <h3 className="font-black text-lg">Direct Purchase Guide</h3>
               </div>
-              <div className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <CheckCircle2 size={16} className="mt-0.5 shrink-0" />
-                  <div>
-                    <p className="text-xs font-bold italic">Valid B2B GST Invoices</p>
-                    <p className="text-[10px] opacity-80">Claim 18% Input Credit back on your tax filings.</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <CheckCircle2 size={16} className="mt-0.5 shrink-0" />
-                  <div>
-                    <p className="text-xs font-bold italic">UPI & NetBanking Support</p>
-                    <p className="text-[10px] opacity-80">Pay for global tools without an international credit card.</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <CheckCircle2 size={16} className="mt-0.5 shrink-0" />
-                  <div>
-                    <p className="text-xs font-bold italic">Concierge Support</p>
-                    <p className="text-[10px] opacity-80">We handle the USD conversion and vendor support for you.</p>
-                  </div>
-                </div>
-              </div>
+              <p className="text-[11px] opacity-80 leading-relaxed">
+                StackFind provides estimated pricing to help you plan your budget. Always verify the final price on the official vendor website before purchasing.
+              </p>
             </div>
           </div>
         </div>
 
-        {/* Right: Payment Breakdown */}
         <div className="lg:col-span-2">
           <div 
             className="rounded-3xl p-6 lg:p-8 sticky top-28 shadow-xl shadow-black/5"
             style={{ background: "#fff", border: "1px solid rgba(140,110,80,0.12)" }}
           >
-            <h2 className="text-lg font-black mb-6" style={{ color: "#1C1611" }}>Billing Summary</h2>
+            <h2 className="text-lg font-black mb-6" style={{ color: "#1C1611" }}>Stack Summary</h2>
             
             <div className="space-y-4 mb-8">
-              <div className="flex justify-between text-sm">
-                <span style={{ color: "#7A6A57" }}>Tool Subtotal</span>
-                <span className="font-semibold" style={{ color: "#1C1611" }}>₹{subtotal}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <div className="flex items-center gap-1.5 group relative">
-                  <span style={{ color: "#7A6A57" }}>Convenience Fee (5%)</span>
-                  <Info size={12} className="text-[#C4B0A0] cursor-help" />
+              <div className="flex justify-between items-end">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wider mb-1" style={{ color: "#A0907E" }}>Estimated Monthly Total</p>
+                  <p className="text-3xl font-black leading-none" style={{ color: "#1C1611" }}>₹{totalMonthlyInr}</p>
                 </div>
-                <span className="font-semibold" style={{ color: "#1C1611" }}>₹{fee}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span style={{ color: "#7A6A57" }}>GST (18%)</span>
-                <span className="font-semibold" style={{ color: "#1C1611" }}>₹{gst}</span>
               </div>
               
               <div className="h-px bg-black/5 my-4" />
               
-              <div className="flex justify-between items-end">
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-wider mb-1" style={{ color: "#A0907E" }}>Total to Pay</p>
-                  <p className="text-3xl font-black leading-none" style={{ color: "#1C1611" }}>₹{total}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-[10px] font-bold text-green-600 mb-0.5">Save ₹{Math.round(total * 0.18)}</p>
-                  <p className="text-[9px]" style={{ color: "#C4B0A0" }}>with GST Input Credit</p>
-                </div>
-              </div>
+              <p className="text-[10px] leading-relaxed italic" style={{ color: "#7A6A57" }}>
+                This is an estimated cost based on current exchange rates and vendor starting plans. Prices may vary based on your specific usage and local taxes.
+              </p>
             </div>
 
-            <button
-              onClick={handlePayment}
-              disabled={loading}
-              className="w-full py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-3 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 shadow-lg shadow-[#6366f1]/20"
-              style={{ background: "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)", color: "#fff" }}
+            <Link
+              href="/tools"
+              className="w-full py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-3 transition-all hover:bg-stone-100 border border-stone-200"
+              style={{ color: "#1C1611" }}
             >
-              {loading ? (
-                <><Loader2 className="animate-spin" size={18} /> Processing...</>
-              ) : (
-                <><CreditCard size={18} /> Pay with UPI / Card</>
-              )}
-            </button>
+              Add More Tools
+            </Link>
             
             <p className="text-center text-[10px] mt-6" style={{ color: "#C4B0A0" }}>
-              Secure checkout powered by Razorpay. <br/>
-              By paying, you agree to StackFind's Managed Terms.
+              Pricing data is updated weekly. <br/>
+              Report an error in pricing? <Link href="/contact" className="underline">Click here</Link>
             </p>
           </div>
         </div>
