@@ -1,31 +1,57 @@
-import { HeroSection } from "@/components/home/hero-section"
-import { CategoriesRow } from "@/components/home/categories-row"
-import { FeaturedTools } from "@/components/home/featured-tools"
-import { WhySection } from "@/components/home/why-section"
-import { LatestTools } from "@/components/home/latest-tools"
-import { PricingSection } from "@/components/home/pricing-section"
-import { NewsletterBanner } from "@/components/home/newsletter-banner"
+import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
-import { getFeaturedTools, getLatestTools, getCategories, getToolStats } from "@/lib/queries"
+import { ScrubHero } from "@/components/pricing/ScrubHero"
+import { ServicesBento } from "@/components/pricing/ServicesBento"
+import { LiquidStats } from "@/components/pricing/LiquidStats"
+import { SavingsCalculator } from "@/components/pricing/savings-calculator"
+import { FAQ } from "@/components/home/faq"
+import { FeaturedCategories } from "@/components/home/featured-categories"
+import { PricingSection } from "@/components/home/pricing-section"
 
-export default async function HomePage() {
-  const [featuredTools, latestTools, categories, stats] = await Promise.all([
-    getFeaturedTools(6),
-    getLatestTools(8),
-    getCategories(),
-    getToolStats(),
-  ])
-
+export default function HomePage() {
   return (
-    <>
-      <HeroSection stats={stats} />
-      <CategoriesRow categories={categories} />
-      <FeaturedTools tools={featuredTools} />
-      <WhySection />
-      <LatestTools tools={latestTools} />
-      <PricingSection />
-      <NewsletterBanner />
+    <main className="min-h-screen bg-[#1C1611]">
+      <Navbar />
+      
+      {/* 1. Cinematic Hero (Scroll-Scrub) */}
+      <ScrubHero />
+
+      {/* 2. Features Bento Grid */}
+      <ServicesBento />
+
+      {/* 3. Dynamic Stats Section */}
+      <LiquidStats />
+
+      {/* 4. GST Savings Deep Dive */}
+      <section className="py-32 bg-[#F9F5F1] text-[#1C1611] rounded-[4rem] mx-4 lg:mx-10 my-10 shadow-2xl">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center mb-20">
+            <h2 className="font-display text-4xl lg:text-7xl font-black mb-6">Stop burning 18% <br/> on every tool.</h2>
+            <p className="text-stone-500 max-w-2xl mx-auto text-xl">
+              Most Indian founders don't realize they can claim GST back on global SaaS. 
+              We've built the calculator to show you exactly how much you're leaving on the table.
+            </p>
+          </div>
+          <SavingsCalculator />
+        </div>
+      </section>
+
+      {/* 5. Tool Categories (Restyled) */}
+      <section className="py-32 px-6">
+        <FeaturedCategories />
+      </section>
+
+      {/* 6. Pricing & Membership */}
+      <div className="py-32">
+        <PricingSection />
+      </div>
+
+      {/* 7. FAQ */}
+      <div className="py-32 border-t border-white/5">
+        <FAQ />
+      </div>
+
       <Footer />
-    </>
+    </main>
   )
 }

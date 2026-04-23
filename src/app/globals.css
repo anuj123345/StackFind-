@@ -49,9 +49,19 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  /* Cinematic Palette (StackFind Signature) */
+  --ink:    20 15% 9%;      /* Muted Ebony */
+  --cream:  40 30% 90%;     /* Ivory/Cream */
+  --ochre:  32 55% 65%;     /* Muted Gold/Sand */
+  --terra:  14 55% 31%;     /* Deep Earth */
+
+  --background: 0 0% 100%;
+  --foreground: 224 71.4% 4.1%;
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
