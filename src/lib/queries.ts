@@ -138,7 +138,7 @@ export type PlaygroundTool = {
   convenience_fee_percent: number
   categorySlug: string
   categoryName: string
-  pricing_modelling: any
+  pricing_modelling?: any
 }
 
 const PLAYGROUND_CATEGORIES = [
@@ -155,7 +155,7 @@ export async function getPlaygroundTools(): Promise<PlaygroundTool[]> {
   // Fetch ALL approved tools with their categories (left join so tools with no categories still appear)
   const { data } = await supabase
     .from('tools')
-    .select('slug, name, tagline, website, logo_url, pricing_model, starting_price_usd, starting_price_inr, is_made_in_india, managed_billing_enabled, convenience_fee_percent, tool_categories(categories(slug, name))')
+    .select('id, slug, name, tagline, website, logo_url, pricing_model, starting_price_usd, starting_price_inr, is_made_in_india, managed_billing_enabled, convenience_fee_percent, pricing_modelling, tool_categories(categories(slug, name))')
     .eq('status', 'approved')
     .order('upvotes', { ascending: false })
 
