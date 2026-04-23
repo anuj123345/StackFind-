@@ -1,7 +1,9 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 interface GetStartedButtonProps {
   text?: string;
@@ -11,6 +13,17 @@ interface GetStartedButtonProps {
 }
 
 export function GetStartedButton({ text = "Get Started", className, href, onClick }: GetStartedButtonProps) {
+  const router = useRouter();
+
+  const handlePress = (e: React.MouseEvent) => {
+    if (onClick) {
+      onClick();
+    }
+    if (href) {
+      router.push(href);
+    }
+  };
+
   const content = (
     <>
       <span className="mr-8 transition-opacity duration-500 group-hover:opacity-0">
@@ -22,21 +35,14 @@ export function GetStartedButton({ text = "Get Started", className, href, onClic
     </>
   );
 
-  const classes = cn(
-    "group relative overflow-hidden h-auto py-6 px-10 text-lg font-black rounded-2xl transition-all hover:scale-105 active:scale-95", 
-    className
-  );
-
-  if (href) {
-    return (
-      <Button asChild className={classes}>
-        <Link href={href}>{content}</Link>
-      </Button>
-    );
-  }
-
   return (
-    <Button onClick={onClick} className={classes}>
+    <Button 
+      onClick={handlePress}
+      className={cn(
+        "group relative overflow-hidden h-auto py-6 px-10 text-lg font-black rounded-2xl transition-all hover:scale-105 active:scale-95", 
+        className
+      )} 
+    >
       {content}
     </Button>
   );
