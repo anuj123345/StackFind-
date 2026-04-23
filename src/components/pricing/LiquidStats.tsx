@@ -20,29 +20,29 @@ export function LiquidStats() {
   const x = useTransform(scrollYProgress, [0, 1], [100, -100])
 
   return (
-    <section ref={containerRef} className="py-24 bg-[#1C1611] overflow-hidden relative">
+    <section ref={containerRef} className="py-16 bg-[#1C1611] overflow-hidden relative">
       {/* Dynamic Background Text */}
       <motion.div 
         style={{ x }}
-        className="absolute top-1/2 -translate-y-1/2 whitespace-nowrap text-[20vw] font-black opacity-[0.02] text-white pointer-events-none select-none"
+        className="absolute top-1/2 -translate-y-1/2 whitespace-nowrap text-[15vw] font-black opacity-[0.02] text-white pointer-events-none select-none"
       >
         OPTIMIZE YOUR SaaS SPEND OPTIMIZE YOUR SaaS SPEND
       </motion.div>
 
       <div className="max-w-7xl mx-auto px-6 relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {stats.map((s, i) => (
             <motion.div
               key={i}
-              initial={{ opacity: 0, scale: 0.9 }}
+              initial={{ opacity: 0, scale: 0.98 }}
               whileInView={{ opacity: 1, scale: 1 }}
-              transition={{ delay: i * 0.1, duration: 1, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ delay: i * 0.1, duration: 0.8 }}
               viewport={{ once: true }}
               className="text-center"
             >
-              <h3 className="text-7xl lg:text-8xl font-black text-indigo-500 mb-4 tracking-tighter">{s.value}</h3>
-              <p className="text-xl font-bold text-white mb-2">{s.label}</p>
-              <p className="text-stone-500 text-sm leading-relaxed">{s.desc}</p>
+              <h3 className="text-5xl lg:text-6xl font-black text-indigo-500 mb-3 tracking-tighter">{s.value}</h3>
+              <p className="text-lg font-bold text-white mb-2">{s.label}</p>
+              <p className="text-stone-500 text-[13px] leading-relaxed max-w-[180px] mx-auto">{s.desc}</p>
             </motion.div>
           ))}
         </div>
