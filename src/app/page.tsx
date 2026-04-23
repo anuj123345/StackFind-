@@ -1,3 +1,4 @@
+import { createClient } from "@/lib/supabase/server"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { ScrubHero } from "@/components/pricing/ScrubHero"
@@ -5,10 +6,23 @@ import { ServicesBento } from "@/components/pricing/ServicesBento"
 import { LiquidStats } from "@/components/pricing/LiquidStats"
 import { SavingsCalculator } from "@/components/pricing/savings-calculator"
 import { FAQ } from "@/components/home/faq"
-import { FeaturedCategories } from "@/components/home/featured-categories"
+import { CategoriesRow } from "@/components/home/categories-row"
 import { PricingSection } from "@/components/home/pricing-section"
 
-export default function HomePage() {
+export default async function HomePage() {
+  const supabase = await createClient()
+
+  const { data: categories } = await supabase
+    .from("categories")
+    .select("*, tools(count)")
+    .order("name")
+
+  // Map tool count correctly
+  const mappedCategories = (categories || []).map((cat: any) => ({
+    ...cat,
+    tool_count: cat.tools?.[0]?.count || 0
+  }))
+
   return (
     <main className="min-h-screen bg-[#1C1611]">
       <Navbar />
@@ -23,7 +37,7 @@ export default function HomePage() {
       <LiquidStats />
 
       {/* 4. GST Savings Deep Dive */}
-      <section className="py-32 bg-[#F9F5F1] text-[#1C1611] rounded-[4rem] mx-4 lg:mx-10 my-10 shadow-2xl">
+      <section className="py-32 bg-[#F9F5F1] text-[#1C1611] rounded-[4rem] mx-4 lg:mx-10 my-10 shadow-2xl overflow-hidden">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-20">
             <h2 className="font-display text-4xl lg:text-7xl font-black mb-6">Stop burning 18% <br/> on every tool.</h2>
@@ -37,9 +51,9 @@ export default function HomePage() {
       </section>
 
       {/* 5. Tool Categories (Restyled) */}
-      <section className="py-32 px-6">
-        <FeaturedCategories />
-      </section>
+      <div className="py-32 px-6">
+        <CategoriesRow categories={mappedCategories} />
+      </div>
 
       {/* 6. Pricing & Membership */}
       <div className="py-32">
