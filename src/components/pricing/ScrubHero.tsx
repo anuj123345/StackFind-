@@ -46,22 +46,22 @@ export function ScrubHero() {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
-            className="mb-6 inline-flex items-center gap-2 px-4 py-2 rounded-full liquid-glass-strong border border-white/10 text-[10px] font-bold uppercase tracking-widest text-indigo-300"
+            className="mb-5 inline-flex items-center gap-2 px-3 py-1.5 rounded-full liquid-glass-strong border border-white/10 text-[10px] font-bold uppercase tracking-widest text-indigo-400"
           >
-            <Zap size={12} className="fill-indigo-300" />
+            <Zap size={11} className="fill-indigo-400" />
             Built for the Indian AI Founder
           </motion.div>
 
           <BlurText 
             text="Find your stack. Build your future."
-            className="font-display text-5xl lg:text-8xl font-black text-white leading-[0.9] tracking-tighter mb-8"
+            className="font-display text-5xl lg:text-8xl font-black text-white leading-[0.9] tracking-tighter mb-6"
           />
 
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.8, duration: 1 }}
-            className="max-w-2xl text-lg lg:text-xl text-stone-400 mb-10 leading-relaxed font-light"
+            className="max-w-2xl text-lg lg:text-xl text-stone-400 mb-8 leading-relaxed font-medium"
           >
             The definitive directory for Indian founders to discover AI tools, 
             optimize SaaS spend, and master managed billing.
@@ -77,16 +77,16 @@ export function ScrubHero() {
               href="/playground" 
               className={cn(
                 buttonVariants({ variant: "hero" }), 
-                "bg-indigo-600 hover:bg-indigo-500 text-white border-none rounded-2xl px-10 py-7 text-lg group shadow-2xl shadow-indigo-500/20 h-auto flex items-center gap-3"
+                "bg-indigo-600 hover:bg-indigo-500 text-white border-none rounded-xl px-8 py-5 text-base font-black group shadow-2xl shadow-indigo-500/20 h-auto flex items-center gap-3"
               )}
             >
-              Launch Playground <ArrowRight size={20} className="transition-transform group-hover:translate-x-1" />
+              Launch Playground <ArrowRight size={18} className="transition-transform group-hover:translate-x-1" />
             </Link>
             <Link 
               href="/pricing" 
               className={cn(
                 buttonVariants({ variant: "ghost" }), 
-                "text-stone-400 hover:text-white px-10 py-7 text-lg h-auto"
+                "text-stone-400 hover:text-white px-8 py-5 text-base font-bold h-auto border border-white/5 rounded-xl hover:bg-white/5"
               )}
             >
               View Cost Calculator

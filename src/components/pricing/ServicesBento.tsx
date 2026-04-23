@@ -41,15 +41,15 @@ const features = [
 
 export function ServicesBento() {
   return (
-    <section className="py-16 px-6 max-w-7xl mx-auto">
-      <div className="text-center mb-16">
-        <h2 className="font-display text-3xl lg:text-5xl font-black text-white mb-4 leading-tight">Designed for Founders.</h2>
-        <p className="text-stone-400 max-w-xl mx-auto text-base">
+    <section className="py-12 px-6 max-w-7xl mx-auto">
+      <div className="text-center mb-12">
+        <h2 className="font-display text-4xl lg:text-6xl font-black text-white mb-4 leading-tight tracking-tight">Designed for Founders.</h2>
+        <p className="text-stone-400 max-w-xl mx-auto text-lg opacity-80">
           The infrastructure you need to scale your AI startup without the international billing friction.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
         {features.map((f, i) => (
           <motion.div
             key={i}
@@ -57,22 +57,22 @@ export function ServicesBento() {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.1, duration: 0.6 }}
             viewport={{ once: true }}
-            className={`${f.size} group relative p-8 rounded-[2rem] liquid-glass border border-white/5 overflow-hidden transition-all hover:scale-[1.005]`}
+            className={`${f.size} group relative p-6 rounded-3xl liquid-glass border border-white/5 overflow-hidden transition-all hover:bg-white/[0.02]`}
           >
             {/* Background Glow */}
             <div className={`absolute top-0 right-0 w-48 h-48 ${f.color} opacity-[0.03] blur-[80px] group-hover:opacity-10 transition-opacity`} />
             
             <div className="relative z-10 h-full flex flex-col justify-between">
               <div>
-                <div className={`w-12 h-12 rounded-xl ${f.color}/10 flex items-center justify-center mb-6 border border-white/10`}>
-                  <f.icon className="text-white" size={22} />
+                <div className={`w-11 h-11 rounded-xl ${f.color}/10 flex items-center justify-center mb-4 border border-white/10`}>
+                  <f.icon className="text-white" size={20} />
                 </div>
-                <h3 className="text-xl font-bold text-white mb-3 tracking-tight">{f.title}</h3>
-                <p className="text-stone-400 text-sm leading-relaxed max-w-[200px]">{f.description}</p>
+                <h3 className="text-2xl font-black text-white mb-2 tracking-tight">{f.title}</h3>
+                <p className="text-stone-400 text-base leading-snug opacity-90">{f.description}</p>
               </div>
               
-              <Link href={f.href} className="mt-8 inline-flex items-center gap-2 text-[12px] font-bold uppercase tracking-wider text-stone-300 group/link transition-all hover:text-white">
-                Learn more <Zap size={12} className="transition-transform group-hover/link:translate-x-1" />
+              <Link href={f.href} className="mt-6 inline-flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-indigo-400 group/link transition-all hover:text-white">
+                Learn more <Zap size={11} className="transition-transform group-hover/link:translate-x-1" />
               </Link>
             </div>
           </motion.div>

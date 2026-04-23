@@ -20,7 +20,7 @@ export function LiquidStats() {
   const x = useTransform(scrollYProgress, [0, 1], [100, -100])
 
   return (
-    <section ref={containerRef} className="py-16 bg-[#1C1611] overflow-hidden relative">
+    <section ref={containerRef} className="py-12 bg-[#1C1611] overflow-hidden relative border-y border-white/5">
       {/* Dynamic Background Text */}
       <motion.div 
         style={{ x }}
@@ -30,7 +30,7 @@ export function LiquidStats() {
       </motion.div>
 
       <div className="max-w-7xl mx-auto px-6 relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {stats.map((s, i) => (
             <motion.div
               key={i}
@@ -38,11 +38,11 @@ export function LiquidStats() {
               whileInView={{ opacity: 1, scale: 1 }}
               transition={{ delay: i * 0.1, duration: 0.8 }}
               viewport={{ once: true }}
-              className="text-center"
+              className="text-center p-4"
             >
-              <h3 className="text-5xl lg:text-6xl font-black text-indigo-500 mb-3 tracking-tighter">{s.value}</h3>
-              <p className="text-lg font-bold text-white mb-2">{s.label}</p>
-              <p className="text-stone-500 text-[13px] leading-relaxed max-w-[180px] mx-auto">{s.desc}</p>
+              <h3 className="text-5xl lg:text-7xl font-black text-indigo-500 mb-2 tracking-tighter">{s.value}</h3>
+              <p className="text-xl font-black text-white mb-2 tracking-tight">{s.label}</p>
+              <p className="text-stone-400 text-sm leading-snug max-w-[220px] mx-auto opacity-80">{s.desc}</p>
             </motion.div>
           ))}
         </div>
