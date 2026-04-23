@@ -75,8 +75,8 @@ export function CategoriesRow({ categories }: CategoriesRowProps) {
               href={`/category/${cat.slug}`}
               className="group flex-shrink-0 flex items-center gap-2 px-3.5 py-2.5 rounded-2xl transition-all duration-200 hover:bg-[rgba(99,102,241,0.07)] hover:border-[rgba(99,102,241,0.2)]"
               style={{
-                background: "rgba(140,110,80,0.05)",
-                border: "1px solid rgba(140,110,80,0.1)",
+                background: "rgba(255,255,255,0.03)",
+                border: "1px solid rgba(255,255,255,0.08)",
               }}
             >
               <span
@@ -87,14 +87,14 @@ export function CategoriesRow({ categories }: CategoriesRowProps) {
                 {getIcon(cat.slug, cat.icon)}
               </span>
               <span
-                className="text-[0.8125rem] font-semibold whitespace-nowrap transition-colors duration-200 group-hover:text-indigo-600"
-                style={{ color: "#1C1611" }}
+                className="text-[0.8125rem] font-semibold whitespace-nowrap transition-colors duration-200 group-hover:text-indigo-400"
+                style={{ color: "#F9F5F1" }}
               >
                 {cat.name}
               </span>
               <span
-                className="text-[0.6875rem] font-medium tabular-nums ml-0.5"
-                style={{ color: "#C4B0A0" }}
+                className="text-[0.6875rem] font-bold tabular-nums ml-0.5"
+                style={{ color: "#8E8277" }}
               >
                 {cat.tool_count}
               </span>
