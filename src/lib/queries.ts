@@ -166,7 +166,7 @@ export async function getPlaygroundTools(): Promise<PlaygroundTool[]> {
       .select('id, slug, name, tagline, website, logo_url, pricing_model, starting_price_usd, starting_price_inr, is_made_in_india, managed_billing_enabled, convenience_fee_percent, tool_categories(categories(slug, name))')
       .eq('status', 'approved')
       .order('upvotes', { ascending: false })
-    data = fallback.data
+    data = fallback.data as any
   }
 
   if (!data) return []
@@ -260,7 +260,7 @@ export async function getToolsBySlugs(slugs: string[]): Promise<PlaygroundTool[]
       .select('id, slug, name, tagline, website, logo_url, pricing_model, starting_price_usd, starting_price_inr, is_made_in_india, managed_billing_enabled, convenience_fee_percent')
       .in('slug', slugs)
       .eq('status', 'approved')
-    data = fallback.data
+    data = fallback.data as any
   }
 
   if (!data) return []
