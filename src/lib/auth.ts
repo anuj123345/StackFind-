@@ -50,3 +50,9 @@ export async function getIsAuthenticated(): Promise<boolean> {
   const { data: { user } } = await supabase.auth.getUser()
   return !!user
 }
+
+export async function getServerUser() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  return user
+}

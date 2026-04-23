@@ -21,14 +21,18 @@ export async function POST(req: NextRequest) {
   console.log("DEBUG: /api/playground/generate hit")
   try {
     const usdToInrRate = await getUsdInrRate()
-    const isAuthenticated = await getIsAuthenticated()
-    if (!isAuthenticated) return jsonError("Sign in to use the Playground", 401)
+    // 1. Auth & Rate Limiting
+    const { getServerUser } = await import("@/lib/auth")
+    const user = await getServerUser()
+    
+    if (!user) {
+      return jsonError("Sign in to use the Playground", 401)
+    }
 
-    // Apply Rate Limiting (5 requests per minute)
+    // Rate limiting using User ID
     try {
       const { playgroundRateLimit } = await import("@/lib/ratelimit")
-      const identifier = isAuthenticated // use the user ID as the identifier
-      const { success } = await playgroundRateLimit.limit(identifier)
+      const { success } = await playgroundRateLimit.limit(user.id)
       
       if (!success) {
         return jsonError("You're building too fast! Please wait a minute before generating another plan.", 429)
