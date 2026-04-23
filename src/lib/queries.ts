@@ -143,6 +143,8 @@ const PLAYGROUND_CATEGORIES = [
   'coding','backend-db','deployment','domain','payments',
   'version-control','emails','auth','dns','analytics',
   'error-tracking','redis','vector-db',
+  'chatbots', 'image-generation', 'video', 'writing', 'audio',
+  'automation', 'marketing', 'productivity'
 ]
 
 export async function getPlaygroundTools(): Promise<PlaygroundTool[]> {
