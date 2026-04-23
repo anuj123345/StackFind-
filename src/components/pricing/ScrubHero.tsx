@@ -8,6 +8,7 @@ import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { Zap, ArrowRight } from "lucide-react"
 import Link from "next/link"
+import { GetStartedButton } from "@/components/ui/get-started-button"
 
 export function ScrubHero() {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -72,15 +73,11 @@ export function ScrubHero() {
             transition={{ delay: 1, duration: 1 }}
             className="flex flex-col sm:flex-row items-center gap-6"
           >
-            <Link 
-              href="/playground" 
-              className={cn(
-                buttonVariants({ variant: "hero" }), 
-                "bg-indigo-600 hover:bg-indigo-500 text-white border-none rounded-2xl px-10 py-6 text-lg font-black group shadow-2xl shadow-indigo-500/30 h-auto flex items-center gap-4 transition-all hover:scale-105 active:scale-95"
-              )}
-            >
-              Launch Playground <ArrowRight size={20} className="transition-transform group-hover:translate-x-2" />
-            </Link>
+            <GetStartedButton 
+              text="Launch Playground"
+              href="/playground"
+              className="bg-indigo-600 hover:bg-indigo-500 text-white border-none shadow-2xl shadow-indigo-500/30"
+            />
           </motion.div>
         </motion.div>
 
