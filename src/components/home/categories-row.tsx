@@ -41,65 +41,70 @@ interface CategoriesRowProps {
 
 export function CategoriesRow({ categories }: CategoriesRowProps) {
   return (
-    <section className="relative z-10 px-4 pb-20">
-      <div className="max-w-6xl mx-auto">
+    <section className="relative z-10 px-4 py-8">
+      <div className="max-w-7xl mx-auto">
 
         {/* Section label + link */}
-        <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <span
-              className="text-[0.6875rem] font-semibold tracking-[0.14em] uppercase"
-              style={{ color: "#C4B0A0" }}
+              className="text-[0.65rem] font-bold tracking-[0.2em] uppercase opacity-60"
+              style={{ color: "#F9F5F1" }}
             >
               Browse by Category
             </span>
-            <div className="h-px w-16" style={{ background: "rgba(140,110,80,0.1)" }} />
+            <div className="h-px w-12 bg-white/10" />
           </div>
           <Link
             href="/categories"
-            className="text-[0.75rem] font-semibold transition-colors duration-200 hover:text-[#1C1611]"
-            style={{ color: "#C4B0A0" }}
+            className="text-[0.7rem] font-bold transition-colors duration-200 hover:text-white opacity-60 hover:opacity-100"
+            style={{ color: "#F9F5F1" }}
           >
             All {categories.length} →
           </Link>
         </div>
 
         {/* Scrollable chip row */}
-        <div
-          className="flex gap-2 overflow-x-auto pb-1"
-          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-        >
-          {categories.map((cat) => (
-            <Link
-              key={cat.slug}
-              href={`/category/${cat.slug}`}
-              className="group flex-shrink-0 flex items-center gap-2 px-3.5 py-2.5 rounded-2xl transition-all duration-200 hover:bg-[rgba(99,102,241,0.07)] hover:border-[rgba(99,102,241,0.2)]"
-              style={{
-                background: "rgba(255,255,255,0.03)",
-                border: "1px solid rgba(255,255,255,0.08)",
-              }}
-            >
-              <span
-                className="leading-none select-none"
-                style={{ fontSize: "1rem" }}
-                aria-hidden="true"
+        <div className="relative -mx-4 overflow-hidden group">
+          <div
+            className="flex gap-2 overflow-x-auto px-4 pb-4 no-scrollbar scroll-smooth"
+            style={{ 
+              scrollbarWidth: "none", 
+              msOverflowStyle: "none",
+              WebkitOverflowScrolling: "touch"
+            }}
+          >
+            {categories.map((cat) => (
+              <Link
+                key={cat.slug}
+                href={`/category/${cat.slug}`}
+                className="group flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all duration-300 hover:bg-white/5 border border-white/5 hover:border-white/20"
+                style={{
+                  background: "rgba(255,255,255,0.02)",
+                }}
               >
-                {getIcon(cat.slug, cat.icon)}
-              </span>
-              <span
-                className="text-[0.8125rem] font-semibold whitespace-nowrap transition-colors duration-200 group-hover:text-indigo-400"
-                style={{ color: "#F9F5F1" }}
-              >
-                {cat.name}
-              </span>
-              <span
-                className="text-[0.6875rem] font-bold tabular-nums ml-0.5"
-                style={{ color: "#8E8277" }}
-              >
-                {cat.tool_count}
-              </span>
-            </Link>
-          ))}
+                <span className="text-base select-none leading-none" aria-hidden="true">
+                  {getIcon(cat.slug, cat.icon)}
+                </span>
+                <span
+                  className="text-[0.8rem] font-semibold whitespace-nowrap"
+                  style={{ color: "#F9F5F1" }}
+                >
+                  {cat.name}
+                </span>
+                <span
+                  className="text-[0.65rem] font-bold tabular-nums opacity-40 group-hover:opacity-100 group-hover:text-indigo-400 transition-all"
+                  style={{ color: "#F9F5F1" }}
+                >
+                  {cat.tool_count}
+                </span>
+              </Link>
+            ))}
+          </div>
+          
+          {/* Edge Fades */}
+          <div className="absolute top-0 right-0 bottom-4 w-12 bg-gradient-to-l from-[#1C1611] to-transparent pointer-events-none" />
+          <div className="absolute top-0 left-0 bottom-4 w-12 bg-gradient-to-r from-[#1C1611] to-transparent pointer-events-none" />
         </div>
 
       </div>
