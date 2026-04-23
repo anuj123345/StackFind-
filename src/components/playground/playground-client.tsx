@@ -10,7 +10,7 @@ import { PlaygroundPaywall } from "./playground-paywall"
 import Link from "next/link"
 import {
   FlaskConical, Trash2, X, Sparkles, Loader2, Plus, Check,
-  Search, Copy, RotateCcw, DollarSign, ArrowRight, ChevronDown,
+  Search, Copy, RotateCcw, DollarSign, ArrowRight, ChevronDown, Zap,
 } from "lucide-react"
 
 // ─── Constants ───────────────────────────────────────────────────────────────
