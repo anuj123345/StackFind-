@@ -54,7 +54,13 @@ export default function CheckoutClient({ tools, usdToInrRate, userEmail }: Props
 
       const data = await response.json()
       if (data.success) {
-        setSuccess(true)
+        if (data.paymentLink) {
+          // Real-time payment: redirect to Razorpay
+          window.location.href = data.paymentLink
+        } else {
+          // Fallback: show success screen
+          setSuccess(true)
+        }
       } else {
         alert(data.error || "Failed to submit request")
       }
