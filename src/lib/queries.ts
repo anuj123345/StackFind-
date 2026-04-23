@@ -227,3 +227,31 @@ export async function getUserProfile() {
   
   return data
 }
+
+export async function getToolsBySlugs(slugs: string[]): Promise<PlaygroundTool[]> {
+  if (!slugs.length) return []
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('tools')
+    .select('slug, name, tagline, website, logo_url, pricing_model, starting_price_usd, starting_price_inr, is_made_in_india, managed_billing_enabled, convenience_fee_percent')
+    .in('slug', slugs)
+    .eq('status', 'approved')
+
+  if (!data) return []
+
+  return (data as any[]).map(row => ({
+    slug: row.slug,
+    name: row.name,
+    tagline: row.tagline,
+    website: row.website,
+    logo_url: row.logo_url,
+    pricing_model: row.pricing_model,
+    starting_price_usd: row.starting_price_usd,
+    starting_price_inr: row.starting_price_inr,
+    is_made_in_india: row.is_made_in_india,
+    managed_billing_enabled: row.managed_billing_enabled,
+    convenience_fee_percent: row.convenience_fee_percent,
+    categorySlug: '',
+    categoryName: '',
+  }))
+}

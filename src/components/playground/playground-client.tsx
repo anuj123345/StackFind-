@@ -1100,6 +1100,21 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
                   <p className="text-[9px] pt-1" style={{ color: "rgba(196,176,160,0.7)" }}>
                     Starting plan prices only. Actual cost scales with usage.
                   </p>
+
+                  {/* Buy Entire Stack Button */}
+                  {stack.length > 0 && totalCostInr > 0 && (
+                    <Link
+                      href={`/checkout/stack?slugs=${stack.map(t => t.slug).join(",")}`}
+                      className="flex items-center justify-center gap-2 w-full py-3 mt-3 rounded-xl font-bold text-xs transition-all duration-200 shadow-sm hover:shadow-md hover:scale-[1.01] active:scale-[0.99]"
+                      style={{ 
+                        background: "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)", 
+                        color: "#fff",
+                      }}
+                    >
+                      <DollarSign size={13} />
+                      Buy Entire Stack (managed)
+                    </Link>
+                  )}
                 </div>
               </>
             )}
