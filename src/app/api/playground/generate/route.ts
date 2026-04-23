@@ -61,8 +61,8 @@ export async function POST(req: NextRequest) {
       else if (t.startingPriceUsd) effectiveInr = Math.round(t.startingPriceUsd * usdToInrRate)
 
       const billingContext = t.managed_billing_enabled 
-        ? "Managed INR Billing Available (UPI/GST)" 
-        : (t.startingPriceInr ? "Native INR/UPI support" : "USD/International Only")
+        ? "INR Billing Available via UPI" 
+        : "Standard USD Billing"
 
       return `- ${t.name}: Price: ${t.startingPriceInr ? `₹${t.startingPriceInr}/mo` : "N/A"} / ${t.startingPriceUsd ? `$${t.startingPriceUsd}/mo` : "N/A"}, (ESTIMATED TOTAL: ₹${effectiveInr}/mo). Billing: ${billingContext}. Tagline: ${t.tagline}`
     }).join("\n")

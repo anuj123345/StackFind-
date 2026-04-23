@@ -283,7 +283,7 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
             <SidebarLink icon={<Activity size={18} />} label="Overview" active={tab === "command"} onClick={() => setTab("command")} />
             <SidebarLink icon={<Database size={18} />} label="Live Tools" active={tab === "tools"} onClick={() => setTab("tools")} />
             <SidebarLink icon={<FileText size={18} />} label="Submissions" active={tab === "submissions"} onClick={() => setTab("submissions")} count={submissions.length} />
-            <SidebarLink icon={<PieChart size={18} />} label="Managed Billing" active={tab === "leads"} onClick={() => setTab("leads")} count={billingRequests.length} />
+            <SidebarLink icon={<PieChart size={18} />} label="Billing Leads" active={tab === "leads"} onClick={() => setTab("leads")} count={billingRequests.length} />
           </nav>
         </div>
 

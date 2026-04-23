@@ -105,7 +105,7 @@ export function HeroSection({ stats }: HeroSectionProps) {
           className="text-center max-w-[34rem] leading-relaxed mb-12"
           style={{ fontSize: "clamp(0.9375rem, 1.4vw, 1.0625rem)", color: "rgba(250,247,242,0.5)" }}
         >
-          INR pricing. UPI billing. GST invoices. Made‑in‑India tools.{" "}
+          INR pricing. UPI billing. Curated discovery. Made‑in‑India tools.{" "}
           <span style={{ color: "rgba(250,247,242,0.82)", fontWeight: 600 }}>
             No dollar conversion. No surprises.
           </span>

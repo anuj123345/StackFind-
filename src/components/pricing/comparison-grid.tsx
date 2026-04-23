@@ -10,11 +10,6 @@ const COMPARISON = [
     managed: { text: "UPI, NetBanking, Debit", icon: <Check className="text-emerald-500" />, sub: "Use any Indian payment method" }
   },
   {
-    feature: "GST Invoicing",
-    direct: { text: "No GST/Input Credit", icon: <X className="text-rose-500" />, sub: "Lose 18% of spend" },
-    managed: { text: "Valid B2B GST Invoice", icon: <Check className="text-emerald-500" />, sub: "Claim 18% input credit back" }
-  },
-  {
     feature: "Forex Charges",
     direct: { text: "3.5% + Markups", icon: <X className="text-rose-500" />, sub: "Hidden bank charges" },
     managed: { text: "Zero Forex Markup", icon: <Check className="text-emerald-500" />, sub: "Pay in fixed INR amount" }
@@ -36,10 +31,10 @@ export function ComparisonGrid() {
     <div className="max-w-6xl mx-auto px-4 py-24">
       <div className="text-center mb-16">
         <h2 className="text-3xl md:text-5xl font-black text-stone-900 mb-6 tracking-tight">
-          StackFind Managed <span className="text-indigo-600">vs</span> Direct Billing
+          StackFind <span className="text-indigo-600">Pro</span> Benefits
         </h2>
         <p className="text-lg text-[#7A6A57] max-w-2xl mx-auto">
-          We handle the complexity of international payments so you can focus on building.
+          Unlock advanced features designed to accelerate your build speed.
         </p>
       </div>
 
@@ -51,13 +46,13 @@ export function ComparisonGrid() {
         <div className="p-8 bg-stone-50/50 border-b border-stone-100 border-x border-stone-100">
           <div className="flex items-center gap-3">
             <Globe size={18} className="text-stone-400" />
-            <p className="font-bold text-stone-900">Direct Purchase</p>
+            <p className="font-bold text-stone-900">Standard Access</p>
           </div>
         </div>
         <div className="p-8 bg-indigo-600 border-b border-indigo-700">
           <div className="flex items-center gap-3">
             <Landmark size={18} className="text-indigo-100" />
-            <p className="font-bold text-white">StackFind Managed</p>
+            <p className="font-bold text-white">StackFind Pro</p>
           </div>
         </div>
 

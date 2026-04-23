@@ -79,7 +79,7 @@ export function PricingBreakdown({
             className="font-bold text-sm uppercase tracking-wider"
             style={{ fontFamily: "'Bricolage Grotesque Variable', sans-serif", color: "#1C1611" }}
           >
-            India Billing Support
+            India Support
           </h3>
         </div>
 
@@ -104,18 +104,6 @@ export function PricingBreakdown({
               <p className="text-sm font-bold text-[#1C1611]">UPI Payments</p>
               <p className="text-[0.8125rem]" style={{ color: "#7A6A57" }}>
                 {hasUpi ? "Pay via GPay, PhonePe, or Paytm." : "Credit card only."}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-3">
-            <div className={`mt-0.5 p-1 rounded-full ${hasGstInvoice ? "bg-emerald-50 text-emerald-600" : "bg-stone-50 text-stone-300"}`}>
-              <Check size={12} strokeWidth={3} />
-            </div>
-            <div>
-              <p className="text-sm font-bold text-[#1C1611]">GST Invoices</p>
-              <p className="text-[0.8125rem]" style={{ color: "#7A6A57" }}>
-                {hasGstInvoice ? "B2B invoices for tax input credit." : "Personal invoice only."}
               </p>
             </div>
           </div>
@@ -170,7 +158,7 @@ export function PricingBreakdown({
           <div className="mt-6 p-4 rounded-xl bg-amber-50/50 border border-amber-100 flex gap-3">
             <Info size={16} className="text-amber-600 shrink-0 mt-0.5" />
             <p className="text-xs leading-relaxed text-amber-800/80">
-              Pricing shown above is for India region and may include exclusive founder discounts. GST of 18% is extra if not mentioned otherwise.
+              Pricing shown above is for India region and may include exclusive founder discounts.
             </p>
           </div>
         </div>

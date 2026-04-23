@@ -64,7 +64,7 @@ function welcomeEmail(name: string, appUrl: string): string {
           Welcome, ${name}
         </h1>
         <p style="margin:0 0 28px;font-size:15px;color:#7A6A57;line-height:1.7;">
-          Your account is ready. You now have full access to every AI tool in the directory — INR pricing, UPI billing, GST invoices, and Made-in-India picks included.
+          Your account is ready. You now have full access to every AI tool in the directory — INR pricing, UPI billing, and Made-in-India picks included.
         </p>
 
         <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">

@@ -4,7 +4,7 @@ import { motion, useScroll, useTransform } from "framer-motion"
 import { useRef } from "react"
 
 const stats = [
-  { value: "18%", label: "GST Input Credit", desc: "Back in your pocket on every USD tool purchase." },
+  { value: "100%", label: "AI Powered", desc: "Every stack generation optimized by advanced LLMs." },
   { value: "5000+", label: "Curated Tools", desc: "Every AI tool vetted for Indian founder needs." },
   { value: "₹0", label: "Forex Markup", desc: "Pay in INR. Avoid hidden credit card conversion fees." },
   { value: "24/7", label: "Managed Support", desc: "We bridge the gap with international vendors." }

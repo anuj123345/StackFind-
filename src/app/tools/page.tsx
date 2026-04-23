@@ -69,7 +69,7 @@ export default async function ToolsPage({ searchParams }: PageProps) {
             All AI Tools
           </h1>
           <p className="mb-10 max-w-lg" style={{ color: "#7A6A57", fontSize: "1.0625rem", lineHeight: "1.6" }}>
-            Curated AI tools with INR pricing, UPI billing, and GST invoice support.
+            Curated AI tools with INR pricing and UPI billing support.
           </p>
 
           <Suspense fallback={

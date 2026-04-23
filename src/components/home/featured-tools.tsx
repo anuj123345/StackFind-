@@ -118,8 +118,8 @@ function FeaturedCard({ tool, delay, color }: { tool: ToolWithCategoryNames; del
                   {tool.has_upi && (
                     <span className="text-[10px] font-medium" style={{ color: "#C4B0A0" }}>· UPI</span>
                   )}
-                  {tool.has_gst_invoice && (
-                    <span className="text-[10px] font-medium" style={{ color: "#C4B0A0" }}>· GST</span>
+                  {tool.is_made_in_india && (
+                    <span className="text-[10px] font-medium" style={{ color: "#C4B0A0" }}>· 🇮🇳</span>
                   )}
                 </div>
               </div>

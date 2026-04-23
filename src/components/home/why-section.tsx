@@ -7,7 +7,7 @@ const PILLARS = [
   {
     num: "01",
     title: "India-first pricing.",
-    body: "Every tool listed shows INR pricing, UPI support, and GST invoice availability. No more guessing what ₹ your dollar bill becomes.",
+    body: "Every tool listed shows INR pricing and UPI support. No more guessing what ₹ your dollar bill becomes.",
     accent: "#6366f1",
   },
   {

@@ -33,7 +33,6 @@ interface ToolCardProps {
   isMadeInIndia?: boolean
   hasInrBilling?: boolean
   hasUpi?: boolean
-  hasGstInvoice?: boolean
   categories?: string[]
   startingPriceUsd?: number | null
   startingPriceInr?: number | null
@@ -85,7 +84,6 @@ export function ToolCard({
   isMadeInIndia,
   hasInrBilling,
   hasUpi,
-  hasGstInvoice,
   categories = [],
   startingPriceUsd = null,
   startingPriceInr = null,
@@ -134,9 +132,6 @@ export function ToolCard({
                   )}
                   {hasUpi && (
                     <span className="text-[9px] font-medium" style={{ color: "#C4B0A0" }}>· UPI</span>
-                  )}
-                  {hasGstInvoice && (
-                    <span className="text-[9px] font-medium" style={{ color: "#C4B0A0" }}>· GST</span>
                   )}
                 </div>
               </div>
