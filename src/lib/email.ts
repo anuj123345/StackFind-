@@ -82,3 +82,71 @@ export async function sendUserBillingConfirmation({
     return { success: false, error: err }
   }
 }
+
+export async function sendStackBillingLeadNotification({
+  userEmail,
+  tools,
+  total,
+}: {
+  userEmail: string
+  tools: { name: string; priceInr: number }[]
+  total: number
+}) {
+  try {
+    const { data, error } = await resend.emails.send({
+      from: "StackFind <onboarding@resend.dev>",
+      to: [ADMIN_EMAIL],
+      subject: `🚀 New STACK Billing Lead: ${tools.length} Tools (₹${total})`,
+      html: `
+        <div style="font-family: sans-serif; line-height: 1.5; color: #333;">
+          <h2 style="color: #000;">New STACK INR Billing Request</h2>
+          <p>A user wants to buy a complete stack of ${tools.length} tools.</p>
+          <hr style="border: 0; border-top: 1px solid #eee;" />
+          <p><strong>User:</strong> ${userEmail}</p>
+          <p><strong>Total Value:</strong> ₹${total}</p>
+          <h3 style="margin-top: 20px;">Tool Breakdown:</h3>
+          <ul>
+            ${tools.map(t => `<li><strong>${t.name}</strong>: ₹${t.priceInr}/mo</li>`).join("")}
+          </ul>
+          <hr style="border: 0; border-top: 1px solid #eee;" />
+          <p style="font-size: 12px; color: #666;">View in <a href="https://stackfind.in/admin">Admin Dashboard</a>.</p>
+        </div>
+      `,
+    })
+    return { success: !error, error }
+  } catch (err) {
+    return { success: false, error: err }
+  }
+}
+
+export async function sendUserStackBillingConfirmation({
+  userEmail,
+  tools,
+  total,
+}: {
+  userEmail: string
+  tools: string[]
+  total: number
+}) {
+  try {
+    const { data, error } = await resend.emails.send({
+      from: "StackFind <onboarding@resend.dev>",
+      to: [userEmail],
+      subject: `Stack Request Received: ${tools.length} Tools`,
+      html: `
+        <div style="font-family: sans-serif; line-height: 1.5; color: #333;">
+          <h2 style="color: #000;">Ready to power up your stack!</h2>
+          <p>Hi there,</p>
+          <p>We've received your request to purchase a stack of <strong>${tools.length} tools</strong> (${tools.join(", ")}) for a total of <strong>₹${total}/month</strong>.</p>
+          <p>Our team is generating your unified payment link. This link will support UPI/Netbanking and will generate a single GST-compliant invoice for your entire stack.</p>
+          <p>Expect to hear from us within 24 hours.</p>
+          <br />
+          <p>Best,<br />The StackFind Team</p>
+        </div>
+      `,
+    })
+    return { success: !error, error }
+  } catch (err) {
+    return { success: false, error: err }
+  }
+}

@@ -38,10 +38,32 @@ export default function CheckoutClient({ tools, usdToInrRate, userEmail }: Props
 
   async function handlePayment() {
     setLoading(true)
-    // Simulate payment flow for now
-    await new Promise(r => setTimeout(r, 2000))
-    setSuccess(true)
-    setLoading(false)
+    try {
+      const response = await fetch("/api/billing/stack-request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tools: tools.map(t => ({
+            slug: t.slug,
+            name: t.name,
+            priceInr: t.starting_price_inr || (t.starting_price_usd ? Math.round(t.starting_price_usd * usdToInrRate) : 0)
+          })),
+          total
+        })
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        setSuccess(true)
+      } else {
+        alert(data.error || "Failed to submit request")
+      }
+    } catch (error) {
+      console.error("Payment Error:", error)
+      alert("Something went wrong. Please try again.")
+    } finally {
+      setLoading(false)
+    }
   }
 
   if (success) {
