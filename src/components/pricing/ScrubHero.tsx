@@ -17,12 +17,12 @@ export function ScrubHero() {
     offset: ["start start", "end end"]
   })
 
-  const opacity = useTransform(scrollYProgress, [0, 0.2, 0.8, 1], [1, 1, 0, 0])
+  const opacity = useTransform(scrollYProgress, [0, 0.1, 0.6, 0.8], [1, 1, 0, 0])
   const scale = useTransform(scrollYProgress, [0, 1], [1, 1.1])
-  const textY = useTransform(scrollYProgress, [0, 0.3], [0, -100])
+  const textY = useTransform(scrollYProgress, [0, 0.4], [0, -100])
 
   return (
-    <section ref={containerRef} className="relative h-[180vh] bg-[#1C1611]">
+    <section ref={containerRef} className="relative h-[130vh] bg-[#1C1611]">
       <div className="sticky top-0 h-screen w-full overflow-hidden">
         {/* The Scrubbing Canvas (Fallback to Gradient if no frames) */}
         <div className="absolute inset-0 z-0">
