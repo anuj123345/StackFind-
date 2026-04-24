@@ -1,4 +1,7 @@
-import { createClient } from "@/lib/supabase/server"
+"use client"
+
+import { useState, useEffect } from "react"
+import { createClient } from "@/lib/supabase/client"
 import { Footer } from "@/components/footer"
 import { ScrubHero } from "@/components/pricing/ScrubHero"
 import { ServicesBento } from "@/components/pricing/ServicesBento"
@@ -6,23 +9,70 @@ import { FAQ } from "@/components/home/faq"
 import { CategoriesRow } from "@/components/home/categories-row"
 import { PricingSection } from "@/components/home/pricing-section"
 import { AmbientBackground } from "@/components/home/ambient-background"
+import { WelcomeIntro } from "@/components/home/welcome-intro"
+import { AnimatePresence } from "framer-motion"
+import { Sparkles } from "lucide-react"
 
-export default async function HomePage() {
-  const supabase = await createClient()
+export default function HomePage() {
+  const [showIntro, setShowIntro] = useState<boolean | null>(null)
+  const [categories, setCategories] = useState<any[]>([])
 
-  const { data: categories } = await supabase
-    .from("categories")
-    .select("*, tools(count)")
-    .order("name")
+  useEffect(() => {
+    // Check session storage
+    const hasSeenIntro = sessionStorage.getItem("stackfind-intro-seen")
+    if (hasSeenIntro) {
+      setShowIntro(false)
+    } else {
+      setShowIntro(true)
+    }
 
-  // Map tool count correctly
-  const mappedCategories = (categories || []).map((cat: any) => ({
-    ...cat,
-    tool_count: cat.tools?.[0]?.count || 0
-  }))
+    // Fetch categories client-side to keep it reactive with the intro
+    const fetchCategories = async () => {
+      const supabase = createClient()
+      const { data } = await supabase
+        .from("categories")
+        .select("*, tools(count)")
+        .order("name")
+      
+      const mapped = (data || []).map((cat: any) => ({
+        ...cat,
+        tool_count: cat.tools?.[0]?.count || 0
+      }))
+      setCategories(mapped)
+    }
+    fetchCategories()
+  }, [])
+
+  const handleIntroComplete = () => {
+    sessionStorage.setItem("stackfind-intro-seen", "true")
+    setShowIntro(false)
+  }
+
+  if (showIntro === null) return null
+
+  const replayIntro = () => {
+    setShowIntro(true)
+  }
 
   return (
     <div className="relative overflow-hidden bg-[#1C1611] min-h-screen">
+      <AnimatePresence>
+        {showIntro && <WelcomeIntro onComplete={handleIntroComplete} />}
+      </AnimatePresence>
+
+      {/* 1. Replay Welcome Button (Top Left) */}
+      <button 
+        onClick={replayIntro}
+        className="fixed top-8 left-8 z-[60] group flex items-center gap-3 px-4 py-2 rounded-xl liquid-glass border border-white/5 hover:border-white/10 transition-all active:scale-95"
+      >
+        <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center border border-white/5 group-hover:scale-110 transition-transform">
+          <Sparkles size={14} className="text-indigo-400" />
+        </div>
+        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 group-hover:text-white transition-colors">
+          Welcome
+        </span>
+      </button>
+
       {/* Dynamic Background Elements (Client Side) */}
       <AmbientBackground />
 
@@ -35,7 +85,7 @@ export default async function HomePage() {
 
         {/* 3. Tool Categories (Restyled) */}
         <div className="py-4">
-          <CategoriesRow categories={mappedCategories} />
+          <CategoriesRow categories={categories} />
         </div>
 
         {/* 4. Pricing & Membership */}
