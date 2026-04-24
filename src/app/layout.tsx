@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { Onest } from "next/font/google"
 import { Navbar } from "@/components/navbar"
 import { SearchModal } from "@/components/search/search-modal"
+import { RouteTransition } from "@/components/ui/route-transition"
 import { Analytics } from "@vercel/analytics/react"
 import "./globals.css"
 
@@ -32,6 +33,7 @@ export default function RootLayout({
       <body className="mesh-bg grain">
         <div className="relative z-10">
           <Navbar />
+          <RouteTransition />
           <main>{children}</main>
         </div>
         <SearchModal />
