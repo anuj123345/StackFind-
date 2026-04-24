@@ -4,11 +4,10 @@ import { useRef } from "react"
 import { motion, useScroll, useTransform } from "framer-motion"
 import { ScrubSequence } from "./ScrubSequence"
 import { BlurText } from "./BlurText"
-import { buttonVariants } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
 import { Zap, ArrowRight } from "lucide-react"
+import { Button, buttonVariants } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 import Link from "next/link"
-import { GetStartedButton } from "@/components/ui/get-started-button"
 
 export function ScrubHero() {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -41,7 +40,7 @@ export function ScrubHero() {
         {/* Cinematic Content */}
         <motion.div 
           style={{ opacity, y: textY }}
-          className="relative z-10 h-full flex flex-col items-center justify-center px-6 text-center"
+          className="relative z-30 h-full flex flex-col items-center justify-center px-6 text-center"
         >
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
@@ -73,13 +72,19 @@ export function ScrubHero() {
             transition={{ delay: 1, duration: 1 }}
             className="flex flex-col sm:flex-row items-center gap-6"
           >
-            <GetStartedButton 
-              text="Launch Playground"
-              href="/playground"
-              className="bg-indigo-600 hover:bg-indigo-500 text-white border-none shadow-2xl shadow-indigo-500/30"
-            />
+            <Link 
+              href="/playground" 
+              className={cn(
+                buttonVariants({ variant: "hero", size: "lg" }),
+                "group relative px-10 py-7 text-xl rounded-2xl flex items-center gap-3 transition-all hover:scale-[1.03] active:scale-[0.97]"
+              )}
+            >
+              Launch Playground
+              <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+            </Link>
           </motion.div>
         </motion.div>
+
 
         {/* Bottom Fade */}
         <div className="absolute bottom-0 left-0 w-full h-64 bg-gradient-to-t from-[#1C1611] to-transparent z-20" />
