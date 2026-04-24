@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import { Onest } from "next/font/google"
+import Script from "next/script"
 import { Navbar } from "@/components/navbar"
 import { SearchModal } from "@/components/search/search-modal"
 import { RouteTransition } from "@/components/ui/route-transition"
@@ -38,6 +39,7 @@ export default function RootLayout({
         </div>
         <SearchModal />
         <Analytics />
+        <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
       </body>
     </html>
   )
