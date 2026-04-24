@@ -4,18 +4,21 @@ import Link from "next/link"
 import { ArrowUpRight, ChevronUp, Plus, Check } from "lucide-react"
 import { getLogoUrl } from "@/lib/logo"
 import { useStack } from "@/hooks/use-stack"
+import { cn } from "@/lib/utils"
+import { motion } from "framer-motion"
 
 // Deterministic color pair from a string — never random, always consistent per tool
 const LETTER_PALETTES = [
-  { bg: "#EEF2FF", text: "#4338CA" }, // indigo
-  { bg: "#FEF3C7", text: "#92400E" }, // amber
-  { bg: "#D1FAE5", text: "#065F46" }, // emerald
-  { bg: "#FCE7F3", text: "#9D174D" }, // pink
-  { bg: "#E0F2FE", text: "#075985" }, // sky
-  { bg: "#F3E8FF", text: "#6B21A8" }, // purple
-  { bg: "#FFF1F2", text: "#9F1239" }, // rose
-  { bg: "#ECFDF5", text: "#14532D" }, // green
+  { bg: "rgba(99, 102, 241, 0.1)", text: "#6366f1", border: "rgba(99, 102, 241, 0.2)" }, // indigo
+  { bg: "rgba(217, 119, 6, 0.1)",  text: "#D97706", border: "rgba(217, 119, 6, 0.2)" },  // amber
+  { bg: "rgba(16, 185, 129, 0.1)", text: "#059669", border: "rgba(16, 185, 129, 0.2)" }, // emerald
+  { bg: "rgba(236, 72, 153, 0.1)", text: "#DB2777", border: "rgba(236, 72, 153, 0.2)" }, // pink
+  { bg: "rgba(14, 165, 233, 0.1)", text: "#0284C7", border: "rgba(14, 165, 233, 0.2)" }, // sky
+  { bg: "rgba(168, 85, 247, 0.1)", text: "#9333EA", border: "rgba(168, 85, 247, 0.2)" }, // purple
+  { bg: "rgba(244, 63, 94, 0.1)",  text: "#E11D48", border: "rgba(244, 63, 94, 0.2)" },  // rose
+  { bg: "rgba(34, 197, 94, 0.1)",  text: "#16A34A", border: "rgba(34, 197, 94, 0.2)" },  // green
 ]
+
 function letterPalette(name: string) {
   let h = 0
   for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0
@@ -39,10 +42,10 @@ interface ToolCardProps {
 }
 
 const PRICING: Record<string, { label: string; bg: string; color: string }> = {
-  free:        { label: "Free",        bg: "rgba(16,185,129,0.09)",  color: "#059669" },
-  freemium:    { label: "Freemium",    bg: "rgba(99,102,241,0.09)",  color: "#6366f1" },
-  paid:        { label: "Paid",        bg: "rgba(217,119,6,0.09)",   color: "#D97706" },
-  open_source: { label: "Open Source", bg: "rgba(59,130,246,0.09)",  color: "#3b82f6" },
+  free:        { label: "Free",        bg: "rgba(16,185,129,0.1)",  color: "#059669" },
+  freemium:    { label: "Freemium",    bg: "rgba(99,102,241,0.1)",  color: "#6366f1" },
+  paid:        { label: "Paid",        bg: "rgba(217,119,6,0.1)",   color: "#D97706" },
+  open_source: { label: "Open Source", bg: "rgba(59,130,246,0.1)",  color: "#3b82f6" },
 }
 
 function ToolLogo({ name, website, logoUrl }: { name: string; website?: string | null; logoUrl?: string | null }) {
@@ -61,16 +64,16 @@ function ToolLogo({ name, website, logoUrl }: { name: string; website?: string |
     )
   }
 
-  // No website at all → letter avatar
   const palette = letterPalette(name)
   return (
     <span
-      className="font-black text-base select-none flex items-center justify-center w-full h-full rounded-xl"
+      className="font-black text-base select-none flex items-center justify-center w-full h-full rounded-xl backdrop-blur-[2px]"
       style={{
         background: palette.bg,
         color: palette.text,
+        border: `1px solid ${palette.border}`,
         fontFamily: "'Bricolage Grotesque Variable', sans-serif",
-        fontSize: 15,
+        fontSize: 16,
         letterSpacing: "-0.02em",
       }}
     >
@@ -93,131 +96,114 @@ export function ToolCard({
   const inStack = isInStack(slug)
 
   return (
-    <Link href={`/tools/${slug}`} className="card-bezel h-full group block">
-      <div className="card-inner flex flex-col h-full">
+    <motion.div
+      whileHover={{ y: -4, scale: 1.01 }}
+      transition={{ type: "spring", stiffness: 400, damping: 25 }}
+      className="h-full"
+    >
+      <Link href={`/tools/${slug}`} className="block h-full group">
+        <div className={cn(
+          "relative h-full flex flex-col rounded-2xl transition-all duration-500",
+          "bg-white/80 backdrop-blur-md border border-black/[0.06]",
+          "hover:border-indigo-500/30 hover:shadow-[0_20px_50px_-12px_rgba(140,110,80,0.15)]",
+          "overflow-hidden"
+        )}>
+          {/* Subtle light shimmer on hover */}
+          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none">
+            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-indigo-500/[0.03] to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+          </div>
 
-        {/* Top */}
-        <div className="p-4 flex flex-col gap-3 flex-1">
+          <div className="p-5 flex flex-col gap-4 flex-1">
+            {/* Header row */}
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-4">
+                {/* Logo with Lens Effect */}
+                <div className="relative w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 overflow-hidden bg-black/[0.02] border border-black/[0.04] group-hover:border-indigo-500/20 transition-colors">
+                  <ToolLogo name={name} website={website} logoUrl={logoUrl} />
+                </div>
 
-          {/* Header row */}
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex items-center gap-3">
-              {/* Logo */}
-              <div
-                className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden"
-                style={{
-                  background: "rgba(140,110,80,0.06)",
-                  border: "1px solid rgba(140,110,80,0.1)",
-                }}
-              >
-                <ToolLogo name={name} website={website} logoUrl={logoUrl} />
+                <div className="min-w-0">
+                  <h3 className="font-display text-base font-bold leading-tight truncate text-[#1C1611] tracking-tight group-hover:text-indigo-600 transition-colors">
+                    {name}
+                  </h3>
+                  <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                    {isMadeInIndia && (
+                      <span className="text-[9px] font-black tracking-widest text-[#D97706] uppercase px-1.5 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20">
+                        🇮🇳 INDIA
+                      </span>
+                    )}
+                    {(hasInrBilling || hasUpi) && (
+                      <span className="text-[9px] font-bold text-[#7A6A57]/60 tracking-wider">
+                        {hasInrBilling && "₹ INR"} {hasUpi && "· UPI"}
+                      </span>
+                    )}
+                  </div>
+                </div>
               </div>
 
-              {/* Name + India badge */}
-              <div className="min-w-0">
-                <h3
-                  className="font-bold text-sm leading-tight truncate"
-                  style={{ color: "#1C1611", fontFamily: "'Bricolage Grotesque Variable', sans-serif" }}
+              {/* Action Buttons */}
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    toggle({
+                      slug, name, tagline,
+                      website: website ?? null,
+                      logoUrl: logoUrl ?? null,
+                      pricingModel,
+                      startingPriceUsd,
+                      startingPriceInr,
+                      categories
+                    })
+                  }}
+                  className={cn(
+                    "w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300",
+                    inStack 
+                      ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200" 
+                      : "bg-black/[0.04] text-[#7A6A57] hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 border border-transparent"
+                  )}
                 >
-                  {name}
-                </h3>
-                <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                  {isMadeInIndia && (
-                    <span className="text-[9px] font-bold tracking-wide" style={{ color: "#D97706" }}>
-                      🇮🇳 INDIA
-                    </span>
-                  )}
-                  {hasInrBilling && (
-                    <span className="text-[9px] font-medium" style={{ color: "#C4B0A0" }}>₹ INR</span>
-                  )}
-                  {hasUpi && (
-                    <span className="text-[9px] font-medium" style={{ color: "#C4B0A0" }}>· UPI</span>
-                  )}
+                  {inStack ? <Check size={12} strokeWidth={3} /> : <Plus size={12} strokeWidth={3} />}
+                </button>
+                
+                <div className="w-8 h-8 rounded-full flex items-center justify-center bg-black/[0.04] text-[#7A6A57] opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-2 group-hover:translate-x-0 border border-transparent hover:bg-white hover:border-black/5 hover:shadow-sm">
+                  <ArrowUpRight size={13} strokeWidth={2.5} />
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-1 flex-shrink-0">
-              {/* Add to stack button */}
-              <button
-                onClick={(e) => {
-                  e.preventDefault()
-                  e.stopPropagation()
-                  toggle({
-                    slug, name, tagline,
-                    website: website ?? null,
-                    logoUrl: logoUrl ?? null,
-                    pricingModel,
-                    startingPriceUsd,
-                    startingPriceInr,
-                    categories
-                  })
-                }}
-                className="w-7 h-7 rounded-full flex items-center justify-center transition-all duration-200"
-                style={{
-                  background: inStack ? "rgba(99,102,241,0.12)" : "rgba(140,110,80,0.06)",
-                  border: `1px solid ${inStack ? "rgba(99,102,241,0.3)" : "rgba(140,110,80,0.1)"}`,
-                  opacity: inStack ? 1 : undefined,
-                }}
-                title={inStack ? "Remove from playground" : "Add to playground"}
+            {/* Tagline */}
+            <p className="text-xs leading-relaxed text-[#7A6A57] line-clamp-2 font-medium opacity-80 group-hover:opacity-100 transition-opacity">
+              {tagline}
+            </p>
+          </div>
+
+          {/* Footer Area */}
+          <div className="mt-auto px-5 py-3.5 bg-black/[0.015] border-t border-black/[0.04] flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span
+                className="text-[10px] font-bold px-2.5 py-1 rounded-lg"
+                style={{ background: p.bg, color: p.color, border: `1px solid ${p.color}20` }}
               >
-                {inStack
-                  ? <Check size={11} style={{ color: "#6366f1" }} />
-                  : <Plus size={11} style={{ color: "#7A6A57" }} className="opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-                }
-              </button>
-              <div
-                className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                style={{ background: "rgba(140,110,80,0.06)", border: "1px solid rgba(140,110,80,0.1)" }}
-              >
-                <ArrowUpRight size={13} style={{ color: "#7A6A57" }} />
-              </div>
+                {p.label}
+              </span>
+              {categories[0] && (
+                <span className="text-[10px] font-bold text-[#C4B0A0] uppercase tracking-wider hidden sm:inline">
+                  {categories[0]}
+                </span>
+              )}
+            </div>
+
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/50 border border-black/[0.04] shadow-sm">
+              <ChevronUp size={11} className="text-[#C4B0A0] group-hover:text-indigo-500 transition-colors" />
+              <span className="text-[11px] font-black tabular-nums text-[#7A6A57]">
+                {upvotes.toLocaleString()}
+              </span>
             </div>
           </div>
-
-          {/* Tagline */}
-          <p
-            className="text-xs leading-relaxed flex-1 line-clamp-2"
-            style={{ color: "#7A6A57" }}
-          >
-            {tagline}
-          </p>
         </div>
-
-        {/* Footer */}
-        <div
-          className="flex items-center justify-between px-4 py-2.5"
-          style={{ borderTop: "1px solid rgba(140,110,80,0.07)" }}
-        >
-          <div className="flex items-center gap-1.5">
-            <span
-              className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
-              style={{ background: p.bg, color: p.color }}
-            >
-              {p.label}
-            </span>
-            {categories[0] && (
-              <span
-                className="text-[10px] px-2 py-0.5 rounded-full hidden sm:inline"
-                style={{ background: "rgba(140,110,80,0.06)", color: "#C4B0A0" }}
-              >
-                {categories[0]}
-              </span>
-            )}
-          </div>
-
-          <div
-            className="flex items-center gap-1 px-2 py-1 rounded-lg"
-            style={{ border: "1px solid rgba(140,110,80,0.1)" }}
-          >
-            <ChevronUp size={11} style={{ color: "#C4B0A0" }} />
-            <span className="text-[11px] font-semibold tabular-nums" style={{ color: "#C4B0A0" }}>
-              {upvotes.toLocaleString()}
-            </span>
-          </div>
-        </div>
-
-      </div>
-    </Link>
+      </Link>
+    </motion.div>
   )
 }

@@ -296,6 +296,7 @@ input::placeholder {
   border-color: rgba(140,110,80,0.35);
   color: #1C1611;
   transform: translateY(-1px);
+}
 
 /* ── Liquid-Glass & Chromatic Loading Effects ── */
 
