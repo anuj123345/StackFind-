@@ -169,7 +169,10 @@ export type Database = {
           full_name: string | null
           avatar_url: string | null
           is_admin: boolean
+          playground_usage_count: number
+          is_premium_playground: boolean
           created_at: string
+          updated_at: string | null
         }
         Insert: {
           id: string
@@ -177,7 +180,10 @@ export type Database = {
           full_name?: string | null
           avatar_url?: string | null
           is_admin?: boolean
+          playground_usage_count?: number
+          is_premium_playground?: boolean
           created_at?: string
+          updated_at?: string | null
         }
         Update: {
           id?: string
@@ -185,7 +191,10 @@ export type Database = {
           full_name?: string | null
           avatar_url?: string | null
           is_admin?: boolean
+          playground_usage_count?: number
+          is_premium_playground?: boolean
           created_at?: string
+          updated_at?: string | null
         }
         Relationships: [
           {

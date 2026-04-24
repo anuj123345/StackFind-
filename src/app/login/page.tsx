@@ -25,7 +25,9 @@ function LoginContent() {
   const supabase = createClient()
 
   function callbackUrl() {
-    return `${window.location.origin}/auth/callback`
+    const next = searchParams.get("next")
+    const base = `${window.location.origin}/auth/callback`
+    return next ? `${base}?next=${encodeURIComponent(next)}` : base
   }
 
   async function signInWithGoogle() {

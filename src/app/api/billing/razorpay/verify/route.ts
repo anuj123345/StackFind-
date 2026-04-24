@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
+import Razorpay from "razorpay";
+import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
@@ -20,11 +22,33 @@ export async function POST(req: NextRequest) {
     const isAuthentic = expectedSignature === razorpay_signature;
 
     if (isAuthentic) {
-      // Here you would typically update your database to mark the order as paid
-      // Since the prompt says "Do not create database tables unless project already has a database"
-      // and I see a billing_requests table in src/app/api/billing/stack-request/route.ts,
-      // we might want to update that if we had the request ID.
-      // For now, we return success as per the integration prompt.
+      const razorpay = new Razorpay({
+        key_id: process.env.RAZORPAY_KEY_ID!,
+        key_secret: process.env.RAZORPAY_KEY_SECRET!,
+      });
+
+      // Fetch order details to check what was purchased
+      const order = await razorpay.orders.fetch(razorpay_order_id);
+      const orderNotes = order.notes as any;
+
+      if (orderNotes?.type === "playground_pro") {
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (user) {
+          const { error: updateError } = await (supabase as any)
+            .from('profiles')
+            .update({ 
+              is_premium_playground: true,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', user.id);
+
+          if (updateError) {
+            console.error("Profile Update Error:", updateError);
+          }
+        }
+      }
       
       return NextResponse.json({ success: true, message: "Payment verified successfully" });
     } else {

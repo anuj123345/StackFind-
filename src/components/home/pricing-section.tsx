@@ -34,7 +34,7 @@ const PLANS = [
       "Early access to new tools",
     ],
     cta: "Unlock Pro",
-    href: "/playground",
+    href: "/playground?unlock=pro",
     highlight: true,
     icon: <Sparkles className="w-5 h-5 text-amber-500" />
   },

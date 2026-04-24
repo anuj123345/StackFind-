@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { amount, receipt } = await req.json();
+    const { amount, receipt, notes } = await req.json();
 
     if (!amount || amount < 100) {
       return NextResponse.json({ error: "Amount must be at least 100 paise (₹1)." }, { status: 400 });
@@ -25,6 +25,7 @@ export async function POST(req: NextRequest) {
       amount: Math.round(amount), // amount in paise
       currency: "INR",
       receipt: receipt || `receipt_${Date.now()}`,
+      notes: notes || {},
     };
 
     const order = await razorpay.orders.create(options);

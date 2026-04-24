@@ -8,6 +8,7 @@ import type { PlaygroundTool } from "@/lib/queries"
 import { incrementPlaygroundUsage } from "@/app/actions/usage"
 import { PlaygroundPaywall } from "./playground-paywall"
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 import {
   FlaskConical, Trash2, X, Sparkles, Loader2, Plus, Check,
   Search, Copy, RotateCcw, DollarSign, ArrowRight, ChevronDown, Zap,
@@ -378,7 +379,7 @@ function PlaygroundLockWall({ tools }: { tools: PlaygroundTool[] }) {
             Build your stack, describe your idea, and get a complete build plan with timelines and cost breakdown.
           </p>
           <Link
-            href="/login"
+            href={`/login?next=${encodeURIComponent("/playground?unlock=pro")}`}
             className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl font-bold text-[0.9375rem] transition-all duration-200 hover:opacity-90"
             style={{ background: "#6366f1", color: "#fff" }}
           >
@@ -507,12 +508,19 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
   const [copied, setCopied] = useState(false)
+  const searchParams = useSearchParams()
   const [sessionUsage, setSessionUsage] = useState(profile?.playground_usage_count || 0)
   const outputRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const isPremium = profile?.is_premium_playground || false
   const hasReachedLimit = !isPremium && sessionUsage >= 10
+
+  useEffect(() => {
+    if (searchParams.get("unlock") === "pro" && isAuthenticated && !isPremium) {
+      handleUnlockPro()
+    }
+  }, [searchParams, isAuthenticated, isPremium])
 
   const totalCostInr = stack.reduce((sum, t) => {
     if (t.startingPriceInr) return sum + t.startingPriceInr
@@ -638,11 +646,76 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
     setTimeout(() => setCopied(false), 2000)
   }
 
+  async function handleUnlockPro() {
+    if (loading) return;
+    try {
+      const res = await fetch("/api/billing/razorpay/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          amount: 499 * 100, // ₹499
+          receipt: `pro_upgrade_${profile?.id}_${Date.now()}`,
+          notes: {
+            type: "playground_pro",
+            userId: profile?.id
+          }
+        }),
+      });
+      
+      if (!res.ok) throw new Error("Failed to create order");
+      const order = await res.json();
+      
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        amount: order.amount,
+        currency: order.currency,
+        name: "StackFind Pro",
+        description: "Lifetime Playground Access",
+        order_id: order.order_id,
+        handler: async function (response: any) {
+          try {
+            const verifyRes = await fetch("/api/billing/razorpay/verify", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(response),
+            });
+            const verifyData = await verifyRes.json();
+            if (verifyData.success) {
+              window.location.reload(); // Refresh to update premium status
+            } else {
+              alert("Payment verification failed. Please contact support.");
+            }
+          } catch (err) {
+            console.error("Verification Error:", err);
+            alert("Verification error. Please contact support.");
+          }
+        },
+        prefill: {
+          name: profile?.full_name || "",
+          email: profile?.email || "",
+        },
+        theme: {
+          color: "#6366f1",
+        },
+      };
+
+      if (!(window as any).Razorpay) {
+        alert("Payment gateway loading... please wait a second and try again.");
+        return;
+      }
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.open();
+    } catch (err) {
+      console.error("Unlock Error:", err);
+      alert("Failed to initiate payment. Please try again.");
+    }
+  }
+
   const canGenerate = isAuthenticated && idea.trim().length > 0 && stack.length > 0 && !loading && !hasReachedLimit
 
   return (
     <div>
-
       {/* ── Hero header ──────────────────────────────────────────────────── */}
       <div className="mb-10">
         <div className="flex items-center gap-2 mb-3">
@@ -681,7 +754,7 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
       {/* ── Paywall ── */}
       {isAuthenticated && hasReachedLimit && (
         <div className="mt-12 py-10">
-          <PlaygroundPaywall onUnlock={() => window.open("/payment", "_blank")} />
+          <PlaygroundPaywall onUnlock={handleUnlockPro} />
         </div>
       )}
 
