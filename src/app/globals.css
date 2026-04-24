@@ -300,7 +300,10 @@ input::placeholder {
 
 /* ── Glass Monolith Cinematic Loading ── */
 
-.monolith-container {
+
+/* ── Recursive Portal Cinematic Loading ── */
+
+.portal-container {
   background: #FAF7F2;
   position: fixed;
   inset: 0;
@@ -309,72 +312,78 @@ input::placeholder {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  perspective: 1000px;
+  perspective: 2000px;
 }
 
-/* 3D Rotating Shard */
-@keyframes monolith-rotate {
-  0% { transform: rotateY(0deg) rotateX(15deg); }
-  100% { transform: rotateY(360deg) rotateX(15deg); }
-}
-
-.glass-shard {
-  width: 120px;
-  height: 180px;
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(40px);
-  -webkit-backdrop-filter: blur(40px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+/* The Glowing Iris */
+.portal-iris {
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  background: radial-gradient(circle at center, rgba(99, 102, 241, 0.05) 0%, transparent 70%);
   position: relative;
-  transform-style: preserve-3d;
-  animation: monolith-rotate 6s infinite linear;
+  display: flex;
+  items-center: center;
+  justify-content: center;
   box-shadow: 
-    0 20px 50px rgba(140, 110, 80, 0.1),
-    inset 0 0 40px rgba(255, 255, 255, 0.1);
-  clip-path: polygon(50% 0%, 100% 20%, 100% 80%, 50% 100%, 0% 80%, 0% 20%);
+    0 0 100px rgba(99, 102, 241, 0.1),
+    inset 0 0 60px rgba(99, 102, 241, 0.05);
 }
 
-/* Prismatic Edge Catch-Light */
-.glass-shard::before {
+/* Spinning Glass Rings */
+@keyframes portal-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes portal-spin-reverse {
+  0% { transform: rotate(360deg); }
+  100% { transform: rotate(0deg); }
+}
+
+.portal-ring {
+  position: absolute;
+  inset: -20px;
+  border: 1px solid rgba(140, 110, 80, 0.1);
+  border-radius: 50%;
+  animation: portal-spin 12s infinite linear;
+}
+
+.portal-ring::after {
   content: '';
   position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    135deg,
-    transparent,
-    rgba(255, 255, 255, 0.4) 45%,
-    rgba(99, 102, 241, 0.4) 50%,
-    rgba(255, 255, 255, 0.4) 55%,
-    transparent
-  );
-  background-size: 200% 200%;
-  animation: edge-glow 3s infinite linear;
-  opacity: 0.6;
-}
-
-@keyframes edge-glow {
-  0% { background-position: -100% -100%; }
-  100% { background-position: 100% 100%; }
-}
-
-/* Floating Particle Field */
-.particle-field {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-@keyframes particle-float {
-  0% { transform: translateY(0) scale(1); opacity: 0; }
-  50% { opacity: 0.5; }
-  100% { transform: translateY(-100px) scale(0.5); opacity: 0; }
-}
-
-.particle {
-  position: absolute;
-  width: 2px;
-  height: 2px;
+  top: -2px;
+  left: 50%;
+  width: 4px;
+  height: 4px;
   background: #6366f1;
   border-radius: 50%;
-  animation: particle-float 4s infinite linear;
+  box-shadow: 0 0 15px #6366f1;
+}
+
+.portal-ring-inner {
+  position: absolute;
+  inset: 20px;
+  border: 1px dashed rgba(99, 102, 241, 0.2);
+  border-radius: 50%;
+  animation: portal-spin-reverse 8s infinite linear;
+}
+
+/* Page Scale Effect */
+.page-zoom-out {
+  animation: page-exit 0.8s forwards cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@keyframes page-exit {
+  0% { transform: scale(1); opacity: 1; filter: blur(0px); }
+  100% { transform: scale(0.92); opacity: 0; filter: blur(20px); }
+}
+
+.page-zoom-in {
+  animation: page-enter 0.8s forwards cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@keyframes page-enter {
+  0% { transform: scale(1.08); opacity: 0; filter: blur(20px); }
+  100% { transform: scale(1); opacity: 1; filter: blur(0px); }
 }
