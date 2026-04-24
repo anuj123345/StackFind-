@@ -60,15 +60,15 @@ export default function HomePage() {
         {showIntro && <WelcomeIntro onComplete={handleIntroComplete} />}
       </AnimatePresence>
 
-      {/* 1. Replay Welcome Button (Top Left) */}
+      {/* 1. Replay Welcome Button (Top Left - Adjusted for Mobile) */}
       <button 
         onClick={replayIntro}
-        className="fixed top-8 left-8 z-[60] group flex items-center gap-3 px-4 py-2 rounded-xl liquid-glass border border-white/5 hover:border-white/10 transition-all active:scale-95"
+        className="fixed top-24 left-6 md:top-8 md:left-8 z-[60] group flex items-center gap-2 md:gap-3 px-3 py-1.5 md:px-4 md:py-2 rounded-xl liquid-glass border border-white/5 hover:border-white/10 transition-all active:scale-95"
       >
-        <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center border border-white/5 group-hover:scale-110 transition-transform">
-          <Sparkles size={14} className="text-indigo-400" />
+        <div className="w-6 h-6 md:w-8 md:h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center border border-white/5 group-hover:scale-110 transition-transform">
+          <Sparkles size={12} className="text-indigo-400 md:w-[14px] md:h-[14px]" />
         </div>
-        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 group-hover:text-white transition-colors">
+        <span className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 group-hover:text-white transition-colors">
           Welcome
         </span>
       </button>
