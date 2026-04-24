@@ -5,8 +5,9 @@ import {
   Plus, Check, X, Trash2, ExternalLink, ChevronDown, ChevronUp, 
   RefreshCw, Activity, TrendingUp, Users, Zap, LayoutDashboard, 
   Database, Shield, PieChart, FileText, Settings, LogOut, Search,
-  ArrowUpRight, Clock, Box, Globe, ShieldAlert
+  ArrowUpRight, Clock, Box, Globe, ShieldAlert, Menu
 } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
 import type { Tool, Category } from "@/types/database"
 
 // ─── Submission types ─────────────────────────────────────────────────────────
@@ -80,6 +81,7 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null)
   const [tab, setTab] = useState<"command" | "tools" | "submissions" | "leads">("command")
   const [searchQuery, setSearchQuery] = useState("")
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   // Form state
   const [form, setForm] = useState({
@@ -264,10 +266,10 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
   }
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-[#FAF7F2] text-[#1C1611] font-sans selection:bg-indigo-50 selection:text-indigo-900">
+    <div className="flex h-screen w-full overflow-hidden bg-[#FAF7F2] text-[#1C1611] font-sans selection:bg-indigo-50 selection:text-indigo-900 relative">
       
-      {/* 🛰️ Warm Sidebar */}
-      <aside className="w-72 flex-shrink-0 relative z-20 flex flex-col border-r border-[rgba(140,110,80,0.12)] bg-[#FAF7F2]/50 backdrop-blur-xl">
+      {/* 🛰️ Warm Sidebar - Desktop */}
+      <aside className="hidden lg:flex w-72 flex-shrink-0 relative z-20 flex-col border-r border-[rgba(140,110,80,0.12)] bg-[#FAF7F2]/50 backdrop-blur-xl">
         <div className="p-8 pb-4">
           <div className="flex items-center gap-3 mb-10 group cursor-default">
             <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-600/10 group-hover:scale-110 transition-transform duration-300">
@@ -308,40 +310,114 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
         </div>
       </aside>
 
+      {/* Mobile Menu Overlay */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setMobileMenuOpen(false)}
+            className="fixed inset-0 z-[110] bg-[#1C1611]/30 backdrop-blur-sm lg:hidden"
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Mobile Sidebar Drawer */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.aside
+            initial={{ x: "-100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "-100%" }}
+            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+            className="fixed inset-y-0 left-0 z-[120] w-72 bg-[#FAF7F2] border-r border-[rgba(140,110,80,0.12)] lg:hidden flex flex-col"
+          >
+            <div className="p-8 pb-4">
+              <div className="flex items-center justify-between mb-10">
+                <div className="flex items-center gap-3 group cursor-default">
+                  <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-600/10 transition-transform duration-300">
+                    <Zap size={20} className="text-white fill-white" />
+                  </div>
+                  <div>
+                    <h1 className="text-[1.125rem] font-black tracking-[-0.03em] leading-none mb-1 text-[#1C1611]" style={{ fontFamily: "'Bricolage Grotesque Variable', sans-serif" }}>COMMAND</h1>
+                    <p className="text-[0.625rem] font-bold tracking-[0.2em] text-[#7A6A57] uppercase">Mobile Access</p>
+                  </div>
+                </div>
+                <button onClick={() => setMobileMenuOpen(false)} className="p-2 rounded-full hover:bg-black/5 text-[#7A6A57]">
+                  <X size={20} />
+                </button>
+              </div>
+
+              <nav className="flex flex-col gap-1.5">
+                <SidebarLink icon={<Activity size={18} />} label="Overview" active={tab === "command"} onClick={() => { setTab("command"); setMobileMenuOpen(false) }} />
+                <SidebarLink icon={<Database size={18} />} label="Live Tools" active={tab === "tools"} onClick={() => { setTab("tools"); setMobileMenuOpen(false) }} />
+                <SidebarLink icon={<FileText size={18} />} label="Submissions" active={tab === "submissions"} onClick={() => { setTab("submissions"); setMobileMenuOpen(false) }} count={submissions.length} />
+                <SidebarLink icon={<PieChart size={18} />} label="Billing Leads" active={tab === "leads"} onClick={() => { setTab("leads"); setMobileMenuOpen(false) }} count={billingRequests.length} />
+              </nav>
+            </div>
+            
+            <div className="mt-auto p-8 border-t border-[rgba(140,110,80,0.12)]">
+              <button 
+                onClick={() => window.location.href = "/"}
+                className="flex items-center gap-3 w-full p-3 rounded-xl text-[#7A6A57] hover:text-[#1C1611] hover:bg-white transition-all text-sm font-semibold border border-transparent hover:border-[rgba(140,110,80,0.12)]"
+              >
+                <LogOut size={16} /> Exit System
+              </button>
+            </div>
+          </motion.aside>
+        )}
+      </AnimatePresence>
+
       {/* 🚀 Main Command Deck */}
-      <main className="flex-1 overflow-y-auto relative z-10 px-10 py-12 custom-scrollbar">
+      <main className="flex-1 overflow-y-auto relative z-10 px-6 lg:px-10 py-8 lg:py-12 custom-scrollbar">
+        
+        {/* Mobile Header Bar */}
+        <div className="flex lg:hidden items-center justify-between mb-8 pb-6 border-bottom border-[rgba(140,110,80,0.08)]">
+          <button 
+            onClick={() => setMobileMenuOpen(true)}
+            className="w-10 h-10 rounded-xl bg-white border border-[rgba(140,110,80,0.12)] flex items-center justify-center text-[#1C1611] shadow-sm active:scale-90 transition-transform"
+          >
+            <Menu size={20} />
+          </button>
+          <div className="flex items-center gap-2">
+            <Zap size={16} className="text-indigo-600 fill-indigo-600" />
+            <span className="font-black text-sm tracking-tight">COMMAND</span>
+          </div>
+          <div className="w-10" /> {/* Spacer */}
+        </div>
         
         {/* Top Action Bar */}
         <div className="flex items-center justify-between mb-12">
-          <div>
-            <h2 className="text-[2rem] font-black tracking-[-0.04em] mb-1 text-[#1C1611]" style={{ fontFamily: "'Bricolage Grotesque Variable', sans-serif" }}>
+          <div className="flex-1 lg:flex-none">
+            <h2 className="text-[1.5rem] lg:text-[2rem] font-black tracking-[-0.04em] mb-1 text-[#1C1611] leading-tight" style={{ fontFamily: "'Bricolage Grotesque Variable', sans-serif" }}>
               {tab === "command" && "System Pulse"}
               {tab === "tools" && "Registry Management"}
               {tab === "submissions" && "Moderation Queue"}
               {tab === "leads" && "Revenue Pipeline"}
             </h2>
-            <p className="text-sm text-[#7A6A57] font-medium capitalize">
+            <p className="text-xs lg:text-sm text-[#7A6A57] font-medium capitalize">
               {tab} Dashboard — {new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </p>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 mt-6 lg:mt-0">
             {tab === "tools" && (
               <button 
                 onClick={() => setShowForm(!showForm)}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm transition-all shadow-lg shadow-indigo-600/20"
+                className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm transition-all shadow-lg shadow-indigo-600/20"
               >
                 <Plus size={16} /> New Deployment
               </button>
             )}
-            <div className="relative group">
+            <div className="relative group flex-1 sm:flex-none">
               <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#C4B0A0] group-focus-within:text-indigo-500 transition-colors" />
               <input 
                 type="text" 
                 placeholder="Deep Search..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-11 pr-4 py-2.5 rounded-xl bg-white border border-[rgba(140,110,80,0.12)] text-sm outline-none focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/5 transition-all w-64 text-[#1C1611]"
+                className="pl-11 pr-4 py-2.5 rounded-xl bg-white border border-[rgba(140,110,80,0.12)] text-sm outline-none focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/5 transition-all w-full sm:w-64 text-[#1C1611]"
               />
             </div>
           </div>
@@ -465,8 +541,8 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
                  </div>
                )}
 
-               <div className="rounded-3xl bg-white border border-[rgba(140,110,80,0.12)] overflow-hidden shadow-sm">
-                  <table className="w-full text-left border-collapse">
+               <div className="rounded-3xl bg-white border border-[rgba(140,110,80,0.12)] overflow-x-auto shadow-sm">
+                  <table className="w-full text-left border-collapse min-w-[800px]">
                     <thead className="bg-[#FAF7F2]">
                        <tr>
                           <th className="px-6 py-4 text-[0.625rem] font-black uppercase tracking-widest text-[#7A6A57]">Registry Item</th>

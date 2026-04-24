@@ -195,7 +195,7 @@ export function Navbar() {
       {/* Mobile menu overlay */}
       {menuOpen && (
         <div
-          className="fixed inset-0 z-40 md:hidden"
+          className="fixed inset-0 z-[90] md:hidden"
           style={{ background: "rgba(28,22,17,0.3)", backdropFilter: "blur(2px)" }}
           onClick={() => setMenuOpen(false)}
         />
@@ -203,7 +203,7 @@ export function Navbar() {
 
       {/* Mobile menu drawer */}
       <div
-        className="fixed top-0 right-0 bottom-0 z-40 md:hidden flex flex-col"
+        className="fixed top-0 right-0 bottom-0 z-[100] md:hidden flex flex-col"
         style={{
           width: "min(80vw, 300px)",
           background: "#FAF7F2",
