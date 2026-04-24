@@ -233,7 +233,7 @@ export default function CheckoutClient({ tools, usdToInrRate, userEmail }: Props
                 <span>₹{subtotal}</span>
               </div>
               <div className="flex justify-between text-xs font-medium" style={{ color: "#7A6A57" }}>
-                <span className="flex items-center gap-1">Convenience Fee (5%) <Info size={10} title="Covers international payment processing & currency exchange" /></span>
+                <span className="flex items-center gap-1">Convenience Fee (5%) <span title="Covers international payment processing & currency exchange"><Info size={10} /></span></span>
                 <span>₹{platformFee}</span>
               </div>
               <div className="flex justify-between text-xs font-medium" style={{ color: "#7A6A57" }}>
