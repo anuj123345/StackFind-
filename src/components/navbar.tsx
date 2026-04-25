@@ -92,13 +92,13 @@ export function Navbar() {
           {/* Logo */}
           <Link
             href="/"
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-black/[0.04] transition-colors mr-1"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-black/[0.04] transition-colors mr-1 shrink-0"
           >
-            <div className="w-6 h-6 rounded-lg bg-indigo-500 flex items-center justify-center">
+            <div className="w-6 h-6 rounded-lg bg-indigo-500 flex items-center justify-center shrink-0">
               <Zap size={13} className="text-white fill-white" />
             </div>
             <span
-              className="font-bold text-[0.9375rem] tracking-tight text-[#1C1611]"
+              className="font-bold text-[0.9375rem] tracking-tight text-[#1C1611] whitespace-nowrap mb-[0.5px]"
               style={{ fontFamily: "'Bricolage Grotesque Variable', sans-serif" }}
             >
               StackFind
@@ -125,7 +125,7 @@ export function Navbar() {
             {/* Search — desktop */}
             <button
               onClick={() => window.dispatchEvent(new CustomEvent("open-search"))}
-              className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[#C4B0A0] hover:text-[#1C1611] hover:bg-black/[0.04] transition-all duration-200"
+              className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[#C4B0A0] hover:text-[#1C1611] hover:bg-black/[0.04] transition-all duration-200 whitespace-nowrap"
               aria-label="Search tools"
             >
               <Search size={13} />
@@ -145,7 +145,7 @@ export function Navbar() {
             {user ? (
               <button
                 onClick={signOut}
-                className="hidden md:flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[0.8125rem] font-medium transition-all duration-200 hover:bg-black/[0.04] whitespace-nowrap"
+                className="hidden md:flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[0.8125rem] font-medium transition-all duration-200 hover:bg-black/[0.04] whitespace-nowrap"
                 style={{ color: "#7A6A57" }}
                 title={`Sign out (${user.email})`}
               >
@@ -155,7 +155,7 @@ export function Navbar() {
             ) : (
               <Link
                 href="/login"
-                className="hidden md:flex btn-primary items-center gap-1.5 !py-2 !px-3.5 !text-[0.8125rem]"
+                className="hidden md:flex btn-primary items-center gap-1.5 !py-1.5 !px-4 !text-[0.8125rem] whitespace-nowrap"
               >
                 Sign in
               </Link>
@@ -173,7 +173,7 @@ export function Navbar() {
 
             <Link
               href="/submit"
-              className="hidden md:flex btn-primary items-center gap-1.5 !py-2 !px-3.5 !text-[0.8125rem]"
+              className="hidden md:flex btn-primary items-center gap-1.5 !py-1.5 !px-4 !text-[0.8125rem] whitespace-nowrap"
             >
               <Plus size={13} strokeWidth={2.5} />
               Submit
