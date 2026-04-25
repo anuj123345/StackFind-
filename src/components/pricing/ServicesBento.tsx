@@ -11,7 +11,7 @@ const features = [
     icon: FlaskConical,
     href: "/playground",
     color: "bg-indigo-500",
-    size: "lg:col-span-3 lg:row-span-1"
+    size: "lg:col-span-1"
   },
   {
     title: "Global Directory",
@@ -19,7 +19,7 @@ const features = [
     icon: Search,
     href: "/tools",
     color: "bg-amber-500",
-    size: "lg:col-span-2 lg:row-span-1"
+    size: "lg:col-span-1"
   }
 ]
 
@@ -33,7 +33,7 @@ export function ServicesBento() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {features.map((f, i) => (
           <motion.div
             key={i}
