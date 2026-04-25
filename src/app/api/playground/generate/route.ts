@@ -78,27 +78,37 @@ export async function POST(req: NextRequest) {
       return `- ${t.name}: Price: ${t.startingPriceInr ? `₹${t.startingPriceInr}/mo` : "N/A"} / ${t.startingPriceUsd ? `$${t.startingPriceUsd}/mo` : "N/A"}, (ESTIMATED TOTAL: ₹${effectiveInr}/mo). Billing: ${billingContext}. Tagline: ${t.tagline}`
     }).join("\n")
 
+    const totalSelectedCost = tools.reduce((sum, t) => {
+      let effectiveInr = 0
+      if (t.startingPriceInr) effectiveInr = t.startingPriceInr
+      else if (t.startingPriceUsd) effectiveInr = Math.round(t.startingPriceUsd * usdToInrRate)
+      return sum + effectiveInr
+    }, 0)
+
+    const budgetDisplay = budget === 0 ? "0 (Free/Freemium Only)" : `₹${budget}`
+
     const prompt = `You are a senior technical co-founder. 
 Founder's Idea: "${productIdea.trim()}"
-Monthly Budget: ₹${budget > 0 ? budget : "Flexible (Free/Freemium preferred)"}
+Monthly Budget: ${budgetDisplay}
 
 ${tools.length > 0 ? `Selected Stack (${tools.length} tools):
-${toolLines}` : `The founder has NOT selected any tools. Suggest a robust stack from these tools that fits the budget:
+${toolLines}
+(STACK TOTAL: ₹${totalSelectedCost}/mo)` : `The founder has NOT selected any tools. Suggest a robust stack from these tools that fits the budget:
 ${suggestionContext}`}
 
 Write a practical build plan. Use this EXACT format:
 ## Product Overview
 [3 sentences max]
 
-## ${tools.length > 0 ? "Stack Analysis" : "Suggested Stack"}
-[Explain why this stack was chosen for the budget and idea]
+## Suggested Stack / Analysis
+[If tools were suggested, explain why they fit the ${budgetDisplay} budget. If tools were provided, analyze if they are the most cost-effective for the idea.]
 
 ## How Each Tool Is Used
 [One paragraph per tool]
 
 ## Cost Breakdown & Budget Validation
 [Markdown Table: Tool | Plan | Monthly Cost (₹) | Billing Status]
-[Check if the total fits the ₹${budget} budget. If not, suggest a "Phase 1: MVP" strategy.]
+[Check if the total fits the ${budgetDisplay} budget. If it exceeds, suggest specific cost-cutting measures or a phased approach.]
 
 ## Managed Stack Advantage
 [Explain how StackFind's managed billing (UPI/INR) simplifies these specific tools]

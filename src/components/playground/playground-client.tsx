@@ -1010,12 +1010,17 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
                       {stack.length} tool{stack.length !== 1 ? "s" : ""}
                     </span>
                     <span className="text-xs" style={{ color: "#C4B0A0" }}>·</span>
-                    <span className="text-xs font-semibold" style={{ color: totalCostInr === 0 ? "#059669" : "#1C1611" }}>
+                    <span className="text-xs font-semibold" style={{ color: totalCostInr === 0 ? "#059669" : (budget && totalCostInr > (typeof budget === "number" ? budget : 0) ? "#ef4444" : "#1C1611") }}>
                       { totalCostInr === 0
                         ? "Free to start"
                         : `from ₹${Math.round(totalCostInr)}/mo`
                       }
                     </span>
+                    {budget && totalCostInr > (typeof budget === "number" ? budget : 0) && (
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-50 text-red-500 border border-red-100 animate-pulse">
+                        Over Budget
+                      </span>
+                    )}
                     <span className="text-[10px]" style={{ color: "#C4B0A0" }}>
                       *Est. at $1 = ₹{usdToInrRate}
                     </span>
