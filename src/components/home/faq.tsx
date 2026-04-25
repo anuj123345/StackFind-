@@ -24,13 +24,13 @@ export function FAQ() {
 
   return (
     <div className="max-w-3xl mx-auto px-6 py-8">
-      <h2 className="text-3xl font-black text-white mb-6 tracking-tight">Common Questions</h2>
+      <h2 className="text-3xl font-black text-[#1C1611] mb-6 tracking-tight">Common Questions</h2>
       <div className="space-y-1">
         {faqs.map((faq, i) => (
-          <div key={i} className="border-b border-white/5">
+          <div key={i} className="border-b border-[#8C6E50]/10">
             <button
               onClick={() => setOpenIndex(openIndex === i ? null : i)}
-              className="w-full flex items-center justify-between text-white hover:text-indigo-400 transition-colors text-left py-3 focus:outline-none group"
+              className="w-full flex items-center justify-between text-[#1C1611] hover:text-indigo-600 transition-colors text-left py-3 focus:outline-none group"
             >
               <span className="text-base font-semibold">{faq.question}</span>
               {openIndex === i ? (
@@ -48,7 +48,7 @@ export function FAQ() {
                   transition={{ duration: 0.2, ease: "easeInOut" }}
                   className="overflow-hidden"
                 >
-                  <p className="text-stone-400 text-sm leading-relaxed pb-3 max-w-xl">
+                  <p className="text-[#7A6A57] text-sm leading-relaxed pb-3 max-w-xl">
                     {faq.answer}
                   </p>
                 </motion.div>

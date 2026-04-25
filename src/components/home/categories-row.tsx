@@ -49,16 +49,16 @@ export function CategoriesRow({ categories }: CategoriesRowProps) {
           <div className="flex items-center gap-3">
             <span
               className="text-[0.65rem] font-bold tracking-[0.2em] uppercase opacity-60"
-              style={{ color: "#F9F5F1" }}
+              style={{ color: "#1C1611" }}
             >
               Browse by Category
             </span>
-            <div className="h-px w-12 bg-white/10" />
+            <div className="h-px w-12 bg-[#8C6E50]/10" />
           </div>
           <Link
             href="/categories"
-            className="text-[0.7rem] font-bold transition-colors duration-200 hover:text-white opacity-60 hover:opacity-100"
-            style={{ color: "#F9F5F1" }}
+            className="text-[0.7rem] font-bold transition-colors duration-200 hover:text-indigo-600 opacity-60 hover:opacity-100"
+            style={{ color: "#1C1611" }}
           >
             All {categories.length} →
           </Link>
@@ -78,9 +78,9 @@ export function CategoriesRow({ categories }: CategoriesRowProps) {
               <Link
                 key={cat.slug}
                 href={`/category/${cat.slug}`}
-                className="group flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all duration-300 hover:bg-white/5 border border-white/5 hover:border-white/20"
+                className="group flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all duration-300 hover:bg-white border border-[#8C6E50]/10 hover:border-indigo-200 hover:shadow-lg hover:shadow-indigo-500/5"
                 style={{
-                  background: "rgba(255,255,255,0.02)",
+                  background: "rgba(255,255,255,0.6)",
                 }}
               >
                 <span className="text-base select-none leading-none" aria-hidden="true">
@@ -88,13 +88,13 @@ export function CategoriesRow({ categories }: CategoriesRowProps) {
                 </span>
                 <span
                   className="text-[0.8rem] font-semibold whitespace-nowrap"
-                  style={{ color: "#F9F5F1" }}
+                  style={{ color: "#1C1611" }}
                 >
                   {cat.name}
                 </span>
                 <span
-                  className="text-[0.65rem] font-bold tabular-nums opacity-40 group-hover:opacity-100 group-hover:text-indigo-400 transition-all"
-                  style={{ color: "#F9F5F1" }}
+                  className="text-[0.65rem] font-bold tabular-nums opacity-40 group-hover:opacity-100 group-hover:text-indigo-600 transition-all"
+                  style={{ color: "#7A6A57" }}
                 >
                   {cat.tool_count}
                 </span>
@@ -103,8 +103,8 @@ export function CategoriesRow({ categories }: CategoriesRowProps) {
           </div>
           
           {/* Edge Fades */}
-          <div className="absolute top-0 right-0 bottom-4 w-12 bg-gradient-to-l from-[#1C1611] to-transparent pointer-events-none" />
-          <div className="absolute top-0 left-0 bottom-4 w-12 bg-gradient-to-r from-[#1C1611] to-transparent pointer-events-none" />
+          <div className="absolute top-0 right-0 bottom-4 w-12 bg-gradient-to-l from-[#FAF7F2] to-transparent pointer-events-none" />
+          <div className="absolute top-0 left-0 bottom-4 w-12 bg-gradient-to-r from-[#FAF7F2] to-transparent pointer-events-none" />
         </div>
 
       </div>
