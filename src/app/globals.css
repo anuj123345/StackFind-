@@ -224,12 +224,12 @@
 
 /* Floating pill nav — warm frosted glass */
 .nav-pill {
-  background: rgba(250,247,242,0.88);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(140,110,80,0.14);
+  background: rgba(255,255,255,0.45);
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+  border: 1px solid rgba(140,110,80,0.12);
   border-radius: 9999px;
-  box-shadow: 0 4px 24px rgba(140,110,80,0.08);
+  box-shadow: 0 8px 32px rgba(140,110,80,0.06), inset 0 1px 0 rgba(255,255,255,0.5);
 }
 
 /* Search */
