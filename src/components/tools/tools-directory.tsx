@@ -298,7 +298,7 @@ export function ToolsDirectory({
               </div>
 
               {/* Glassmorphic CTA Card */}
-              <div className="absolute inset-0 flex items-center justify-center -top-12">
+              <div className="absolute inset-0 flex items-center justify-center -top-20 z-[60]">
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}

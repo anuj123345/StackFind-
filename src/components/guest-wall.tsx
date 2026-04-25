@@ -39,7 +39,7 @@ export function GuestWall({ lockedCount, label = "results", message }: GuestWall
 
       {/* Gradient + CTA */}
       <div
-        className="absolute inset-0 flex flex-col items-center justify-end pb-4"
+        className="absolute inset-0 flex flex-col items-center justify-end pb-8 z-10"
         style={{
           background: "linear-gradient(to bottom, rgba(250,247,242,0) 0%, rgba(250,247,242,0.9) 35%, rgba(250,247,242,1) 60%)",
         }}
