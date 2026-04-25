@@ -286,7 +286,7 @@ export function ToolsDirectory({
 
           {/* Cinematic Unlock Wall */}
           {!isAuthenticated && lockedCount > 0 && (
-            <div className="relative mt-8">
+            <div className="relative mt-8 z-[70]">
               {/* Blurred Background Preview */}
               <div
                 className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 opacity-40 blur-xl pointer-events-none select-none grayscale-[0.5]"

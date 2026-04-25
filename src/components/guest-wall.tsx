@@ -10,7 +10,7 @@ interface GuestWallProps {
 export function GuestWall({ lockedCount, label = "results", message }: GuestWallProps) {
   const headline = message ?? `${lockedCount?.toLocaleString()} ${label} locked`
   return (
-    <div className="relative mt-3" style={{ minHeight: 280 }}>
+    <div className="relative mt-3 z-[70]" style={{ minHeight: 280 }}>
       {/* Ghost rows — give the wall depth */}
       <div
         className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3"
