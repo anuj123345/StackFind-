@@ -231,7 +231,7 @@ Write a practical build plan. Use this EXACT format:
                 // The model outputted a tool call as text instead of using the API
                 // Let's try to recover by treating it as a tool call
                 try {
-                  const rawJson = content.trim().startsWith('{') ? content.trim() : content.match(/\{.*\}/s)?.[0]
+                  const rawJson = content.trim().startsWith('{') ? content.trim() : content.match(/\{[\s\S]*?\}/)?.[0]
                   if (rawJson) {
                     const parsed = JSON.parse(rawJson)
                     const url = parsed.function?.parameters?.url || parsed.parameters?.url
