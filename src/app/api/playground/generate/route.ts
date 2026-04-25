@@ -196,6 +196,7 @@ Write a practical build plan. Use this EXACT format:
               messages.push(message)
 
               for (const toolCall of message.tool_calls) {
+                if (toolCall.type !== 'function') continue
                 const args = JSON.parse(toolCall.function.arguments)
                 const intelligence = await getLiveToolIntelligence(args.url)
                 
