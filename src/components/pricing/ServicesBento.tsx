@@ -10,7 +10,7 @@ const features = [
     description: "Design your entire stack in seconds with our high-fidelity AI architect. Built for Indian founders.",
     icon: FlaskConical,
     href: "/playground",
-    bgImage: "ghibli_forest_bg_1777143257569.png",
+    bgImage: "/bento-forest.png",
     size: "lg:col-span-1"
   },
   {
@@ -18,7 +18,7 @@ const features = [
     description: "5,000+ AI tools meticulously curated for the Indian ecosystem.",
     icon: Search,
     href: "/tools",
-    bgImage: "ghibli_sky_bg_1777143272687.png",
+    bgImage: "/bento-sky.png",
     size: "lg:col-span-1"
   }
 ]
