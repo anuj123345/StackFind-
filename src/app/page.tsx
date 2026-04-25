@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Footer } from "@/components/footer"
-import { ScrubHero } from "@/components/pricing/ScrubHero"
+import { HeroSection } from "@/components/home/hero-section"
 import { ServicesBento } from "@/components/pricing/ServicesBento"
 import { FAQ } from "@/components/home/faq"
 import { CategoriesRow } from "@/components/home/categories-row"
@@ -16,6 +16,7 @@ import { Sparkles } from "lucide-react"
 export default function HomePage() {
   const [showIntro, setShowIntro] = useState<boolean | null>(null)
   const [categories, setCategories] = useState<any[]>([])
+  const [stats, setStats] = useState<any>(null)
 
   useEffect(() => {
     // Check session storage
@@ -41,6 +42,25 @@ export default function HomePage() {
       setCategories(mapped)
     }
     fetchCategories()
+
+    // Fetch stats
+    const fetchStats = async () => {
+      const supabase = createClient()
+      const [totalRes, indiaRes, catRes, freeRes] = await Promise.all([
+        supabase.from('tools').select('id', { count: 'exact', head: true }).eq('status', 'approved'),
+        supabase.from('tools').select('id', { count: 'exact', head: true }).eq('status', 'approved').eq('is_made_in_india', true),
+        supabase.from('categories').select('id', { count: 'exact', head: true }),
+        supabase.from('tools').select('id', { count: 'exact', head: true }).eq('status', 'approved').in('pricing_model', ['free', 'freemium']),
+      ])
+      const total = totalRes.count ?? 0
+      setStats({
+        total,
+        madeInIndia: indiaRes.count ?? 0,
+        categories: catRes.count ?? 0,
+        freeOrFreemium: total > 0 ? Math.round(((freeRes.count ?? 0) / total) * 100) : 0,
+      })
+    }
+    fetchStats()
   }, [])
 
   const handleIntroComplete = () => {
@@ -55,7 +75,7 @@ export default function HomePage() {
   }
 
   return (
-    <div className="relative overflow-hidden bg-[#1C1611] min-h-screen">
+    <div className="relative overflow-hidden bg-[#FAF7F2] min-h-screen">
       <AnimatePresence>
         {showIntro && <WelcomeIntro onComplete={handleIntroComplete} />}
       </AnimatePresence>
@@ -77,8 +97,8 @@ export default function HomePage() {
       <AmbientBackground />
 
       <div className="relative z-10">
-        {/* 1. Cinematic Hero (Scroll-Scrub) */}
-        <ScrubHero />
+        {/* 1. Cinematic Hero (Nature Vibe) */}
+        <HeroSection stats={stats} />
 
         {/* 2. Features Bento Grid */}
         <ServicesBento />
