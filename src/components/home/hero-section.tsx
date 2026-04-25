@@ -85,19 +85,6 @@ export function HeroSection({ stats }: HeroSectionProps) {
           <span className="text-indigo-600">Build the future.</span>
         </motion.h1>
 
-        {/* Sub */}
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.22, ease: [0.32, 0.72, 0, 1] }}
-          className="text-center max-w-[34rem] leading-relaxed mb-12"
-          style={{ fontSize: "clamp(0.9375rem, 1.4vw, 1.0625rem)", color: "#7A6A57" }}
-        >
-          INR pricing. UPI billing. Curated discovery. Made‑in‑India tools.{" "}
-          <span style={{ color: "#1C1611", fontWeight: 600 }}>
-            No dollar conversion. No surprises.
-          </span>
-        </motion.p>
 
         {/* CTAs */}
         <motion.div
