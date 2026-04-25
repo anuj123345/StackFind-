@@ -83,7 +83,7 @@ export function Navbar() {
     <>
       <header className="fixed top-0 left-0 right-0 z-50 flex justify-center pt-5 px-4">
         <nav
-          className="nav-pill flex items-center gap-1 px-2 py-2 w-full max-w-5xl"
+          className="nav-pill flex items-center gap-1 px-4 py-2 w-fit max-w-[95vw]"
           style={{
             boxShadow: scrolled ? "0 8px 32px rgba(140,110,80,0.12)" : "none",
             transition: "box-shadow 400ms cubic-bezier(0.32,0.72,0,1)",
@@ -106,7 +106,7 @@ export function Navbar() {
           </Link>
 
           {/* Desktop nav links */}
-          <div className="hidden md:flex items-center gap-0.5 flex-1">
+          <div className="hidden md:flex items-center gap-0.5">
             {NAV_LINKS.filter(link => link.href !== '/playground' || !!user).map((link) => (
               <Link
                 key={link.href}
