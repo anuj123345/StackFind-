@@ -17,7 +17,20 @@
 - **Icons**: Lucide React.
 - **Transitions**: Use Framer Motion for smooth entrances.
 
-## Recent Updates (2026-04-23)
-- **Playground Cleanup**: Removed non-functional models (Kimi, GPT-4o, GPT-4o-mini).
-- **Backend Optimization**: Refactored `api/playground/generate/route.ts` to use only Anthropic and NVIDIA NIM (Meta Llama/Qwen) providers.
-- **Storage Strategy**: Local scratch files and project data now prioritize the `D:` drive at `D:\claude projects folder\StackFind\.antigravity\.`
+## Recent Updates (2026-04-25)
+- **Managed Billing & Razorpay**: Implemented a full checkout flow for Indian founders. Integrated Razorpay for INR payments with automated convenience fee (5%) and GST (18%) calculations.
+- **Cinematic Welcome**: Added 'Assembly of Light' welcome intro (`welcome-intro.tsx`) with particle animations andlogo reveal. Persistence via `sessionStorage`.
+- **AI Playground reasoning**: Integrated Kimi K2.5 reasoning mode via NVIDIA NIM. Added heartbeat signals to prevent gateway timeouts.
+- **Admin Command Center**: Complete redesign of `admin-dashboard.tsx` with glassmorphic, holographic stats and real-time activity streams.
+
+## Key Features & Current State
+- **Playground**: Supports Anthropic (Claude 3.5 Haiku) and NVIDIA NIM (Meta Llama 3.3, Kimi K2.5). Streaming enabled.
+- **Billing**: Managed billing requests handled via Supabase `billing_requests` table. Payment gateway live for managed stacks.
+- **Auth**: Supabase Auth with custom `profiles` table.
+- **Admin**: Accessible via `x-admin-key` header logic.
+- **Theme**: Warm parchment theme (`#FAF7F2`) with premium Antigravity design principles (glassmorphism, micro-animations).
+
+## Handover Context
+- **Deployment**: Next.js 15 (Breaking APIs). Always run `npx tsc --noEmit` before push.
+- **Database**: Strictly follow `src/types/database.ts` manual updates.
+- **API Keys**: Ensure `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `NVIDIA_API_KEY`, and `ANTHROPIC_API_KEY` are present in `.env.local`.

@@ -52,6 +52,7 @@ export function WelcomeIntro({ onComplete }: WelcomeIntroProps) {
                   ease: [0.22, 1, 0.36, 1],
                   delay: Math.random() * 0.2
                 }}
+                style={{ willChange: "transform, opacity" }}
                 className="absolute left-1/2 top-1/2 w-1 h-1 bg-indigo-500 rounded-full blur-[1px]"
               />
             ))}
@@ -111,7 +112,8 @@ export function WelcomeIntro({ onComplete }: WelcomeIntroProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 1, ease: "easeInOut" }}
-            className="absolute inset-0 bg-white z-[210] pointer-events-none"
+            style={{ willChange: "opacity" }}
+            className="absolute inset-0 bg-indigo-500/10 z-[210] pointer-events-none backdrop-blur-[2px]"
           />
         )}
       </AnimatePresence>

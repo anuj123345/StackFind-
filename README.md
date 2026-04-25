@@ -1,36 +1,32 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# StackFind: The Managed Stack for Indian Founders
 
-## Getting Started
+StackFind is a premium platform designed to help Indian founders discover, build, and bill their SaaS stacks in INR. It solves the "USD Billing" friction by providing a managed billing layer.
 
-First, run the development server:
+## Core Features
+- **AI Playground**: Build your product plan using high-reasoning models (Claude 3.5, Llama 3.3, Kimi K2.5).
+- **Managed Billing**: Pay for global SaaS tools in INR via UPI/Netbanking with automated GST invoicing.
+- **Founders' Directory**: A curated list of essential tools with detailed pricing and India-specific support info.
+- **Cinematic Experience**: High-fidelity, glassmorphic UI with animated transitions and immersive introductions.
+
+## Tech Stack
+- **Framework**: Next.js 15 (App Router)
+- **Styling**: Tailwind CSS + Framer Motion + Glassmorphism
+- **Database**: Supabase (PostgreSQL)
+- **Auth**: Supabase Auth
+- **Payments**: Razorpay Integration (managed billing flow)
+- **AI**: Anthropic SDK & NVIDIA NIM (Streaming enabled)
+
+## Development
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Critical Rules
+- Always verify types with `npx tsc --noEmit`.
+- Maintain manual database types in `src/types/database.ts`.
+- Follow the warm parchment theme (`#FAF7F2`) and Antigravity design principles.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Deployment
+Deployed on Vercel. Ensure all environment variables (Razorpay, Supabase, Anthropic, NVIDIA) are configured in the Vercel dashboard.
