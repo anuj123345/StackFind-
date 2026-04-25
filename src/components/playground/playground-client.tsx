@@ -125,6 +125,11 @@ function MarkdownOutput({ text }: { text: string }) {
         `<li>${l.replace(/^- /, "")}</li>`).join("")
       return `<ul class="pg-ul">${items}</ul>`
     })
+    out = out.replace(/^> \[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\n((?:> .+\n?)+)/gm, (_, type, content) => {
+      const alertText = content.replace(/^> /gm, "").trim()
+      return `<div class="pg-alert pg-alert-${type.toLowerCase()}">${alertText}</div>`
+    })
+    out = out.replace(/^> (.+)$/gm, '<blockquote class="pg-blockquote">$1</blockquote>')
     out = out.replace(/\n\n+/g, "\n\n")
     out = out.split("\n\n").map(block => {
       if (block.startsWith("<")) return block
@@ -162,6 +167,14 @@ function MarkdownOutput({ text }: { text: string }) {
         .pg-td { padding: 10px 16px; color: #7A6A57; border: 1px solid rgba(140,110,80,0.09); }
         .pg-td strong, .pg-th strong { font-weight: 700; color: #1C1611; }
         tr:last-child .pg-td { font-weight: 700; color: #1C1611; background: rgba(140,110,80,0.03); }
+        
+        .pg-blockquote { border-left: 3px solid rgba(140,110,80,0.2); padding-left: 1rem; margin: 1rem 0; color: #7A6A57; font-style: italic; }
+        .pg-alert { padding: 1rem; border-radius: 0.75rem; margin: 1rem 0; font-size: 0.8125rem; border: 1px solid transparent; }
+        .pg-alert-note { background: rgba(99,102,241,0.05); border-color: rgba(99,102,241,0.15); color: #6366f1; }
+        .pg-alert-tip { background: rgba(16,185,129,0.05); border-color: rgba(16,185,129,0.15); color: #059669; }
+        .pg-alert-important { background: rgba(239,68,68,0.05); border-color: rgba(239,68,68,0.15); color: #ef4444; }
+        .pg-alert-warning { background: rgba(245,158,11,0.05); border-color: rgba(245,158,11,0.15); color: #f59e0b; }
+        .pg-alert-caution { background: rgba(239,68,68,0.08); border-color: rgba(239,68,68,0.2); color: #b91c1c; font-weight: 600; }
       `}</style>
     </>
   )

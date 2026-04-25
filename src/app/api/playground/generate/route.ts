@@ -3,6 +3,7 @@ import { OpenAI } from "openai"
 import Anthropic from "@anthropic-ai/sdk"
 import { getIsAuthenticated } from "@/lib/auth"
 import { getUsdInrRate } from "@/lib/exchange"
+import { getLiveToolIntelligence } from "@/lib/live-fetcher"
 
 // Increase Vercel function timeout
 export const maxDuration = 60
@@ -131,6 +132,8 @@ Write a practical build plan. Use this EXACT format:
           if (modelId.startsWith("anthropic/") || (!process.env.NVIDIA_API_KEY && process.env.ANTHROPIC_API_KEY)) {
             const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
             const actualModel = modelId.startsWith("anthropic/") ? modelId.replace("anthropic/", "") : "claude-3-5-haiku-20241022"
+            
+            // Note: Anthropic tool support could be added here later
             const anthropicStream = await anthropic.messages.create({
               model: actualModel,
               max_tokens: 1800,
@@ -151,25 +154,79 @@ Write a practical build plan. Use this EXACT format:
               baseURL: "https://integrate.api.nvidia.com/v1"
             })
 
-            const nimStream: any = await nimClient.chat.completions.create({
+            const messages: any[] = [
+              { 
+                role: "system", 
+                content: "You are a senior technical co-founder. Use the 'get_live_tool_intelligence' tool if you are unsure about a tool's current pricing, tagline, or features. Always provide a highly professional and practical build plan." 
+              },
+              { role: "user", content: prompt }
+            ]
+
+            const tools = [
+              {
+                type: 'function',
+                function: {
+                  name: 'get_live_tool_intelligence',
+                  description: 'Fetch real-time metadata from a tool\'s website to verify pricing, tagline, or features.',
+                  parameters: {
+                    type: 'object',
+                    properties: {
+                      url: { type: 'string', description: 'The official website URL of the tool' }
+                    },
+                    required: ['url']
+                  }
+                }
+              }
+            ]
+
+            // We handle one level of tool calling for now (simple & robust)
+            let response = await nimClient.chat.completions.create({
               model: modelId.includes("/") ? modelId : "meta/llama-3.3-70b-instruct",
-              messages: [{ role: "user", content: prompt }],
-              temperature: 0.2,
-              top_p: 1.0,
-              max_tokens: 1800,
-              stream: true,
-            } as any)
+              messages,
+              tools: tools as any,
+              tool_choice: "auto",
+              max_tokens: 2000,
+            })
 
-            for await (const chunk of nimStream) {
-              const delta = chunk.choices[0]?.delta as any
-              const reasoning = delta?.reasoning_content
-              const content = delta?.content
+            const message = response.choices[0].message
+            
+            if (message.tool_calls && message.tool_calls.length > 0) {
+              controller.enqueue(encoder.encode("> [!NOTE]\n> AI is verifying live tool data...\n\n"))
+              
+              messages.push(message)
 
-              if (reasoning) {
-                controller.enqueue(encoder.encode(reasoning))
-              } 
-              else if (content) {
-                controller.enqueue(encoder.encode(content))
+              for (const toolCall of message.tool_calls) {
+                const args = JSON.parse(toolCall.function.arguments)
+                const intelligence = await getLiveToolIntelligence(args.url)
+                
+                messages.push({
+                  role: "tool",
+                  tool_call_id: toolCall.id,
+                  name: "get_live_tool_intelligence",
+                  content: JSON.stringify(intelligence),
+                })
+              }
+
+              // Final stream with the tool results in context
+              const finalStream = await nimClient.chat.completions.create({
+                model: modelId.includes("/") ? modelId : "meta/llama-3.3-70b-instruct",
+                messages,
+                max_tokens: 2000,
+                stream: true,
+              })
+
+              for await (const chunk of finalStream) {
+                const content = chunk.choices[0]?.delta?.content
+                if (content) controller.enqueue(encoder.encode(content))
+              }
+            } else {
+              // No tool call, just stream the direct response
+              // Since we already made one non-streaming call to check for tools, 
+              // we just enqueue the content of that first response if it exists,
+              // or start a new streaming call if needed. 
+              // To keep it simple and robust, we'll just enqueue the first response.
+              if (message.content) {
+                controller.enqueue(encoder.encode(message.content))
               }
             }
           }
