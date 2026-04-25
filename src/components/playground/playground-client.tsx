@@ -662,11 +662,21 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
         }),
       });
       
-      if (!res.ok) throw new Error("Failed to create order");
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to create order");
+      }
       const order = await res.json();
       
+      const razorpayKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
+      
+      if (!razorpayKey) {
+        console.error("Razorpay Public Key is missing in environment variables.");
+        throw new Error("Payment gateway configuration error. Please contact support.");
+      }
+
       const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        key: razorpayKey,
         amount: order.amount,
         currency: order.currency,
         name: "StackFind Pro",
@@ -683,11 +693,11 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
             if (verifyData.success) {
               window.location.reload(); // Refresh to update premium status
             } else {
-              alert("Payment verification failed. Please contact support.");
+              throw new Error(verifyData.message || "Payment verification failed");
             }
-          } catch (err) {
+          } catch (err: any) {
             console.error("Verification Error:", err);
-            alert("Verification error. Please contact support.");
+            alert(err.message || "Verification error. Please contact support.");
           }
         },
         prefill: {
@@ -706,9 +716,9 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
 
       const rzp = new (window as any).Razorpay(options);
       rzp.open();
-    } catch (err) {
+    } catch (err: any) {
       console.error("Unlock Error:", err);
-      alert("Failed to initiate payment. Please try again.");
+      alert(err.message || "Failed to initiate payment. Please try again.");
     }
   }
 

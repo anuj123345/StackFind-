@@ -21,8 +21,7 @@ interface Props {
 
 export default function CheckoutClient({ tools, usdToInrRate, userEmail }: Props) {
   const [loading, setLoading] = useState(false)
-  const [paymentStatus, setPaymentStatus] = useState<"idle" | "success" | "failed">("idle")
-  const [errorMessage, setErrorMessage] = useState("")
+  const [submitted, setSubmitted] = useState(false)
 
   const { subtotal, platformFee, gstAmount, totalMonthlyInr } = useMemo(() => {
     let baseInr = 0
@@ -32,9 +31,7 @@ export default function CheckoutClient({ tools, usdToInrRate, userEmail }: Props
     })
 
     const sub = Math.round(baseInr)
-    // 5% Platform Convenience Fee
     const fee = Math.round(sub * 0.05)
-    // 18% GST on (Subtotal + Fee)
     const gst = Math.round((sub + fee) * 0.18)
     
     return {
@@ -45,88 +42,15 @@ export default function CheckoutClient({ tools, usdToInrRate, userEmail }: Props
     }
   }, [tools, usdToInrRate])
 
-  const handlePayment = async () => {
-    if (loading) return
+  const handleSubmitRequest = async () => {
     setLoading(true)
-    setErrorMessage("")
-
-    try {
-      // 1. Create Order on Backend
-      const res = await fetch("/api/billing/razorpay/create-order", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          amount: totalMonthlyInr * 100, // to paise
-          receipt: `stack_${Date.now()}`,
-        }),
-      })
-
-      const orderData = await res.json()
-      if (!res.ok) throw new Error(orderData.error || "Failed to create order")
-
-      // 2. Open Razorpay Modal
-      const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-        amount: orderData.amount,
-        currency: orderData.currency,
-        name: "StackFind",
-        description: `Purchase for ${tools.length} AI Tools`,
-        image: "/logo.png",
-        order_id: orderData.order_id,
-        handler: async function (response: any) {
-          // 3. Verify Payment on Backend
-          try {
-            const verifyRes = await fetch("/api/billing/razorpay/verify", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-              }),
-            })
-
-            const verifyData = await verifyRes.json()
-            if (verifyData.success) {
-              setPaymentStatus("success")
-            } else {
-              throw new Error(verifyData.message || "Payment verification failed")
-            }
-          } catch (err: any) {
-            setPaymentStatus("failed")
-            setErrorMessage(err.message)
-          } finally {
-            setLoading(false)
-          }
-        },
-        prefill: {
-          name: userEmail?.split("@")[0] || "",
-          email: userEmail || "",
-        },
-        theme: {
-          color: "#6366f1",
-        },
-        modal: {
-          ondismiss: function() {
-            setLoading(false)
-          }
-        }
-      }
-
-      const rzp = new window.Razorpay(options)
-      rzp.on("payment.failed", function (response: any) {
-        setPaymentStatus("failed")
-        setErrorMessage(response.error.description)
-        setLoading(false)
-      })
-      rzp.open()
-    } catch (err: any) {
-      setErrorMessage(err.message)
-      setLoading(false)
-    }
+    // Simulate API call to save request
+    await new Promise(resolve => setTimeout(resolve, 1500))
+    setSubmitted(true)
+    setLoading(false)
   }
 
-  if (paymentStatus === "success") {
+  if (submitted) {
     return (
       <div className="max-w-xl mx-auto px-6 py-20 text-center">
         <motion.div 
@@ -137,9 +61,9 @@ export default function CheckoutClient({ tools, usdToInrRate, userEmail }: Props
           <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <CheckCircle2 size={40} className="text-green-600" />
           </div>
-          <h1 className="text-3xl font-black mb-4" style={{ color: "#1C1611" }}>Payment Successful!</h1>
+          <h1 className="text-3xl font-black mb-4" style={{ color: "#1C1611" }}>Request Submitted!</h1>
           <p className="text-stone-500 mb-8 leading-relaxed">
-            Your stack request has been verified. We are now setting up your managed accounts. You will receive an email with further instructions shortly.
+            We've received your request for managed billing. Our team will review the stack and contact you within 24 hours to set up your accounts and provide payment instructions.
           </p>
           <Link 
             href="/playground"
@@ -168,11 +92,11 @@ export default function CheckoutClient({ tools, usdToInrRate, userEmail }: Props
           <div className="flex items-center gap-3 mb-2">
             <Zap size={18} style={{ color: "#6366f1" }} />
             <h1 className="text-2xl font-black tracking-tight" style={{ color: "#1C1611" }}>
-              Secure Checkout
+              Managed Billing Request
             </h1>
           </div>
           <p className="text-sm leading-relaxed" style={{ color: "#7A6A57" }}>
-            Review your stack and complete the purchase in INR. We'll handle the international USD payments for you.
+            Submit your stack for managed INR billing. We'll verify availability and send you a formal invoice with UPI/Netbanking options.
           </p>
 
           <div className="space-y-3 pt-4">
@@ -180,8 +104,6 @@ export default function CheckoutClient({ tools, usdToInrRate, userEmail }: Props
               const logoSrc = getLogoUrl(tool.website, tool.logo_url)
               const priceInr = tool.starting_price_inr || (tool.starting_price_usd ? Math.round(tool.starting_price_usd * usdToInrRate) : 0)
               
-              const pricingLink = tool.website ? (tool.website.endsWith('/') ? tool.website + 'pricing' : tool.website + '/pricing') : null
-
               return (
                 <div 
                   key={tool.slug} 
@@ -211,9 +133,9 @@ export default function CheckoutClient({ tools, usdToInrRate, userEmail }: Props
             <div className="relative z-10 flex gap-4">
               <ShieldCheck size={32} className="text-indigo-400 flex-shrink-0" />
               <div>
-                <h3 className="font-black text-lg mb-1">Razorpay Secure Payment</h3>
+                <h3 className="font-black text-lg mb-1">Secure Management</h3>
                 <p className="text-[11px] opacity-80 leading-relaxed">
-                  Your transaction is protected by 256-bit SSL encryption. We never store your card or bank details.
+                  We handle the international KYC and USD payments. Your accounts are managed securely with dedicated enterprise access where available.
                 </p>
               </div>
             </div>
@@ -225,7 +147,7 @@ export default function CheckoutClient({ tools, usdToInrRate, userEmail }: Props
             className="rounded-3xl p-6 lg:p-8 sticky top-28 shadow-xl shadow-black/5"
             style={{ background: "#fff", border: "1px solid rgba(140,110,80,0.12)" }}
           >
-            <h2 className="text-lg font-black mb-6" style={{ color: "#1C1611" }}>Billing Details</h2>
+            <h2 className="text-lg font-black mb-6" style={{ color: "#1C1611" }}>Estimated Billing</h2>
             
             <div className="space-y-3 mb-8">
               <div className="flex justify-between text-xs font-medium" style={{ color: "#7A6A57" }}>
@@ -245,33 +167,27 @@ export default function CheckoutClient({ tools, usdToInrRate, userEmail }: Props
               
               <div className="flex justify-between items-end">
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-wider mb-1" style={{ color: "#A0907E" }}>Total Amount</p>
+                  <p className="text-xs font-bold uppercase tracking-wider mb-1" style={{ color: "#A0907E" }}>Estimated Monthly</p>
                   <p className="text-3xl font-black leading-none" style={{ color: "#1C1611" }}>₹{totalMonthlyInr}</p>
                 </div>
               </div>
             </div>
 
             <button
-              onClick={handlePayment}
+              onClick={handleSubmitRequest}
               disabled={loading}
               className="w-full py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-3 transition-all shadow-lg disabled:opacity-50"
-              style={{ background: "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)", color: "#fff" }}
+              style={{ background: "#1C1611", color: "#fff" }}
             >
               {loading ? (
-                <><Loader2 className="animate-spin" size={18} /> Initializing...</>
+                <><Loader2 className="animate-spin" size={18} /> Submitting...</>
               ) : (
-                <><CreditCard size={18} /> Pay ₹{totalMonthlyInr} Now</>
+                <><Zap size={18} className="text-yellow-400" /> Request Managed Billing</>
               )}
             </button>
             
-            {errorMessage && (
-              <p className="text-[10px] text-red-500 mt-4 text-center font-medium">
-                {errorMessage}
-              </p>
-            )}
-
             <p className="text-center text-[10px] mt-6" style={{ color: "#C4B0A0" }}>
-              By clicking pay, you agree to our Terms of Service. <br/>
+              Our team will contact you to finalize the setup. <br/>
               Need help? <Link href="/contact" className="underline">Contact Support</Link>
             </p>
           </div>

@@ -5,9 +5,17 @@ import { getServerUser } from "@/lib/auth";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
+  const key_id = process.env.RAZORPAY_KEY_ID;
+  const key_secret = process.env.RAZORPAY_KEY_SECRET;
+
+  if (!key_id || !key_secret) {
+    console.error("Razorpay Keys missing:", { key_id: !!key_id, key_secret: !!key_secret });
+    return NextResponse.json({ error: "Razorpay API keys are not configured." }, { status: 500 });
+  }
+
   const razorpay = new Razorpay({
-    key_id: process.env.RAZORPAY_KEY_ID!,
-    key_secret: process.env.RAZORPAY_KEY_SECRET!,
+    key_id,
+    key_secret,
   });
   try {
     const user = await getServerUser();
