@@ -950,4 +950,3 @@ function SecurityIndicator({ label, active }: { label: string, active: boolean }
 }
 
 function SidebarIcon({ icon }: { icon: React.ReactNode }) { return icon }
-function ShieldCheck({ size }: { size: number }) { return <Check size={size} /> }
