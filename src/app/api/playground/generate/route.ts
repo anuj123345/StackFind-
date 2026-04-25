@@ -42,18 +42,29 @@ export async function POST(req: NextRequest) {
       // We continue if ratelimit fails (e.g. missing keys) to avoid blocking users
     }
 
-    let tools: any[], productIdea: string, modelId: string = "meta/llama-3.3-70b-instruct"
+    let tools: any[], productIdea: string, budget: number = 0, modelId: string = "meta/llama-3.3-70b-instruct"
     try {
       const body = await req.json()
-      tools = body.tools
+      tools = body.tools || []
       productIdea = body.productIdea
+      budget = body.budget || 0
       if (body.modelId) modelId = body.modelId
     } catch {
       return jsonError("Invalid request body")
     }
 
-    if (!tools?.length) return jsonError("Add at least one tool to your stack")
     if (!productIdea?.trim()) return jsonError("Describe what you want to build")
+    
+    // If no tools selected, suggest a stack from all available tools
+    let suggestionContext = ""
+    if (tools.length === 0) {
+      const { getPlaygroundTools } = await import("@/lib/queries")
+      const allTools = await getPlaygroundTools()
+      // Limit to ~40 popular tools to keep context manageable
+      suggestionContext = allTools.slice(0, 40).map(t => 
+        `- ${t.name}: ${t.tagline} (Est: ₹${t.starting_price_inr || Math.round((t.starting_price_usd || 0) * usdToInrRate)}/mo)`
+      ).join("\n")
+    }
 
     const toolLines = tools.map((t: any) => {
       let effectiveInr = 0
@@ -67,22 +78,30 @@ export async function POST(req: NextRequest) {
       return `- ${t.name}: Price: ${t.startingPriceInr ? `₹${t.startingPriceInr}/mo` : "N/A"} / ${t.startingPriceUsd ? `$${t.startingPriceUsd}/mo` : "N/A"}, (ESTIMATED TOTAL: ₹${effectiveInr}/mo). Billing: ${billingContext}. Tagline: ${t.tagline}`
     }).join("\n")
 
-    const prompt = `You are a senior technical co-founder. A founder wants to build: "${productIdea.trim()}"
-Their stack (${tools.length} tools):
-${toolLines}
+    const prompt = `You are a senior technical co-founder. 
+Founder's Idea: "${productIdea.trim()}"
+Monthly Budget: ₹${budget > 0 ? budget : "Flexible (Free/Freemium preferred)"}
+
+${tools.length > 0 ? `Selected Stack (${tools.length} tools):
+${toolLines}` : `The founder has NOT selected any tools. Suggest a robust stack from these tools that fits the budget:
+${suggestionContext}`}
 
 Write a practical build plan. Use this EXACT format:
 ## Product Overview
 [3 sentences max]
 
+## ${tools.length > 0 ? "Stack Analysis" : "Suggested Stack"}
+[Explain why this stack was chosen for the budget and idea]
+
 ## How Each Tool Is Used
 [One paragraph per tool]
 
-## Cost Breakdown
+## Cost Breakdown & Budget Validation
 [Markdown Table: Tool | Plan | Monthly Cost (₹) | Billing Status]
+[Check if the total fits the ₹${budget} budget. If not, suggest a "Phase 1: MVP" strategy.]
 
 ## Managed Stack Advantage
-[Savings calculation]
+[Explain how StackFind's managed billing (UPI/INR) simplifies these specific tools]
 
 ## Launch Timeline
 [8 weeks breakdown]

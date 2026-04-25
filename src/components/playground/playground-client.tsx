@@ -503,6 +503,7 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
   const [activeCategory, setActiveCategory] = useState("all")
   const [search, setSearch] = useState("")
   const [idea, setIdea] = useState("")
+  const [budget, setBudget] = useState<number | "">(5000)
   const [selectedModelId, setSelectedModelId] = useState(MODELS[0].id)
   const [output, setOutput] = useState("")
   const [error, setError] = useState("")
@@ -586,7 +587,7 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
   }
 
   async function generate() {
-    if (!idea.trim() || stack.length === 0 || loading) return
+    if (!idea.trim() || (stack.length === 0 && budget === "") || loading) return
     setOutput("")
     setError("")
     setLoading(true)
@@ -597,7 +598,9 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
         body: JSON.stringify({ 
           tools: stack, 
           productIdea: idea,
-          modelId: selectedModelId
+          budget: budget === "" ? 0 : budget,
+          modelId: selectedModelId,
+          usdToInrRate,
         }),
       })
 
@@ -722,7 +725,7 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
     }
   }
 
-  const canGenerate = isAuthenticated && idea.trim().length > 0 && stack.length > 0 && !loading && !hasReachedLimit
+  const canGenerate = isAuthenticated && idea.trim().length > 0 && (stack.length > 0 || (typeof budget === "number" && budget >= 0)) && !loading && !hasReachedLimit
 
   return (
     <div>
@@ -894,28 +897,57 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
             className="rounded-2xl p-5"
             style={{ background: "rgba(255,255,255,0.7)", border: "1px solid rgba(140,110,80,0.1)" }}
           >
-            <label className="block text-sm font-bold mb-3" style={{ color: "#1C1611" }}>
-              Describe what you want to build
-            </label>
+            <div className="flex flex-col sm:flex-row gap-5 mb-3">
+              <div className="flex-1">
+                <label className="block text-sm font-bold mb-3" style={{ color: "#1C1611" }}>
+                  Describe what you want to build
+                </label>
+                <textarea
+                  ref={textareaRef}
+                  value={idea}
+                  onChange={e => setIdea(e.target.value)}
+                  placeholder="e.g. A SaaS for freelancers to track invoices and auto-remind clients when payments are overdue…"
+                  rows={3}
+                  className="w-full resize-none rounded-xl text-sm outline-none placeholder:text-[#C4B0A0]"
+                  style={{
+                    background: "rgba(140,110,80,0.03)",
+                    border: "1px solid rgba(140,110,80,0.12)",
+                    padding: "12px 14px",
+                    color: "#1C1611",
+                    lineHeight: "1.65",
+                    transition: "border-color 200ms",
+                  }}
+                  onFocus={e => (e.target.style.borderColor = "rgba(99,102,241,0.35)")}
+                  onBlur={e => (e.target.style.borderColor = "rgba(140,110,80,0.12)")}
+                />
+              </div>
 
-            <textarea
-              ref={textareaRef}
-              value={idea}
-              onChange={e => setIdea(e.target.value)}
-              placeholder="e.g. A SaaS for freelancers to track invoices and auto-remind clients when payments are overdue…"
-              rows={3}
-              className="w-full resize-none rounded-xl text-sm outline-none placeholder:text-[#C4B0A0]"
-              style={{
-                background: "rgba(140,110,80,0.03)",
-                border: "1px solid rgba(140,110,80,0.12)",
-                padding: "12px 14px",
-                color: "#1C1611",
-                lineHeight: "1.65",
-                transition: "border-color 200ms",
-              }}
-              onFocus={e => (e.target.style.borderColor = "rgba(99,102,241,0.35)")}
-              onBlur={e => (e.target.style.borderColor = "rgba(140,110,80,0.12)")}
-            />
+              <div className="w-full sm:w-52">
+                <label className="block text-sm font-bold mb-3" style={{ color: "#1C1611" }}>
+                  Monthly Budget (₹)
+                </label>
+                <div 
+                  className="flex items-center gap-2.5 px-4 py-3 rounded-xl transition-all duration-200"
+                  style={{ 
+                    background: "rgba(140,110,80,0.03)", 
+                    border: "1px solid rgba(140,110,80,0.12)",
+                  }}
+                >
+                  <DollarSign size={14} style={{ color: "#6366f1" }} />
+                  <input 
+                    type="number"
+                    value={budget}
+                    onChange={e => setBudget(e.target.value === "" ? "" : Number(e.target.value))}
+                    placeholder="e.g. 5000"
+                    className="bg-transparent outline-none text-sm font-bold w-full"
+                    style={{ color: "#1C1611" }}
+                  />
+                </div>
+                <p className="text-[10px] mt-2 leading-relaxed" style={{ color: "#C4B0A0" }}>
+                  AI will suggest a stack <br /> that fits this budget.
+                </p>
+              </div>
+            </div>
 
             {/* Example prompts */}
             <div className="mt-3 flex flex-wrap gap-1.5">
@@ -1020,8 +1052,8 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
                     onClick={generate}
                     disabled={!canGenerate}
                     title={!canGenerate ? 
-                      (stack.length === 0 ? "Add at least one tool to your stack" : 
-                       idea.trim().length === 0 ? "Describe your idea to generate a plan" : 
+                      (idea.trim().length === 0 ? "Describe your idea to generate a plan" : 
+                       (stack.length === 0 && (budget === "" || budget < 0)) ? "Add tools or set a budget to suggest a stack" :
                        hasReachedLimit ? "Usage limit reached" : "Please fill in all details") 
                       : "Generate build plan"
                     }
