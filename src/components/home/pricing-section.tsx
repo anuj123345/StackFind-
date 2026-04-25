@@ -71,7 +71,7 @@ function Sparkles({ className }: { className?: string }) {
 
 export function PricingSection() {
   return (
-    <section className="relative z-10 px-4 py-12 bg-[#F9F5F1]">
+    <section className="relative z-10 px-6 py-24 lg:py-32 bg-[#FAF7F2]">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-16">
           <motion.div 
@@ -114,7 +114,7 @@ export function PricingSection() {
           </motion.p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
           {PLANS.map((plan, i) => (
             <motion.div
               key={plan.name}
@@ -122,10 +122,10 @@ export function PricingSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.1, duration: 0.6 }}
-              className={`relative flex flex-col p-8 rounded-3xl border transition-all duration-300 ${
+              className={`relative flex flex-col p-10 rounded-[2.5rem] border transition-all duration-300 ${
                 plan.highlight 
-                  ? "bg-white border-indigo-200 shadow-2xl shadow-indigo-100 scale-105 z-20" 
-                  : "bg-white/50 border-stone-200 hover:border-indigo-100"
+                  ? "bg-white border-indigo-200 shadow-2xl shadow-indigo-100/50 scale-105 z-20" 
+                  : "bg-white/60 border-stone-200 hover:border-indigo-100"
               }`}
             >
               {plan.highlight && (
