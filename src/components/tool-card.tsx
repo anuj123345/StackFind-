@@ -105,18 +105,19 @@ export function ToolCard({
         <div className={cn(
           "relative h-full flex flex-col rounded-2xl transition-all duration-500",
           "bg-white/80 backdrop-blur-md border border-black/[0.06]",
-          "hover:border-indigo-500/30 hover:shadow-[0_20px_50px_-12px_rgba(140,110,80,0.15)]",
-          "overflow-hidden"
+          "hover:border-indigo-500/30 hover:shadow-[0_20px_50px_-12px_rgba(140,110,80,0.15)]"
         )}>
-          {/* Subtle light shimmer on hover */}
-          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none">
-            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-indigo-500/[0.03] to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+          {/* Shimmer & Background constraints */}
+          <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
+            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700">
+              <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-indigo-500/[0.03] to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+            </div>
           </div>
 
-          <div className="p-5 flex flex-col gap-4 flex-1">
+          <div className="p-6 flex flex-col gap-4 flex-1">
             {/* Header row */}
             <div className="flex items-start justify-between gap-3">
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4 min-w-0">
                 {/* Logo with Lens Effect */}
                 <div className="relative w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 overflow-hidden bg-black/[0.02] border border-black/[0.04] group-hover:border-indigo-500/20 transition-colors">
                   <ToolLogo name={name} website={website} logoUrl={logoUrl} />
@@ -142,7 +143,7 @@ export function ToolCard({
               </div>
 
               {/* Action Buttons */}
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 flex-shrink-0">
                 <button
                   onClick={(e) => {
                     e.preventDefault()

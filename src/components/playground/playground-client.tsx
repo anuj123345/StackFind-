@@ -215,7 +215,7 @@ function BrowserCard({ tool, inStack, onToggle, usdToInrRate }: {
   return (
     <button
       onClick={() => onToggle(tool)}
-      className="w-full text-left rounded-xl p-3 transition-all duration-150 group"
+      className="w-full text-left rounded-xl p-4 transition-all duration-150 group"
       style={{
         background: inStack ? "rgba(99,102,241,0.05)" : "rgba(255,255,255,0.6)",
         border: `1px solid ${inStack ? "rgba(99,102,241,0.22)" : "rgba(140,110,80,0.09)"}`,

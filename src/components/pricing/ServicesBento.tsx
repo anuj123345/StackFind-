@@ -41,10 +41,10 @@ export function ServicesBento() {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.1, duration: 0.7 }}
             viewport={{ once: true }}
-            className={`${f.size} group relative min-h-[400px] p-10 rounded-[3rem] border border-[#8C6E50]/10 overflow-hidden transition-all duration-500 hover:shadow-2xl hover:shadow-[#8C6E50]/10`}
+            className={`${f.size} group relative min-h-[400px] p-10 rounded-[3rem] border border-[#8C6E50]/10 transition-all duration-500 hover:shadow-2xl hover:shadow-[#8C6E50]/10`}
           >
-            {/* Background Image */}
-            <div className="absolute inset-0 z-0">
+            {/* Background Container (with overflow-hidden) */}
+            <div className="absolute inset-0 z-0 rounded-[3rem] overflow-hidden">
               <img 
                 src={f.bgImage} 
                 alt="" 

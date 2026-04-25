@@ -79,7 +79,7 @@ function FeaturedCard({ tool, delay, color }: { tool: ToolWithCategoryNames; del
       className="card-bezel group h-full"
     >
       <div className="card-inner flex flex-col h-full">
-        <div className="p-5 flex flex-col flex-1 gap-3">
+        <div className="p-6 flex flex-col flex-1 gap-4">
 
           {/* Logo + name row */}
           <div className="flex items-start justify-between gap-2">
