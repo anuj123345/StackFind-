@@ -212,20 +212,60 @@ Write a practical build plan. Use this EXACT format:
               const finalStream = await nimClient.chat.completions.create({
                 model: modelId.includes("/") ? modelId : "meta/llama-3.3-70b-instruct",
                 messages,
+                tools: tools as any, // Always provide tools to maintain model state
                 max_tokens: 2000,
                 stream: true,
               })
 
               for await (const chunk of finalStream) {
                 const content = chunk.choices[0]?.delta?.content
-                if (content) controller.enqueue(encoder.encode(content))
+                // Safety: If the model still tries to output tool JSON in the content, skip it
+                if (content && !content.trim().startsWith('{"type": "function"')) {
+                  controller.enqueue(encoder.encode(content))
+                }
               }
             } else {
-              // No tool call, just stream the direct response
-              // Since we already made one non-streaming call to check for tools, 
-              // we just enqueue the content of that first response if it exists,
-              // or start a new streaming call if needed. 
-              // To keep it simple and robust, we'll just enqueue the first response.
+              // No official tool_calls, but check if the model outputted a JSON tool call in content
+              const content = message.content || ""
+              if (content.trim().startsWith('{"type": "function"') || content.includes('"get_live_tool_intelligence"')) {
+                // The model outputted a tool call as text instead of using the API
+                // Let's try to recover by treating it as a tool call
+                try {
+                  const rawJson = content.trim().startsWith('{') ? content.trim() : content.match(/\{.*\}/s)?.[0]
+                  if (rawJson) {
+                    const parsed = JSON.parse(rawJson)
+                    const url = parsed.function?.parameters?.url || parsed.parameters?.url
+                    if (url) {
+                      controller.enqueue(encoder.encode("> [!NOTE]\n> AI is verifying live tool data (recovered)...\n\n"))
+                      const intelligence = await getLiveToolIntelligence(url)
+                      messages.push({ role: "assistant", content: content })
+                      messages.push({
+                        role: "tool",
+                        tool_call_id: "call_" + Math.random().toString(36).substring(7),
+                        name: "get_live_tool_intelligence",
+                        content: JSON.stringify(intelligence),
+                      })
+                      
+                      const finalStream = await nimClient.chat.completions.create({
+                        model: modelId.includes("/") ? modelId : "meta/llama-3.3-70b-instruct",
+                        messages,
+                        tools: tools as any,
+                        max_tokens: 2000,
+                        stream: true,
+                      })
+                      for await (const chunk of finalStream) {
+                        const c = chunk.choices[0]?.delta?.content
+                        if (c) controller.enqueue(encoder.encode(c))
+                      }
+                      controller.close()
+                      return
+                    }
+                  }
+                } catch (e) {
+                  // Fallback to normal streaming if recovery fails
+                }
+              }
+              
               if (message.content) {
                 controller.enqueue(encoder.encode(message.content))
               }
