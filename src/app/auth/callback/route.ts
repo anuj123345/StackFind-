@@ -1,5 +1,4 @@
-import { NextRequest, NextResponse } from "next/server"
-import { createClient } from "@/lib/supabase/server"
+import { createClient, createAdminClient } from "@/lib/supabase/server"
 
 export async function GET(req: NextRequest) {
   const { searchParams, origin } = req.nextUrl
@@ -12,9 +11,10 @@ export async function GET(req: NextRequest) {
     if (!error) {
       const { data: { user } } = await supabase.auth.getUser()
 
-      // 1. Ensure profile exists and track login
+      // 1. Ensure profile exists and track login (using Admin Client to bypass RLS)
       if (user?.email) {
-        await supabase
+        const adminSupabase = await createAdminClient()
+        const { error: upsertError } = await adminSupabase
           .from("profiles")
           .upsert({
             id: user.id,
@@ -23,6 +23,12 @@ export async function GET(req: NextRequest) {
             avatar_url: user.user_metadata?.avatar_url ?? null,
             updated_at: new Date().toISOString(),
           }, { onConflict: 'id' })
+        
+        if (upsertError) {
+          console.error("[auth/callback] profile upsert error:", upsertError)
+        } else {
+          console.log("[auth/callback] tracked login for:", user.email)
+        }
       }
 
       // 2. Check if this is a brand-new user and send welcome email
