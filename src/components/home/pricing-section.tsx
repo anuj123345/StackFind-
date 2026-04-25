@@ -19,7 +19,8 @@ const PLANS = [
     cta: "Start browsing",
     href: "/tools",
     highlight: false,
-    icon: <Zap className="w-5 h-5 text-indigo-500" />
+    icon: <Zap className="w-5 h-5 text-white" />,
+    bgImage: "/pricing-explorer.png"
   },
   {
     name: "Product Pro",
@@ -36,7 +37,8 @@ const PLANS = [
     cta: "Unlock Pro",
     href: "/playground?unlock=pro",
     highlight: true,
-    icon: <Sparkles className="w-5 h-5 text-amber-500" />
+    icon: <Sparkles className="w-5 h-5 text-white" />,
+    bgImage: "/pricing-pro.png"
   },
   {
     name: "Startup Squad",
@@ -53,7 +55,8 @@ const PLANS = [
     cta: "Get Started",
     href: "/login",
     highlight: false,
-    icon: <Users className="w-5 h-5 text-emerald-500" />
+    icon: <Users className="w-5 h-5 text-white" />,
+    bgImage: "/pricing-squad.png"
   },
 ]
 
@@ -122,54 +125,64 @@ export function PricingSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.1, duration: 0.6 }}
-              className={`relative flex flex-col p-10 rounded-[2.5rem] border transition-all duration-300 ${
+              className={`relative flex flex-col p-10 rounded-[2.5rem] border overflow-hidden transition-all duration-500 ${
                 plan.highlight 
-                  ? "bg-white border-indigo-200 shadow-2xl shadow-indigo-100/50 scale-105 z-20" 
-                  : "bg-white/60 border-stone-200 hover:border-indigo-100"
+                  ? "border-indigo-300/30 shadow-2xl shadow-indigo-200/20 scale-105 z-20" 
+                  : "border-stone-200/10 hover:border-white/20"
               }`}
             >
+              {/* Background Image */}
+              <div className="absolute inset-0 z-0">
+                <img 
+                  src={plan.bgImage} 
+                  alt="" 
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                />
+                <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/80" />
+              </div>
+
               {plan.highlight && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-indigo-600 text-white text-[0.625rem] font-black uppercase tracking-widest rounded-full shadow-lg">
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-indigo-600 text-white text-[0.625rem] font-black uppercase tracking-widest rounded-full shadow-lg z-20">
                   Most Popular
                 </div>
               )}
 
-              <div className="mb-8">
+              <div className="relative z-10 mb-8">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2.5 rounded-xl bg-stone-50 border border-stone-100 italic">
+                  <div className="p-2.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/20">
                     {plan.icon}
                   </div>
-                  <h3 className="font-bold text-xl text-[#1C1611]">{plan.name}</h3>
+                  <h3 className="font-bold text-xl text-white drop-shadow-md">{plan.name}</h3>
                 </div>
                 
                 <div className="flex items-baseline gap-1 mb-2">
-                  <span className="text-4xl font-black text-[#1C1611]" style={{ fontFamily: "'Bricolage Grotesque Variable', sans-serif" }}>
+                  <span className="text-4xl font-black text-white drop-shadow-md" style={{ fontFamily: "'Bricolage Grotesque Variable', sans-serif" }}>
                     {plan.price}
                   </span>
-                  <span className="text-sm font-medium text-[#A29485]">{plan.period}</span>
+                  <span className="text-sm font-medium text-white/70">{plan.period}</span>
                 </div>
-                <p className="text-sm text-[#7A6A57] leading-relaxed">
+                <p className="text-sm text-white/80 leading-relaxed">
                   {plan.description}
                 </p>
               </div>
 
-              <div className="flex-grow space-y-4 mb-10">
+              <div className="relative z-10 flex-grow space-y-4 mb-10">
                 {plan.features.map((feature, j) => (
                     <div key={j} className="flex items-start gap-3">
-                        <div className={`mt-1 p-0.5 rounded-full ${plan.highlight ? "text-indigo-600" : "text-stone-400"}`}>
+                        <div className={`mt-1 p-0.5 rounded-full text-white`}>
                             <Check size={14} strokeWidth={3} />
                         </div>
-                        <span className="text-sm text-[#5C5248] font-medium leading-tight">{feature}</span>
+                        <span className="text-sm text-white/90 font-medium leading-tight">{feature}</span>
                     </div>
                 ))}
               </div>
 
               <Link 
                 href={plan.href}
-                className={`flex items-center justify-center gap-2 py-4 px-6 rounded-2xl font-bold transition-all duration-300 ${
+                className={`relative z-10 flex items-center justify-center gap-2 py-4 px-6 rounded-2xl font-bold transition-all duration-300 ${
                     plan.highlight
-                    ? "bg-indigo-600 text-white hover:bg-indigo-700 shadow-xl shadow-indigo-100"
-                    : "bg-stone-900 text-white hover:bg-black"
+                    ? "bg-indigo-600 text-white hover:bg-indigo-700 shadow-xl shadow-indigo-600/20"
+                    : "bg-white text-black hover:bg-stone-100"
                 }`}
               >
                 {plan.cta}
