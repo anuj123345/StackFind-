@@ -10,8 +10,22 @@ export async function GET(req: NextRequest) {
     const supabase = await createClient()
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     if (!error) {
-      // Check if this is a brand-new user and send welcome email
       const { data: { user } } = await supabase.auth.getUser()
+
+      // 1. Ensure profile exists and track login
+      if (user?.email) {
+        await supabase
+          .from("profiles")
+          .upsert({
+            id: user.id,
+            email: user.email,
+            full_name: user.user_metadata?.full_name ?? user.user_metadata?.name ?? null,
+            avatar_url: user.user_metadata?.avatar_url ?? null,
+            updated_at: new Date().toISOString(),
+          }, { onConflict: 'id' })
+      }
+
+      // 2. Check if this is a brand-new user and send welcome email
       if (user?.email) {
         const createdAt = new Date(user.created_at).getTime()
         const isNewUser = Date.now() - createdAt < 60_000 // created within last 60s

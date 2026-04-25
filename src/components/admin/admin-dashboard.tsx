@@ -79,7 +79,7 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
   const [showForm, setShowForm] = useState(false)
   const [isPending, startTransition] = useTransition()
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null)
-  const [tab, setTab] = useState<"command" | "tools" | "submissions" | "leads">("command")
+  const [tab, setTab] = useState<"command" | "tools" | "submissions" | "leads" | "users">("command")
   const [searchQuery, setSearchQuery] = useState("")
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
@@ -178,7 +178,7 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
     })
   }
 
-  // ─── Submissions & Analytics state ──────────────────────────────────────────
+  // ─── Submissions & Analytics & Users state ──────────────────────────────────
   const [stats, setStats] = useState<any>(null)
   const [statsLoading, setStatsLoading] = useState(false)
   const [submissions, setSubmissions] = useState<Submission[]>([])
@@ -187,6 +187,9 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
   const [billingRequests, setBillingRequests] = useState<BillingRequest[]>([])
   const [leadsLoaded, setLeadsLoaded] = useState(false)
   const [leadsLoading, setLeadsLoading] = useState(false)
+  const [users, setUsers] = useState<any[]>([])
+  const [usersLoaded, setUsersLoaded] = useState(false)
+  const [usersLoading, setUsersLoading] = useState(false)
 
   async function loadAnalytics() {
     setStatsLoading(true)
@@ -217,10 +220,21 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
     } finally { setLeadsLoading(false) }
   }
 
+  async function loadUsers() {
+    setUsersLoading(true)
+    try {
+      const res = await fetch("/api/admin/users", { headers: { "x-admin-key": adminKey } })
+      const data = await res.json()
+      setUsers(data.users ?? [])
+      setUsersLoaded(true)
+    } finally { setUsersLoading(false) }
+  }
+
   useEffect(() => {
     if (tab === "command") loadAnalytics()
     if (tab === "submissions" && !subsLoaded) loadSubmissions()
     if (tab === "leads" && !leadsLoaded) loadBillingRequests()
+    if (tab === "users" && !usersLoaded) loadUsers()
   }, [tab])
 
   async function handleApproveSubmission(id: string) {
@@ -284,6 +298,7 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
           <nav className="flex flex-col gap-1.5">
             <SidebarLink icon={<Activity size={18} />} label="Overview" active={tab === "command"} onClick={() => setTab("command")} />
             <SidebarLink icon={<Database size={18} />} label="Live Tools" active={tab === "tools"} onClick={() => setTab("tools")} />
+            <SidebarLink icon={<Users size={18} />} label="User Base" active={tab === "users"} onClick={() => setTab("users")} />
             <SidebarLink icon={<FileText size={18} />} label="Submissions" active={tab === "submissions"} onClick={() => setTab("submissions")} count={submissions.length} />
             <SidebarLink icon={<PieChart size={18} />} label="Billing Leads" active={tab === "leads"} onClick={() => setTab("leads")} count={billingRequests.length} />
           </nav>
@@ -352,6 +367,7 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
               <nav className="flex flex-col gap-1.5">
                 <SidebarLink icon={<Activity size={18} />} label="Overview" active={tab === "command"} onClick={() => { setTab("command"); setMobileMenuOpen(false) }} />
                 <SidebarLink icon={<Database size={18} />} label="Live Tools" active={tab === "tools"} onClick={() => { setTab("tools"); setMobileMenuOpen(false) }} />
+                <SidebarLink icon={<Users size={18} />} label="User Base" active={tab === "users"} onClick={() => { setTab("users"); setMobileMenuOpen(false) }} />
                 <SidebarLink icon={<FileText size={18} />} label="Submissions" active={tab === "submissions"} onClick={() => { setTab("submissions"); setMobileMenuOpen(false) }} count={submissions.length} />
                 <SidebarLink icon={<PieChart size={18} />} label="Billing Leads" active={tab === "leads"} onClick={() => { setTab("leads"); setMobileMenuOpen(false) }} count={billingRequests.length} />
               </nav>
@@ -393,6 +409,7 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
             <h2 className="text-[1.5rem] lg:text-[2rem] font-black tracking-[-0.04em] mb-1 text-[#1C1611] leading-tight" style={{ fontFamily: "'Bricolage Grotesque Variable', sans-serif" }}>
               {tab === "command" && "System Pulse"}
               {tab === "tools" && "Registry Management"}
+              {tab === "users" && "User Ecosystem"}
               {tab === "submissions" && "Moderation Queue"}
               {tab === "leads" && "Revenue Pipeline"}
             </h2>
@@ -697,6 +714,104 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
                     ))}
                  </div>
                )}
+            </div>
+          )}
+
+          {tab === "users" && (
+            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Active Users Card */}
+                <div className="rounded-3xl bg-white border border-[rgba(140,110,80,0.12)] p-8 shadow-sm relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-8 opacity-[0.03] text-indigo-600 group-hover:scale-125 transition-transform duration-700">
+                    <Activity size={100} />
+                  </div>
+                  <h3 className="text-lg font-bold mb-6 flex items-center gap-2 text-[#1C1611] relative z-10">
+                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                    Regular Logins
+                  </h3>
+                  <div className="space-y-4 relative z-10">
+                    {users.slice(0, 5).map(u => (
+                      <div key={u.id} className="flex items-center justify-between p-3 rounded-xl hover:bg-[#FAF7F2] transition-colors border border-transparent hover:border-[rgba(140,110,80,0.08)]">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-full bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 font-black text-xs uppercase">
+                            {u.email[0]}
+                          </div>
+                          <div>
+                            <div className="text-sm font-bold text-[#1C1611]">{u.email}</div>
+                            <div className="text-[10px] text-[#7A6A57] font-medium">Last active: {new Date(u.updated_at).toLocaleString('en-IN')}</div>
+                          </div>
+                        </div>
+                        <div className="text-[10px] font-black text-emerald-600 uppercase tracking-widest bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">Active</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* New Users Card */}
+                <div className="rounded-3xl bg-white border border-[rgba(140,110,80,0.12)] p-8 shadow-sm relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-8 opacity-[0.03] text-orange-600 group-hover:scale-125 transition-transform duration-700">
+                    <Plus size={100} />
+                  </div>
+                  <h3 className="text-lg font-bold mb-6 flex items-center gap-2 text-[#1C1611] relative z-10">
+                    <div className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
+                    New Signups
+                  </h3>
+                  <div className="space-y-4 relative z-10">
+                    {[...users].sort((a,b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 5).map(u => (
+                      <div key={u.id} className="flex items-center justify-between p-3 rounded-xl hover:bg-[#FAF7F2] transition-colors border border-transparent hover:border-[rgba(140,110,80,0.08)]">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-full bg-orange-50 border border-orange-100 flex items-center justify-center text-orange-600 font-black text-xs uppercase">
+                            {u.email[0]}
+                          </div>
+                          <div>
+                            <div className="text-sm font-bold text-[#1C1611]">{u.email}</div>
+                            <div className="text-[10px] text-[#7A6A57] font-medium">Joined: {new Date(u.created_at).toLocaleDateString('en-IN')}</div>
+                          </div>
+                        </div>
+                        <div className="text-[10px] font-black text-orange-500 uppercase tracking-widest bg-orange-50 px-2 py-0.5 rounded-md border border-orange-100">New</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* All Users Table */}
+              <div className="rounded-3xl bg-white border border-[rgba(140,110,80,0.12)] overflow-hidden shadow-sm">
+                <table className="w-full text-left border-collapse min-w-[800px]">
+                  <thead className="bg-[#FAF7F2]">
+                    <tr>
+                      <th className="px-6 py-4 text-[0.625rem] font-black uppercase tracking-widest text-[#7A6A57]">User Profile</th>
+                      <th className="px-6 py-4 text-[0.625rem] font-black uppercase tracking-widest text-[#7A6A57]">Joined On</th>
+                      <th className="px-6 py-4 text-[0.625rem] font-black uppercase tracking-widest text-[#7A6A57]">Last Activity</th>
+                      <th className="px-6 py-4 text-[0.625rem] font-black uppercase tracking-widest text-[#7A6A57] text-right">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[rgba(140,110,80,0.08)]">
+                    {users.filter(u => u.email.toLowerCase().includes(searchQuery.toLowerCase())).map(u => (
+                      <tr key={u.id} className="group hover:bg-[#FAF7F2]/50 transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-white border border-[rgba(140,110,80,0.08)] flex items-center justify-center text-[10px] font-bold text-[#7A6A57]">
+                              {u.email[0].toUpperCase()}
+                            </div>
+                            <div>
+                              <div className="text-sm font-bold text-[#1C1611] group-hover:text-indigo-600 transition-colors">{u.email}</div>
+                              <div className="text-[10px] text-[#7A6A57] font-medium">{u.full_name || "Founder"}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-xs text-[#7A6A57] font-bold">{new Date(u.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
+                        <td className="px-6 py-4 text-xs text-[#7A6A57] font-bold">{u.updated_at ? new Date(u.updated_at).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : "Never"}</td>
+                        <td className="px-6 py-4 text-right">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-600 text-[10px] font-black uppercase tracking-tighter border border-indigo-100">
+                            <ShieldCheck size={10} /> Verified
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </div>
