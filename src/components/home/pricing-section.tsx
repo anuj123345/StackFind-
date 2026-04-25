@@ -125,14 +125,14 @@ export function PricingSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.1, duration: 0.6 }}
-              className={`relative flex flex-col p-10 rounded-[2.5rem] border overflow-hidden transition-all duration-500 ${
+              className={`relative flex flex-col p-10 rounded-[2.5rem] border transition-all duration-500 ${
                 plan.highlight 
                   ? "border-indigo-300/30 shadow-2xl shadow-indigo-200/20 scale-105 z-20" 
                   : "border-stone-200/10 hover:border-white/20"
               }`}
             >
-              {/* Background Image */}
-              <div className="absolute inset-0 z-0">
+              {/* Background Container (with overflow-hidden) */}
+              <div className="absolute inset-0 z-0 rounded-[2.5rem] overflow-hidden">
                 <img 
                   src={plan.bgImage} 
                   alt="" 
@@ -142,7 +142,7 @@ export function PricingSection() {
               </div>
 
               {plan.highlight && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-indigo-600 text-white text-[0.625rem] font-black uppercase tracking-widest rounded-full shadow-lg z-20">
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-indigo-600 text-white text-[0.625rem] font-black uppercase tracking-widest rounded-full shadow-lg z-30 whitespace-nowrap">
                   Most Popular
                 </div>
               )}
