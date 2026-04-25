@@ -5,7 +5,7 @@ import {
   Plus, Check, X, Trash2, ExternalLink, ChevronDown, ChevronUp, 
   RefreshCw, Activity, TrendingUp, Users, Zap, LayoutDashboard, 
   Database, Shield, PieChart, FileText, Settings, LogOut, Search,
-  ArrowUpRight, Clock, Box, Globe, ShieldAlert, Menu
+  ArrowUpRight, Clock, Box, Globe, ShieldAlert, Menu, ShieldCheck
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import type { Tool, Category } from "@/types/database"
