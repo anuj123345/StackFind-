@@ -9,15 +9,15 @@ interface WelcomeIntroProps {
 }
 
 export function WelcomeIntro({ onComplete }: WelcomeIntroProps) {
-  const [step, setStep] = useState(0) // 0: Swarm, 1: Solid Logo + Text, 2: Exit
+  const [step, setStep] = useState(0) // 0: Nature & Birds, 1: Logo Assembly, 2: Final Reveal
 
   useEffect(() => {
-    // 1. Swarm for 1.5s
-    const timer1 = setTimeout(() => setStep(1), 1500)
-    // 2. Show Logo + Welcome for 2s
-    const timer2 = setTimeout(() => setStep(2), 3500)
+    // 1. Nature & Birds for 3s
+    const timer1 = setTimeout(() => setStep(1), 3000)
+    // 2. Logo Assembly for 2.5s
+    const timer2 = setTimeout(() => setStep(2), 5500)
     // 3. Complete
-    const timer3 = setTimeout(onComplete, 4500)
+    const timer3 = setTimeout(onComplete, 6500)
 
     return () => {
       clearTimeout(timer1)
@@ -26,37 +26,54 @@ export function WelcomeIntro({ onComplete }: WelcomeIntroProps) {
     }
   }, [onComplete])
 
+  // Simple Bird SVG component for animation
+  const Bird = ({ delay, y, duration, scale }: { delay: number; y: string; duration: number; scale: number }) => (
+    <motion.div
+      initial={{ x: "-10vw", y, opacity: 0, scale }}
+      animate={{ 
+        x: "110vw", 
+        opacity: [0, 1, 1, 0],
+        y: [y, `calc(${y} - 20px)`, y] 
+      }}
+      transition={{ 
+        duration, 
+        delay, 
+        ease: "linear",
+        y: { duration: 2, repeat: Infinity, ease: "easeInOut" }
+      }}
+      className="absolute z-[205] pointer-events-none"
+    >
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-[#1C1611]/40">
+        <path d="M4 12C4 12 8 8 12 12C16 16 20 12 20 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </motion.div>
+  )
+
   return (
     <div className="fixed inset-0 z-[200] bg-[#1C1611] flex items-center justify-center overflow-hidden">
-      {/* 1. Particle Swarm (Step 0) */}
+      {/* 1. Nature Background Reveal (Step 0) */}
       <AnimatePresence>
         {step === 0 && (
-          <div className="absolute inset-0">
-            {[...Array(40)].map((_, i) => (
-              <motion.div
-                key={i}
-                initial={{ 
-                  x: (Math.random() - 0.5) * 1000, 
-                  y: (Math.random() - 0.5) * 1000, 
-                  opacity: 0,
-                  scale: 0
-                }}
-                animate={{ 
-                  x: 0, 
-                  y: 0, 
-                  opacity: [0, 1, 0.8],
-                  scale: [0, 1.5, 1]
-                }}
-                transition={{ 
-                  duration: 1.5, 
-                  ease: [0.22, 1, 0.36, 1],
-                  delay: Math.random() * 0.2
-                }}
-                style={{ willChange: "transform, opacity" }}
-                className="absolute left-1/2 top-1/2 w-1 h-1 bg-indigo-500 rounded-full blur-[1px]"
-              />
-            ))}
-          </div>
+          <motion.div 
+            initial={{ opacity: 0, scale: 1.1 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, filter: "blur(20px)", transition: { duration: 1 } }}
+            className="absolute inset-0 z-[201]"
+          >
+            <img 
+              src="/images/hero-bg.png" 
+              alt="Nature Background" 
+              className="w-full h-full object-cover opacity-60"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-[#1C1611]/40 via-transparent to-[#1C1611]/80" />
+            
+            {/* Birds Flock */}
+            <Bird delay={0.5} y="30vh" duration={4} scale={0.8} />
+            <Bird delay={0.8} y="35vh" duration={4.5} scale={0.6} />
+            <Bird delay={1.1} y="28vh" duration={3.8} scale={0.7} />
+            <Bird delay={1.4} y="40vh" duration={4.2} scale={0.5} />
+            <Bird delay={0.2} y="45vh" duration={5} scale={0.4} />
+          </motion.div>
         )}
       </AnimatePresence>
 
@@ -65,6 +82,7 @@ export function WelcomeIntro({ onComplete }: WelcomeIntroProps) {
         <motion.div
           initial={{ scale: 0.5, opacity: 0, filter: "blur(20px)" }}
           animate={step >= 1 ? { scale: 1, opacity: 1, filter: "blur(0px)" } : {}}
+          transition={{ duration: 1, ease: [0.32, 0.72, 0, 1] }}
           className="relative"
         >
           <div className="relative">
@@ -111,9 +129,10 @@ export function WelcomeIntro({ onComplete }: WelcomeIntroProps) {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             transition={{ duration: 1, ease: "easeInOut" }}
             style={{ willChange: "opacity" }}
-            className="absolute inset-0 bg-indigo-500/10 z-[210] pointer-events-none backdrop-blur-[2px]"
+            className="absolute inset-0 bg-white z-[210] pointer-events-none"
           />
         )}
       </AnimatePresence>
