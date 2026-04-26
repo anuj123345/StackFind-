@@ -11,7 +11,7 @@ import { PricingSection } from "@/components/home/pricing-section"
 import { AmbientBackground } from "@/components/home/ambient-background"
 import { WelcomeIntro } from "@/components/home/welcome-intro"
 import { AnimatePresence } from "framer-motion"
-import { Sparkles } from "lucide-react"
+import { Sparkles, RotateCcw, ArrowRight } from "lucide-react"
 
 export default function HomePage() {
   const [showIntro, setShowIntro] = useState<boolean | null>(null)
@@ -80,16 +80,16 @@ export default function HomePage() {
         {showIntro && <WelcomeIntro onComplete={handleIntroComplete} />}
       </AnimatePresence>
 
-      {/* 1. Replay Welcome Button (Top Left - Adjusted for Mobile) */}
+      {/* 1. Replay Welcome Button (Minimal & Professional Arrow Button) */}
       <button 
         onClick={replayIntro}
-        className="fixed top-24 left-6 md:top-8 md:left-8 z-[60] group flex items-center gap-2 md:gap-3 px-3 py-1.5 md:px-4 md:py-2 rounded-xl liquid-glass border border-white/20 hover:border-white/40 transition-all active:scale-95 shadow-lg shadow-black/5"
+        className="fixed top-24 left-6 md:top-8 md:left-8 z-[60] group flex items-center gap-3 px-1.5 py-1.5 pr-4 rounded-full bg-white/40 backdrop-blur-md border border-[rgba(140,110,80,0.12)] hover:bg-white/60 hover:border-[rgba(140,110,80,0.25)] transition-all duration-300 active:scale-95 shadow-sm"
       >
-        <div className="w-6 h-6 md:w-8 md:h-8 rounded-lg bg-indigo-500/20 flex items-center justify-center border border-indigo-500/20 group-hover:scale-110 transition-transform">
-          <Sparkles size={12} className="text-indigo-600 md:w-[14px] md:h-[14px]" />
+        <div className="flex items-center justify-center w-7 h-7 rounded-full bg-indigo-600 text-white shadow-lg shadow-indigo-500/20 group-hover:scale-110 transition-transform duration-300">
+          <RotateCcw size={12} className="group-hover:rotate-[-90deg] transition-transform duration-500" />
         </div>
-        <span className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em] text-[#1C1611]/70 group-hover:text-[#1C1611] transition-colors">
-          Welcome
+        <span className="text-[10px] md:text-[11px] font-bold tracking-widest uppercase text-[#1C1611]/50 group-hover:text-[#1C1611] transition-colors">
+          Replay
         </span>
       </button>
 
