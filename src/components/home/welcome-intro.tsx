@@ -26,14 +26,14 @@ export function WelcomeIntro({ onComplete }: WelcomeIntroProps) {
     }
   }, [onComplete])
 
-  // Simple Bird SVG component for animation
+  // Refined Bird SVG with wing animation
   const Bird = ({ delay, y, duration, scale }: { delay: number; y: string; duration: number; scale: number }) => (
     <motion.div
       initial={{ x: "-10vw", y, opacity: 0, scale }}
       animate={{ 
         x: "110vw", 
         opacity: [0, 1, 1, 0],
-        y: [y, `calc(${y} - 20px)`, y] 
+        y: [y, `calc(${y} - 30px)`, y] 
       }}
       transition={{ 
         duration, 
@@ -43,9 +43,17 @@ export function WelcomeIntro({ onComplete }: WelcomeIntroProps) {
       }}
       className="absolute z-[205] pointer-events-none"
     >
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-[#1C1611]/40">
-        <path d="M4 12C4 12 8 8 12 12C16 16 20 12 20 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
+      <motion.svg 
+        width="32" height="32" viewBox="0 0 24 24" fill="none" 
+        className="text-[#1C1611]/60 drop-shadow-sm"
+      >
+        <motion.path 
+          animate={{ d: ["M4 12C4 12 8 8 12 12C16 16 20 12 20 12", "M4 12C4 12 8 14 12 12C16 10 20 12 20 12"] }}
+          transition={{ duration: 0.2, repeat: Infinity, ease: "easeInOut" }}
+          d="M4 12C4 12 8 8 12 12C16 16 20 12 20 12" 
+          stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" 
+        />
+      </motion.svg>
     </motion.div>
   )
 
@@ -55,17 +63,20 @@ export function WelcomeIntro({ onComplete }: WelcomeIntroProps) {
       <AnimatePresence>
         {step === 0 && (
           <motion.div 
-            initial={{ opacity: 0, scale: 1.1 }}
+            initial={{ opacity: 0, scale: 1.05 }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, filter: "blur(20px)", transition: { duration: 1 } }}
+            exit={{ opacity: 0, filter: "blur(40px)", scale: 1.1, transition: { duration: 1.2 } }}
             className="absolute inset-0 z-[201]"
           >
             <img 
               src="/images/hero-bg.png" 
               alt="Nature Background" 
-              className="w-full h-full object-cover opacity-60"
+              className="w-full h-full object-cover"
+              style={{ filter: "contrast(1.05) saturate(1.1)" }}
             />
-            <div className="absolute inset-0 bg-gradient-to-b from-[#1C1611]/40 via-transparent to-[#1C1611]/80" />
+            {/* Cinematic HD Vignette & Overlays */}
+            <div className="absolute inset-0 vignette-hd opacity-60" />
+            <div className="absolute inset-0 bg-gradient-to-b from-[#1C1611]/20 via-transparent to-[#1C1611]/60" />
             
             {/* Birds Flock */}
             <Bird delay={0.5} y="30vh" duration={4} scale={0.8} />

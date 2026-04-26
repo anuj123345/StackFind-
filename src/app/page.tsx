@@ -83,7 +83,7 @@ export default function HomePage() {
       {/* 1. Replay Welcome Button (Minimal & Professional Arrow Button) */}
       <button 
         onClick={replayIntro}
-        className="fixed top-24 left-6 md:top-8 md:left-8 z-[60] group flex items-center gap-3 px-1.5 py-1.5 pr-4 rounded-full bg-white/40 backdrop-blur-md border border-[rgba(140,110,80,0.12)] hover:bg-white/60 hover:border-[rgba(140,110,80,0.25)] transition-all duration-300 active:scale-95 shadow-sm"
+        className="fixed top-24 left-6 md:top-8 md:left-8 z-[60] group flex items-center gap-3 px-1.5 py-1.5 pr-4 rounded-full glass-hd hover:bg-white/60 transition-all duration-300 active:scale-95 shadow-lg shadow-black/5"
       >
         <div className="flex items-center justify-center w-7 h-7 rounded-full bg-indigo-600 text-white shadow-lg shadow-indigo-500/20 group-hover:scale-110 transition-transform duration-300">
           <RotateCcw size={12} className="group-hover:rotate-[-90deg] transition-transform duration-500" />

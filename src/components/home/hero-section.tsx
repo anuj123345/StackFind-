@@ -4,6 +4,7 @@ import { ArrowRight, ChevronDown } from "lucide-react"
 import { useState, useEffect, useRef } from "react"
 import { motion, useInView, animate } from "framer-motion"
 import Link from "next/link"
+import Image from "next/image"
 
 function Counter({ from = 0, to, duration = 1.8 }: { from?: number; to: number; duration?: number }) {
   const ref = useRef<HTMLSpanElement>(null)
@@ -35,17 +36,21 @@ export function HeroSection({ stats }: HeroSectionProps) {
     <section
       className="relative min-h-[100dvh] flex flex-col items-center justify-center px-4 pt-24 overflow-hidden"
     >
-      {/* Nature Background */}
+      {/* Nature Background - HD Optimized */}
       <div className="absolute inset-0 z-0">
-        <img 
+        <Image 
           src="/images/hero-bg.png" 
           alt="Serene nature workspace" 
-          className="w-full h-full object-cover"
+          fill
+          priority
+          quality={100}
+          className="object-cover"
         />
-        {/* Soft atmospheric overlay */}
+        {/* Cinematic HD Overlays */}
+        <div className="absolute inset-0 vignette-hd opacity-40" />
         <div 
-          className="absolute inset-0 bg-gradient-to-b from-white/20 via-transparent to-[#FAF7F2]" 
-          style={{ backdropFilter: "blur(2px) saturate(1.2)" }}
+          className="absolute inset-0 bg-gradient-to-b from-white/10 via-transparent to-[#FAF7F2]" 
+          style={{ backdropFilter: "blur(2px) saturate(1.1)" }}
         />
       </div>
 
@@ -103,7 +108,7 @@ export function HeroSection({ stats }: HeroSectionProps) {
           </Link>
           <Link
             href="/tools"
-            className="flex items-center gap-1.5 px-6 py-3.5 rounded-full font-bold text-[0.875rem] transition-all duration-200 bg-white/40 hover:bg-white/60 backdrop-blur-md border border-[rgba(140,110,80,0.12)] text-[#1C1611]"
+            className="flex items-center gap-1.5 px-6 py-3.5 rounded-full font-bold text-[0.875rem] transition-all duration-300 glass-hd hover:bg-white/60 text-[#1C1611] active:scale-[0.98]"
           >
             Browse Directory
           </Link>
