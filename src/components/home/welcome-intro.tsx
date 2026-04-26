@@ -59,41 +59,45 @@ export function WelcomeIntro({ onComplete }: WelcomeIntroProps) {
 
   return (
     <div className="fixed inset-0 z-[200] bg-[#1C1611] flex items-center justify-center overflow-hidden">
-      {/* 1. Nature Background Reveal (Step 0) */}
-      <AnimatePresence>
+      {/* 1. Continuous Nature Background (Stay visible throughout Steps 0 & 1) */}
+      <motion.div 
+        initial={{ opacity: 0, scale: 1.05 }}
+        animate={{ 
+          opacity: step === 2 ? 0 : 1, 
+          scale: step >= 1 ? 1.15 : 1.1,
+          filter: step >= 1 ? "blur(20px) brightness(0.4)" : "blur(0px) brightness(0.8)"
+        }}
+        transition={{ duration: 2, ease: [0.32, 0.72, 0, 1] }}
+        className="absolute inset-0 z-[201]"
+      >
+        <img 
+          src="/images/hero-bg.png" 
+          alt="Nature Background" 
+          className="w-full h-full object-cover"
+          style={{ filter: "contrast(1.05) saturate(1.1)" }}
+        />
+        {/* Cinematic HD Vignette & Overlays */}
+        <div className="absolute inset-0 vignette-hd opacity-60" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#1C1611]/60" />
+        
+        {/* Birds Flock (Only during step 0) */}
         {step === 0 && (
-          <motion.div 
-            initial={{ opacity: 0, scale: 1.05 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, filter: "blur(40px)", scale: 1.1, transition: { duration: 1.2 } }}
-            className="absolute inset-0 z-[201]"
-          >
-            <img 
-              src="/images/hero-bg.png" 
-              alt="Nature Background" 
-              className="w-full h-full object-cover"
-              style={{ filter: "contrast(1.05) saturate(1.1)" }}
-            />
-            {/* Cinematic HD Vignette & Overlays */}
-            <div className="absolute inset-0 vignette-hd opacity-60" />
-            <div className="absolute inset-0 bg-gradient-to-b from-[#1C1611]/20 via-transparent to-[#1C1611]/60" />
-            
-            {/* Birds Flock */}
+          <>
             <Bird delay={0.5} y="30vh" duration={4} scale={0.8} />
             <Bird delay={0.8} y="35vh" duration={4.5} scale={0.6} />
             <Bird delay={1.1} y="28vh" duration={3.8} scale={0.7} />
             <Bird delay={1.4} y="40vh" duration={4.2} scale={0.5} />
             <Bird delay={0.2} y="45vh" duration={5} scale={0.4} />
-          </motion.div>
+          </>
         )}
-      </AnimatePresence>
+      </motion.div>
 
       {/* 2. Logo Assembly (Step 1+) */}
-      <div className="relative z-10 flex flex-col items-center">
+      <div className="relative z-[202] flex flex-col items-center">
         <motion.div
           initial={{ scale: 0.5, opacity: 0, filter: "blur(20px)" }}
           animate={step >= 1 ? { scale: 1, opacity: 1, filter: "blur(0px)" } : {}}
-          transition={{ duration: 1, ease: [0.32, 0.72, 0, 1] }}
+          transition={{ duration: 1.5, ease: [0.32, 0.72, 0, 1] }}
           className="relative"
         >
           <div className="relative">
@@ -104,11 +108,11 @@ export function WelcomeIntro({ onComplete }: WelcomeIntroProps) {
                 scale: [1, 1.1, 1]
               }}
               transition={{ duration: 3, repeat: Infinity }}
-              className="absolute inset-0 bg-indigo-600/30 blur-[60px] rounded-full"
+              className="absolute inset-0 bg-indigo-600/40 blur-[80px] rounded-full"
             />
             
             {/* The Main Logo */}
-            <Zap size={160} className="text-white fill-white/10 relative z-10" />
+            <Zap size={160} className="text-white fill-white/10 relative z-10 drop-shadow-[0_0_30px_rgba(99,102,241,0.5)]" />
           </div>
         </motion.div>
 
@@ -116,19 +120,19 @@ export function WelcomeIntro({ onComplete }: WelcomeIntroProps) {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={step >= 1 ? { opacity: 1, y: 0 } : {}}
-          transition={{ delay: 0.3, duration: 0.8 }}
+          transition={{ delay: 0.5, duration: 1 }}
           className="mt-12 text-center"
         >
-          <h1 className="font-display text-4xl lg:text-7xl font-black text-white tracking-tighter mb-2">
+          <h1 className="font-display text-4xl lg:text-7xl font-black text-white tracking-tighter mb-2 drop-shadow-lg">
             WELCOME TO STACKFIND
           </h1>
           <motion.div
             initial={{ width: 0 }}
             animate={step >= 1 ? { width: "100%" } : {}}
-            transition={{ delay: 1, duration: 1.5, ease: "easeInOut" }}
-            className="h-px bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent mx-auto"
+            transition={{ delay: 1.2, duration: 1.5, ease: "easeInOut" }}
+            className="h-px bg-gradient-to-r from-transparent via-indigo-500/80 to-transparent mx-auto"
           />
-          <p className="mt-4 text-[10px] font-black uppercase tracking-[0.6em] text-stone-500 opacity-60">
+          <p className="mt-4 text-[10px] font-black uppercase tracking-[0.6em] text-white/40">
             Constructing Future Ready Architectures
           </p>
         </motion.div>
@@ -149,7 +153,7 @@ export function WelcomeIntro({ onComplete }: WelcomeIntroProps) {
       </AnimatePresence>
 
       {/* Background Ambience */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.05)_0%,transparent_70%)] pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.08)_0%,transparent_70%)] pointer-events-none z-[203]" />
     </div>
   )
 }
