@@ -1,102 +1,94 @@
 "use client"
 
-import { useState, useRef, useMemo, useCallback, useEffect } from "react"
+import { useState, useEffect, useRef, useMemo, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { useStack, type StackTool } from "@/hooks/use-stack"
-import { getLogoUrl } from "@/lib/logo"
-import type { PlaygroundTool } from "@/lib/queries"
-import { incrementPlaygroundUsage } from "@/app/actions/usage"
-import { PlaygroundPaywall } from "./playground-paywall"
-import Link from "next/link"
-import { useSearchParams } from "next/navigation"
-import {
-  FlaskConical, Trash2, X, Sparkles, Loader2, Plus, Check,
-  Search, Copy, RotateCcw, DollarSign, ArrowRight, ChevronDown, Zap, FileText, ExternalLink,
-  Download, Mail
+import { 
+  Search, 
+  Sparkles, 
+  Loader2, 
+  Check, 
+  X, 
+  ChevronRight, 
+  Zap, 
+  Layers, 
+  ArrowRight,
+  ChevronDown,
+  Info,
+  DollarSign,
+  Calendar,
+  Code,
+  Layout,
+  ExternalLink,
+  Plus,
+  Trash2,
+  Copy,
+  Download,
+  Share2,
+  Send,
+  FlaskConical,
+  CreditCard,
+  Lock,
+  ArrowUpRight,
+  Menu,
+  ChevronUp,
+  FileText
 } from "lucide-react"
-import jsPDF from "jspdf"
-import autoTable from "jspdf-autotable"
-import { getToolLogoBase64 } from "@/lib/utils/logo-resolver"
+import { useSearchParams } from "next/navigation"
+import { PlaygroundTool } from "@/lib/queries"
+import { incrementPlaygroundUsage } from "@/lib/actions"
+import { PlaygroundPaywall } from "./playground-paywall"
+import { PlaygroundLockWall } from "./playground-lock-wall"
 import { ExportEmailModal } from "./export-email-modal"
+import { LogoBubble } from "./logo-bubble"
+import { BrowserCard } from "./browser-card"
+import { jsPDF } from "jspdf"
+import "jspdf-autotable"
 
-// ─── Constants ───────────────────────────────────────────────────────────────
-
-const PRICING_LABEL: Record<string, string> = {
-  free: "Free", freemium: "Freemium", paid: "Paid", open_source: "Open Source",
-}
-const PRICING_COLOR: Record<string, { bg: string; color: string }> = {
-  free:        { bg: "rgba(16,185,129,0.1)",  color: "#059669" },
-  freemium:    { bg: "rgba(99,102,241,0.1)",  color: "#6366f1" },
-  paid:        { bg: "rgba(217,119,6,0.1)",   color: "#D97706" },
-  open_source: { bg: "rgba(59,130,246,0.1)",  color: "#3b82f6" },
-}
-
-const MODELS = [
-  { id: "anthropic/claude-3-5-sonnet-20241022", name: "anthropic / claude-3.5-sonnet", provider: "Anthropic" },
-  { id: "anthropic/claude-3-5-haiku-20241022",  name: "anthropic / claude-3.5-haiku",  provider: "Anthropic" },
-  { id: "meta/llama-3.3-70b-instruct",     name: "meta / llama-3.3-70b-instruct",     provider: "NVIDIA NIM" },
-  { id: "moonshotai/kimi-k2.5",            name: "moonshot / kimi-k2.5",              provider: "NVIDIA NIM" },
-  { id: "qwen/qwen2.5-coder-32b-instruct", name: "qwen / qwen2.5-coder-32b",       provider: "NVIDIA NIM" },
-]
+// ─── Constants & Types ───────────────────────────────────────────────────────
 
 const CATEGORIES = [
-  { slug: "all",             name: "All"            },
-  { slug: "chatbots",         name: "Chat Assistants"},
-  { slug: "coding",          name: "Coding"         },
-  { slug: "image-generation", name: "Image Gen"      },
-  { slug: "video",           name: "Video Gen"      },
-  { slug: "writing",         name: "Writing"        },
-  { slug: "audio",           name: "Audio & Voice"  },
-  { slug: "backend-db",      name: "Backend & DB"   },
-  { slug: "deployment",      name: "Deployment"     },
-  { slug: "auth",            name: "Auth"           },
-  { slug: "payments",        name: "Payments"       },
-  { slug: "automation",      name: "Automation"     },
-  { slug: "marketing",       name: "Marketing AI"   },
-  { slug: "productivity",    name: "Productivity"   },
-  { slug: "emails",          name: "Email"          },
-  { slug: "analytics",       name: "Analytics"      },
-  { slug: "error-tracking",  name: "Error Tracking" },
-  { slug: "version-control", name: "Version Control"},
-  { slug: "redis",           name: "Redis"          },
-  { slug: "vector-db",       name: "Vector DB"      },
-  { slug: "domain",          name: "Domain"         },
-  { slug: "dns",             name: "DNS & CDN"      },
-  { slug: "others",          name: "Others"         },
+  { name: "All Tools", slug: "all" },
+  { name: "Frontend & UI", slug: "frontend-ui" },
+  { name: "Backend & DB", slug: "backend-database" },
+  { name: "Auth & Security", slug: "auth-security" },
+  { name: "Payments", slug: "payments-billing" },
+  { name: "AI & ML", slug: "ai-machine-learning" },
+  { name: "Analytics", slug: "analytics-marketing" },
+  { name: "DevOps", slug: "devops-hosting" },
 ]
 
-const PRESET_STACKS: { name: string; emoji: string; description: string; slugs: string[] }[] = [
-  {
-    name: "MVP SaaS",
-    emoji: "🚀",
-    description: "Ship fast",
-    slugs: ["cursor", "github", "vercel", "supabase", "clerk", "stripe", "resend", "sentry"],
-  },
-  {
-    name: "AI App",
-    emoji: "🤖",
-    description: "LLM-powered",
-    slugs: ["cursor", "github", "vercel", "supabase", "clerk", "pinecone", "upstash", "resend"],
-  },
-  {
-    name: "Indian Startup",
-    emoji: "🇮🇳",
-    description: "Built for India",
-    slugs: ["cursor", "github", "vercel", "supabase", "clerk", "razorpay", "resend", "posthog"],
-  },
-  {
-    name: "Indie Hacker",
-    emoji: "⚡",
-    description: "Zero to shipped",
-    slugs: ["cursor", "github", "railway", "pocketbase", "better-auth", "lemon-squeezy", "resend", "posthog"],
-  },
+const MODELS = [
+  { id: "gpt-4o", name: "GPT-4o (Smartest)", icon: Sparkles },
+  { id: "gpt-4-turbo", name: "GPT-4 Turbo", icon: Zap },
+  { id: "claude-3-5-sonnet", name: "Claude 3.5 Sonnet", icon: Layers },
 ]
 
-const EXAMPLE_PROMPTS = [
-  "Freelancer invoicing tool with auto-reminders",
-  "B2B analytics dashboard for multiple apps",
-  "AI customer support bot trained on your docs",
-  "Paid newsletter with subscription billing",
+const PRESET_STACKS = [
+  {
+    name: "SaaS Starter",
+    slugs: ["nextjs", "tailwind-css", "supabase", "clerk", "stripe", "resend"],
+    description: "The gold standard for modern SaaS apps"
+  },
+  {
+    name: "AI Micro-SaaS",
+    slugs: ["nextjs", "openai", "supabase", "clerk", "razorpay", "vercel"],
+    description: "Launch AI wrappers and tools in hours"
+  },
+  {
+    name: "Mobile App Backend",
+    slugs: ["react-native", "supabase", "clerk", "revenuecat", "onesignal"],
+    description: "Everything you need for a cross-platform app"
+  },
+  {
+    name: "E-commerce Build",
+    slugs: ["nextjs", "shopify", "sanity", "stripe", "klaviyo"],
+    description: "Scalable store with custom frontend"
+  }
+]
+
+const SUGGESTIONS = [
+  "AI-powered SEO content generator for Shopify stores",
+  "Real-time fitness tracking dashboard for gyms",
   "Digital products marketplace with instant checkout",
   "Internal OKR tracker for early-stage startups",
 ]
@@ -105,7 +97,9 @@ const EXAMPLE_PROMPTS = [
 
 function MarkdownOutput({ text }: { text: string }) {
   const html = useMemo(() => {
-    let out = text
+    // 1. Strip the [STACK: ...] block from rendering
+    let out = text.replace(/\[\s*STACK:[\s\S]*?\]/gi, "").trim()
+    
     out = out.replace(/\|(.+)\|\n\|[-| :]+\|\n((?:\|.+\|\n?)*)/g, (_, header, rows) => {
       const ths = header.split("|").filter((c: string) => c.trim()).map((c: string) =>
         `<th class="pg-th">${c.trim()}</th>`).join("")
@@ -147,355 +141,109 @@ function MarkdownOutput({ text }: { text: string }) {
     <>
       <div className="pg-output" dangerouslySetInnerHTML={{ __html: html }} />
       <style jsx global>{`
-        .pg-output { font-size: 0.9rem; line-height: 1.8; color: #7A6A57; }
-        .pg-h2 {
-          font-family: 'Bricolage Grotesque Variable', sans-serif;
-          font-size: 1.125rem; font-weight: 800; color: #1C1611;
-          margin: 2rem 0 0.75rem; padding-bottom: 0.5rem;
-          border-bottom: 1px solid rgba(140,110,80,0.12);
+        .pg-output { line-height: 1.7; color: #475569; font-size: 0.9375rem; }
+        .pg-h2 { font-size: 1.25rem; font-weight: 800; color: #1C1611; margin: 2rem 0 1rem; letter-spacing: -0.01em; }
+        .pg-h3 { font-size: 1.05rem; font-weight: 700; color: #1C1611; margin: 1.5rem 0 0.75rem; }
+        .pg-p { margin-bottom: 1.25rem; }
+        .pg-strong { color: #1C1611; font-weight: 600; }
+        .pg-ol, .pg-ul { margin-bottom: 1.5rem; padding-left: 1.25rem; }
+        .pg-ol li, .pg-ul li { margin-bottom: 0.5rem; }
+        .pg-ol { list-style-type: decimal; }
+        .pg-ul { list-style-type: disc; }
+        .pg-blockquote { 
+          border-left: 3px solid #E2E8F0; 
+          padding-left: 1rem; 
+          color: #64748B; 
+          font-style: italic; 
+          margin: 1.5rem 0;
         }
-        .pg-h2:first-child { margin-top: 0; }
-        .pg-h3 {
-          font-family: 'Bricolage Grotesque Variable', sans-serif;
-          font-size: 0.9375rem; font-weight: 700; color: #1C1611;
-          margin: 1.5rem 0 0.375rem;
+        .pg-table { 
+          width: 100%; 
+          border-collapse: collapse; 
+          margin: 1.5rem 0; 
+          font-size: 0.875rem;
+          background: rgba(255,255,255,0.5);
+          border-radius: 12px;
+          overflow: hidden;
+          border: 1px solid rgba(140,110,80,0.1);
         }
-        .pg-p { margin: 0.6rem 0; }
-        .pg-strong { color: #1C1611; font-weight: 700; }
-        .pg-ul { margin: 0.75rem 0 0.75rem 1.5rem; }
-        .pg-ol { margin: 0.75rem 0 0.75rem 1.5rem; }
-        .pg-ul li { list-style-type: disc; margin: 0.3rem 0; }
-        .pg-ol li { list-style-type: decimal; margin: 0.3rem 0; }
-        .pg-table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; font-size: 0.8125rem; }
-        .pg-th { text-align: left; padding: 10px 16px; font-weight: 700; color: #1C1611; background: rgba(140,110,80,0.05); border: 1px solid rgba(140,110,80,0.12); }
-        .pg-td { padding: 10px 16px; color: #7A6A57; border: 1px solid rgba(140,110,80,0.09); }
-        .pg-td strong, .pg-th strong { font-weight: 700; color: #1C1611; }
-        tr:last-child .pg-td { font-weight: 700; color: #1C1611; background: rgba(140,110,80,0.03); }
-        
-        .pg-blockquote { border-left: 3px solid rgba(140,110,80,0.2); padding-left: 1rem; margin: 1rem 0; color: #7A6A57; font-style: italic; }
-        .pg-alert { padding: 1rem; border-radius: 0.75rem; margin: 1rem 0; font-size: 0.8125rem; border: 1px solid transparent; }
-        .pg-alert-note { background: rgba(99,102,241,0.05); border-color: rgba(99,102,241,0.15); color: #6366f1; }
-        .pg-alert-tip { background: rgba(16,185,129,0.05); border-color: rgba(16,185,129,0.15); color: #059669; }
-        .pg-alert-important { background: rgba(239,68,68,0.05); border-color: rgba(239,68,68,0.15); color: #ef4444; }
-        .pg-alert-warning { background: rgba(245,158,11,0.05); border-color: rgba(245,158,11,0.15); color: #f59e0b; }
-        .pg-alert-caution { background: rgba(239,68,68,0.08); border-color: rgba(239,68,68,0.2); color: #b91c1c; font-weight: 600; }
+        .pg-th { 
+          background: rgba(140,110,80,0.05); 
+          text-align: left; 
+          padding: 0.75rem 1rem; 
+          font-weight: 700; 
+          color: #1C1611;
+          text-transform: uppercase;
+          font-size: 0.75rem;
+          letter-spacing: 0.05em;
+        }
+        .pg-td { 
+          padding: 0.75rem 1rem; 
+          border-top: 1px solid rgba(140,110,80,0.05);
+        }
+        .pg-alert {
+          padding: 1rem 1.25rem;
+          border-radius: 12px;
+          margin: 1.5rem 0;
+          font-size: 0.875rem;
+          line-height: 1.6;
+        }
+        .pg-alert-note { background: #F8FAFC; border: 1px solid #E2E8F0; color: #475569; }
+        .pg-alert-tip { background: #F0FDF4; border: 1px solid #BBF7D0; color: #166534; }
+        .pg-alert-important { background: #F5F3FF; border: 1px solid #DDD6FE; color: #5B21B6; }
+        .pg-alert-warning { background: #FFFBEB; border: 1px solid #FEF3C7; color: #92400E; }
+        .pg-alert-caution { background: #FEF2F2; border: 1px solid #FECACA; color: #991B1B; }
       `}</style>
     </>
   )
 }
 
-// ─── Tool logo bubble ────────────────────────────────────────────────────────
+// ─── Subcomponents ───────────────────────────────────────────────────────────
 
-function LogoBubble({ tool, size = 28 }: { tool: PlaygroundTool; size?: number }) {
-  const logoSrc = getLogoUrl(tool.website, tool.logo_url)
-  return (
-    <div
-      className="rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden"
-      style={{
-        width: size, height: size,
-        background: "rgba(255,255,255,0.9)",
-        border: "1px solid rgba(140,110,80,0.12)",
-      }}
-    >
-      {logoSrc
-        ? <img src={logoSrc} alt={tool.name} style={{ width: size * 0.7, height: size * 0.7, objectFit: "contain" }} />
-        : <span style={{ fontSize: size * 0.4, fontWeight: 900, color: "#7A6A57" }}>{tool.name[0]}</span>
-      }
-    </div>
-  )
-}
-
-// ─── Browser tool card ───────────────────────────────────────────────────────
-
-function BrowserCard({ tool, inStack, onToggle, usdToInrRate }: {
-  tool: PlaygroundTool
-  inStack: boolean
-  onToggle: (tool: PlaygroundTool) => void
-  usdToInrRate: number
+function ModelSelector({ selectedId, onSelect, loading }: { 
+  selectedId: string, 
+  onSelect: (id: string) => void,
+  loading: boolean
 }) {
-  const p = PRICING_COLOR[tool.pricing_model] ?? PRICING_COLOR.freemium
-  const logoSrc = getLogoUrl(tool.website, tool.logo_url)
+  const selected = MODELS.find(m => m.id === selectedId) || MODELS[0]
+  const [open, setOpen] = useState(false)
 
   return (
-    <button
-      onClick={() => onToggle(tool)}
-      className="w-full text-left rounded-xl p-4 transition-all duration-150 group"
-      style={{
-        background: inStack ? "rgba(99,102,241,0.05)" : "rgba(255,255,255,0.6)",
-        border: `1px solid ${inStack ? "rgba(99,102,241,0.22)" : "rgba(140,110,80,0.09)"}`,
-      }}
-    >
-      <div className="flex items-start gap-2.5">
-        <div
-          className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden mt-0.5"
-          style={{ background: "rgba(140,110,80,0.05)", border: "1px solid rgba(140,110,80,0.1)" }}
-        >
-          {logoSrc
-            ? <img src={logoSrc} alt={tool.name} className="w-6 h-6 object-contain" />
-            : <span className="text-xs font-black" style={{ color: "#7A6A57" }}>{tool.name[0]}</span>
-          }
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between gap-1 mb-0.5">
-            <p className="text-xs font-bold truncate" style={{ color: "#1C1611" }}>{tool.name}</p>
-            <div
-              className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-150"
-              style={{
-                background: inStack ? "#6366f1" : "transparent",
-                border: inStack ? "none" : "1.5px solid rgba(140,110,80,0.2)",
-              }}
-            >
-              {inStack
-                ? <Check size={9} style={{ color: "#fff" }} strokeWidth={3} />
-                : <Plus size={9} style={{ color: "#C4B0A0" }} strokeWidth={2.5} />
-              }
-            </div>
-          </div>
-          <p className="text-[10px] leading-snug line-clamp-2 mb-1.5" style={{ color: "#A0907E" }}>
-            {tool.tagline}
-          </p>
-          <div className="flex items-center gap-1.5">
-            <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-md" style={{ background: p.bg, color: p.color }}>
-              {PRICING_LABEL[tool.pricing_model]}
-            </span>
-            {tool.starting_price_inr ? (
-              <span className="text-[9px]" style={{ color: "#C4B0A0" }}>₹{tool.starting_price_inr}/mo</span>
-            ) : tool.starting_price_usd ? (
-              <span className="text-[9px]" style={{ color: "#C4B0A0" }}>₹{Math.round(tool.starting_price_usd * usdToInrRate)}/mo*</span>
-            ) : null}
-            {tool.managed_billing_enabled && (
-              <div 
-                className="flex items-center gap-0.5 px-1 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-tight"
-                style={{ background: "rgba(99,102,241,0.08)", color: "#6366f1" }}
-                title="StackFind Managed INR Billing supported"
-              >
-                <Sparkles size={8} /> Managed
-              </div>
-            )}
-            {tool.is_made_in_india && (
-              <span className="text-[9px]">🇮🇳</span>
-            )}
-          </div>
-        </div>
-      </div>
-    </button>
-  )
-}
-
-// ─── Lock wall for guests ─────────────────────────────────────────────────────
-
-function PlaygroundLockWall({ tools }: { tools: PlaygroundTool[] }) {
-  const sampleTools = tools.slice(0, 9)
-
-  return (
-    <div>
-      {/* Blurred playground preview */}
-      <div
-        className="relative rounded-2xl overflow-hidden"
-        style={{ filter: "blur(5px)", pointerEvents: "none", userSelect: "none", opacity: 0.5 }}
-        aria-hidden
-      >
-        {/* Fake preset row */}
-        <div className="mb-4">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-            {PRESET_STACKS.map(preset => (
-              <div
-                key={preset.name}
-                className="rounded-2xl p-3.5"
-                style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(140,110,80,0.1)" }}
-              >
-                <div className="flex items-center gap-1 mb-3 flex-wrap">
-                  {[0,1,2,3,4].map(i => (
-                    <div key={i} className="w-6 h-6 rounded-lg" style={{ background: "rgba(140,110,80,0.12)" }} />
-                  ))}
-                </div>
-                <p className="text-xs font-bold" style={{ color: "#1C1611" }}>{preset.name}</p>
-                <p className="text-[10px] mt-0.5" style={{ color: "#C4B0A0" }}>{preset.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Fake tool browser */}
-        <div
-          className="rounded-2xl overflow-hidden"
-          style={{ background: "rgba(255,255,255,0.7)", border: "1px solid rgba(140,110,80,0.1)" }}
-        >
-          <div className="px-4 pt-4 pb-3" style={{ borderBottom: "1px solid rgba(140,110,80,0.07)" }}>
-            <div
-              className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl"
-              style={{ background: "rgba(140,110,80,0.04)", border: "1px solid rgba(140,110,80,0.1)" }}
-            >
-              <Search size={13} style={{ color: "#C4B0A0" }} />
-              <span className="text-sm" style={{ color: "#C4B0A0" }}>Search tools…</span>
-            </div>
-          </div>
-          <div className="p-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
-              {sampleTools.map((tool, i) => {
-                const p = PRICING_COLOR[tool.pricing_model] ?? PRICING_COLOR.freemium
-                const logoSrc = getLogoUrl(tool.website, tool.logo_url)
-                return (
-                  <div
-                    key={i}
-                    className="rounded-xl p-3"
-                    style={{ background: "rgba(255,255,255,0.6)", border: "1px solid rgba(140,110,80,0.09)" }}
-                  >
-                    <div className="flex items-start gap-2.5">
-                      <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden mt-0.5"
-                        style={{ background: "rgba(140,110,80,0.05)", border: "1px solid rgba(140,110,80,0.1)" }}>
-                        {logoSrc
-                          ? <img src={logoSrc} alt={tool.name} className="w-6 h-6 object-contain" />
-                          : <span className="text-xs font-black" style={{ color: "#7A6A57" }}>{tool.name[0]}</span>
-                        }
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold truncate mb-0.5" style={{ color: "#1C1611" }}>{tool.name}</p>
-                        <p className="text-[10px] leading-snug line-clamp-2 mb-1.5" style={{ color: "#A0907E" }}>{tool.tagline}</p>
-                        <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-md" style={{ background: p.bg, color: p.color }}>
-                          {PRICING_LABEL[tool.pricing_model]}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Lock overlay */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center" style={{ minHeight: 400 }}>
-        <div
-          className="rounded-2xl px-8 py-8 text-center w-full max-w-md mx-auto"
-          style={{
-            background: "#FFFFFF",
-            border: "1px solid rgba(140,110,80,0.14)",
-            boxShadow: "0 8px 48px rgba(140,110,80,0.18), 0 2px 12px rgba(140,110,80,0.1)",
-          }}
-        >
-          <div
-            className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4"
-            style={{ background: "rgba(99,102,241,0.08)" }}
-          >
-            <FlaskConical size={22} style={{ color: "#6366f1" }} />
-          </div>
-          <p
-            className="font-black mb-2 leading-tight"
-            style={{
-              fontFamily: "'Bricolage Grotesque Variable', sans-serif",
-              fontSize: "1.5rem",
-              color: "#1C1611",
-              letterSpacing: "-0.02em",
-            }}
-          >
-            Sign in to use the Playground
-          </p>
-          <p className="text-[0.875rem] mb-6 leading-relaxed" style={{ color: "#7A6A57" }}>
-            Build your stack, describe your idea, and get a complete build plan with timelines and cost breakdown.
-          </p>
-          <Link
-            href={`/login?next=${encodeURIComponent("/playground?unlock=pro")}`}
-            className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl font-bold text-[0.9375rem] transition-all duration-200 hover:opacity-90"
-            style={{ background: "#6366f1", color: "#fff" }}
-          >
-            Sign in free <ArrowRight size={14} />
-          </Link>
-          <p className="text-[0.75rem] mt-3" style={{ color: "#C4B0A0" }}>
-            Free forever · No credit card
-          </p>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-
-// ─── Custom Model Selector ──────────────────────────────────────────────────
-
-function ModelSelector({ value, onChange }: { value: string; onChange: (id: string) => void }) {
-  const [isOpen, setIsOpen] = useState(false)
-  const containerRef = useRef<HTMLDivElement>(null)
-  
-  const selectedModel = MODELS.find(m => m.id === value) || MODELS[0]
-
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setIsOpen(false)
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [])
-
-  return (
-    <div className="relative" ref={containerRef}>
+    <div className="relative">
       <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2.5 pl-3.5 pr-2.5 py-2 rounded-xl text-[0.8125rem] font-bold transition-all duration-200 outline-none border border-transparent hover:border-[#6366f1]/30"
+        onClick={() => !loading && setOpen(!open)}
+        disabled={loading}
+        className="flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all duration-200"
         style={{ 
-          background: "rgba(140,110,80,0.06)", 
-          color: "#1C1611",
+          background: "rgba(140,110,80,0.05)", 
+          border: "1px solid rgba(140,110,80,0.1)",
+          opacity: loading ? 0.6 : 1
         }}
       >
-        <span className="truncate max-w-[120px] sm:max-w-none">
-          {selectedModel.name.split(" / ")[1] || selectedModel.name}
-        </span>
-        <motion.div
-          animate={{ rotate: isOpen ? 180 : 0 }}
-          transition={{ duration: 0.2, ease: "circOut" }}
-          className="opacity-40"
-        >
-          <ChevronDown size={12} />
-        </motion.div>
+        <selected.icon size={12} style={{ color: "#6366f1" }} />
+        <span className="text-[11px] font-bold" style={{ color: "#1C1611" }}>{selected.name}</span>
+        <ChevronDown size={10} style={{ color: "#A0907E" }} />
       </button>
 
       <AnimatePresence>
-        {isOpen && (
+        {open && (
           <motion.div
-            initial={{ opacity: 0, y: 8, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 4, scale: 0.95 }}
-            transition={{ duration: 0.15, ease: "easeOut" }}
-            className="absolute right-0 bottom-full mb-2 min-w-[220px] z-[100] rounded-2xl overflow-hidden shadow-2xl p-1.5"
-            style={{
-              background: "rgba(255, 255, 255, 0.92)",
-              backdropFilter: "blur(12px)",
-              border: "1px solid rgba(140, 110, 80, 0.15)",
-              boxShadow: "0 20px 50px rgba(0,0,0,0.15), 0 4px 12px rgba(0,0,0,0.05)",
-            }}
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 5 }}
+            className="absolute top-full left-0 mt-1 w-48 z-50 rounded-xl overflow-hidden shadow-xl p-1"
+            style={{ background: "#fff", border: "1px solid rgba(140,110,80,0.1)" }}
           >
-            <div className="px-3 py-2 border-b border-black/[0.04] mb-1">
-              <p className="text-[10px] font-bold uppercase tracking-wider opacity-40">Select Model</p>
-            </div>
             {MODELS.map(m => {
-              const isSelected = m.id === value
+              const Icon = m.icon
               return (
                 <button
                   key={m.id}
-                  onClick={() => { onChange(m.id); setIsOpen(false) }}
-                  className="w-full text-left px-3 py-2.5 rounded-xl transition-all duration-150 flex flex-col gap-0.5 group"
-                  style={{
-                    background: isSelected ? "#6366f1" : "transparent",
-                  }}
+                  onClick={() => { onSelect(m.id); setOpen(false) }}
+                  className="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-left transition-colors hover:bg-[rgba(140,110,80,0.05)]"
                 >
-                  <span 
-                    className="text-[0.8125rem] font-bold truncate"
-                    style={{ color: isSelected ? "#fff" : "#1C1611" }}
-                  >
-                    {m.name.split(" / ")[1] || m.name}
-                  </span>
-                  <div className="flex items-center justify-between">
-                    <span 
-                      className="text-[10px] font-medium opacity-60"
-                      style={{ color: isSelected ? "rgba(255,255,255,0.8)" : "#7A6A57" }}
-                    >
-                      {m.provider}
-                    </span>
-                    {isSelected && <Check size={10} className="text-white" />}
-                  </div>
+                  <Icon size={12} style={{ color: m.id === selectedId ? "#6366f1" : "#A0907E" }} />
+                  <span className="text-xs font-medium" style={{ color: "#1C1611" }}>{m.name}</span>
                 </button>
               )
             })}
@@ -516,15 +264,16 @@ interface Props {
 }
 
 export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate }: Props) {
-  const { stack, add, remove, toggle: toggleStack, clear, isInStack } = useStack()
+  const { stack, add, remove, toggle: toggleStack, clear, isInStack, setFullStack } = useStack()
   const [activeCategory, setActiveCategory] = useState("all")
   const [search, setSearch] = useState("")
   const [idea, setIdea] = useState("")
-  const [budget, setBudget] = useState<number | "">(5000)
+  const [budget, setBudget] = useState<number | "">("")
   const [selectedModelId, setSelectedModelId] = useState(MODELS[0].id)
   const [output, setOutput] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
+  const [isSelectingTools, setIsSelectingTools] = useState(false)
   const [exporting, setExporting] = useState(false)
   const [notionUrl, setNotionUrl] = useState("")
   const [showEmailModal, setShowEmailModal] = useState(false)
@@ -608,10 +357,12 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
   }
 
   async function generate() {
-    if (!idea.trim() || (stack.length === 0 && budget === "") || loading) return
+    if (!idea.trim() || loading) return
     setOutput("")
     setError("")
     setLoading(true)
+    setIsSelectingTools(stack.length === 0)
+    
     try {
       const res = await fetch("/api/playground/generate", {
         method: "POST",
@@ -631,18 +382,18 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
         return
       }
 
-      // Handle streaming response
       const reader = res.body?.getReader()
       if (!reader) { setError("Failed to start stream"); return }
 
       const decoder = new TextDecoder()
-      setOutput("") // Clear previous output
+      setOutput("")
       
-      // Increment and update local state
       await incrementPlaygroundUsage()
       setSessionUsage((prev: number) => prev + 1)
 
       let accumulatedText = ""
+      let stackProcessed = false
+
       while (true) {
         const { done, value } = await reader.read()
         if (done) break
@@ -651,6 +402,41 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
         accumulatedText += chunk
         setOutput(accumulatedText)
         
+        // Check for [STACK: slug1, slug2] and update the UI
+        if (!stackProcessed && (accumulatedText.includes("[STACK:") || accumulatedText.includes("[STACK:"))) {
+          const match = accumulatedText.match(/\[\s*STACK:\s*([\s\S]*?)\]/i)
+          if (match) {
+            const slugs = match[1].split(",").map(s => s.trim().toLowerCase()).filter(Boolean)
+            if (slugs.length > 0) {
+              const selectedTools: StackTool[] = []
+              slugs.forEach(slug => {
+                const tool = tools.find(t => t.slug === slug)
+                if (tool) {
+                  selectedTools.push({
+                    slug: tool.slug,
+                    name: tool.name,
+                    tagline: tool.tagline,
+                    website: tool.website,
+                    logoUrl: tool.logo_url,
+                    pricingModel: tool.pricing_model,
+                    startingPriceUsd: tool.starting_price_usd,
+                    startingPriceInr: tool.starting_price_inr,
+                    managedBillingEnabled: tool.managed_billing_enabled,
+                    convenienceFeePercent: tool.convenience_fee_percent,
+                    categories: [tool.categoryName],
+                  })
+                }
+              })
+              
+              if (selectedTools.length > 0) {
+                setFullStack(selectedTools)
+                stackProcessed = true
+                setIsSelectingTools(false)
+              }
+            }
+          }
+        }
+
         // Auto-scroll as text arrives
         if (outputRef.current) {
           outputRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" })
@@ -694,102 +480,86 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          idea: idea || "Custom project architecture",
-          stack,
-          output: finalPlan
+          idea,
+          stack: stack.map(t => ({ name: t.name, tagline: t.tagline, website: t.website })),
+          plan: finalPlan
         }),
         signal: controller.signal
       })
 
       clearTimeout(timeoutId)
 
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || "Failed to export to Notion")
-
-      if (data.url) {
-        setNotionUrl(data.url)
-        // Try to open, but browsers often block this after an async fetch
-        const newWindow = window.open(data.url, '_blank')
-        if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
-          setError("Notion page created! Click the 'View on Notion' button that appeared.")
-        }
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || "Export failed")
       }
+
+      const data = await res.json()
+      setNotionUrl(data.url)
     } catch (err: any) {
-      console.error("Notion Export Error:", err)
-      setError(err.name === 'AbortError' ? "Notion export timed out. Please try again." : err.message)
+      setError(err.name === "AbortError" ? "Export timed out. Please try again." : err.message)
     } finally {
-      setExporting(false)
+      setExporting(true)
+      setTimeout(() => setExporting(false), 5000)
     }
   }
-
-  async function handleExportPDF() {
-    if (pdfExporting || stack.length === 0) return
+  async function handleExportPdf() {
+    if (pdfExporting) return
     setPdfExporting(true)
-    setError("")
-
+    
     try {
       const doc = new jsPDF()
       const pageWidth = doc.internal.pageSize.getWidth()
       const pageHeight = doc.internal.pageSize.getHeight()
+
+      // Header
+      doc.setFillColor(99, 102, 241)
+      doc.rect(0, 0, pageWidth, 40, "F")
       
-      // Professional Header with Icon
-      doc.setFillColor(99, 102, 241) // Indigo-500
-      doc.roundedRect(20, 20, 12, 12, 3, 3, "F")
       doc.setTextColor(255, 255, 255)
+      doc.setFontSize(24)
       doc.setFont("helvetica", "bold")
-      doc.setFontSize(8)
-      doc.text("SF", 23, 28)
-
-      doc.setFontSize(18)
-      doc.setTextColor(30, 41, 59)
-      doc.text("Project Blueprint", 38, 29)
-      doc.link(38, 20, 60, 12, { url: "https://stackfind.in" })
+      doc.text("StackFind Blueprint", 20, 25)
       
-      doc.setFontSize(9)
+      doc.setFontSize(10)
       doc.setFont("helvetica", "normal")
-      doc.setTextColor(100, 116, 139)
-      doc.text(`Generated by StackFind AI • ${new Date().toLocaleDateString()}`, 38, 34)
+      doc.text(new Date().toLocaleDateString("en-IN", { day: 'numeric', month: 'long', year: 'numeric' }), pageWidth - 60, 25)
 
-      // Divider
-      doc.setDrawColor(241, 245, 249)
-      doc.line(20, 45, pageWidth - 20, 45)
+      let currentY = 55
 
-      // Project Idea Section
-      doc.setFontSize(10)
-      doc.setFont("helvetica", "bold")
-      doc.setTextColor(99, 102, 241)
-      doc.text("THE VISION", 20, 58)
-      
+      // Project Info
+      doc.setTextColor(30, 41, 59)
       doc.setFontSize(12)
-      doc.setFont("helvetica", "italic")
-      doc.setTextColor(51, 65, 85)
-      const splitIdea = doc.splitTextToSize(`"${idea || "Custom project architecture"}"`, pageWidth - 40)
-      doc.text(splitIdea, 20, 66)
-
-      let currentY = 66 + (splitIdea.length * 6) + 15
-
-      // Tech Stack Table
-      doc.setFontSize(10)
       doc.setFont("helvetica", "bold")
-      doc.setTextColor(99, 102, 241)
-      doc.text("SELECTED ARCHITECTURE", 20, currentY)
+      doc.text("PROJECT IDEA", 20, currentY)
       currentY += 8
+      
+      doc.setFontSize(10)
+      doc.setFont("helvetica", "normal")
+      doc.setTextColor(71, 85, 105)
+      const splitIdea = doc.splitTextToSize(idea || "Custom Project Build", pageWidth - 40)
+      doc.text(splitIdea, 20, currentY)
+      currentY += (splitIdea.length * 5) + 15
 
-      const tableData = await Promise.all(stack.map(async (tool) => {
-        const logoBase64 = await getToolLogoBase64(tool.website || null)
-        return [
-          { content: "", logo: logoBase64 },
-          tool.name,
-          tool.categories[0] || "Tool",
-          tool.startingPriceInr ? `₹${tool.startingPriceInr}/mo` : (tool.startingPriceUsd ? `$${tool.startingPriceUsd}/mo` : "Free")
-        ]
-      }))
+      // Stack Table
+      doc.setTextColor(30, 41, 59)
+      doc.setFontSize(12)
+      doc.setFont("helvetica", "bold")
+      doc.text("SELECTED TECHNOLOGY STACK", 20, currentY)
+      currentY += 10
 
-      autoTable(doc, {
+      const tableData = stack.map(t => [
+        { content: "", logo: t.logoUrl }, // Placeholder for logo
+        t.name,
+        t.categories?.[0] || "General",
+        t.startingPriceInr ? `₹${t.startingPriceInr}/mo` : "Free/Usage"
+      ])
+
+      ;(doc as any).autoTable({
         startY: currentY,
-        head: [["", "Service/Tool", "Category", "Budget Estimate"]],
-        body: tableData.map(row => row.map((cell, i) => i === 0 ? "" : cell)),
-        theme: "plain",
+        head: [["", "Tool", "Category", "Starting Price"]],
+        body: tableData,
+        theme: "striped",
         headStyles: { 
           fillColor: [248, 250, 252], 
           textColor: [71, 85, 105],
@@ -806,7 +576,7 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
           0: { cellWidth: 15 },
           1: { fontStyle: "bold" }
         },
-        didDrawCell: (data) => {
+        didDrawCell: (data: any) => {
           if (data.section === "body" && data.column.index === 0) {
             const rowIndex = data.row.index
             const logo = (tableData[rowIndex][0] as any).logo
@@ -831,7 +601,7 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
       doc.text("EXECUTION STRATEGY", 20, currentY)
       currentY += 10
 
-      const planToRender = output.includes("No detailed build plan generated yet")
+      const planToRender = (!output || output.includes("No detailed build plan generated yet"))
         ? `Quick Summary:\nYou have selected a stack of ${stack.length} tools. For a detailed step-by-step implementation guide including API integrations and costs, please use the 'Generate Plan' feature in the StackFind Playground.`
         : output
 
@@ -855,7 +625,6 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
         
         const wrappedLines = doc.splitTextToSize(clean, maxWidth)
         
-        // Ensure we handle the split text correctly to avoid any weird joining issues
         if (Array.isArray(wrappedLines)) {
           wrappedLines.forEach((l, idx) => {
             doc.text(l, x, y + (idx * fontSize * 0.5))
@@ -914,9 +683,7 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
   }
 
   async function handleExportEmail(email: string) {
-    const isGenericPlan = output.includes("No detailed build plan generated yet");
-    
-    // Better default plan for email if none generated
+    const isGenericPlan = !output || output.includes("No detailed build plan generated yet");
     const finalPlan = isGenericPlan 
       ? `A curated selection of ${stack.length} elite tools has been compiled for your project. To unlock the full step-by-step execution roadmap, head back to the StackFind Playground.`
       : output;
@@ -970,13 +737,8 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
         throw new Error(errorData.error || "Failed to create order");
       }
       const order = await res.json();
-      
       const razorpayKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
-      
-      if (!razorpayKey) {
-        console.error("Razorpay Public Key is missing in environment variables.");
-        throw new Error("Payment gateway configuration error. Please contact support.");
-      }
+      if (!razorpayKey) throw new Error("Payment gateway configuration error.");
 
       const options = {
         key: razorpayKey,
@@ -993,44 +755,30 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
               body: JSON.stringify(response),
             });
             const verifyData = await verifyRes.json();
-            if (verifyData.success) {
-              window.location.reload(); // Refresh to update premium status
-            } else {
-              throw new Error(verifyData.message || "Payment verification failed");
-            }
+            if (verifyData.success) window.location.reload();
+            else throw new Error(verifyData.message || "Payment verification failed");
           } catch (err: any) {
-            console.error("Verification Error:", err);
-            alert(err.message || "Verification error. Please contact support.");
+            alert(err.message || "Verification error.");
           }
         },
         prefill: {
           name: profile?.full_name || "",
           email: profile?.email || "",
         },
-        theme: {
-          color: "#6366f1",
-        },
+        theme: { color: "#6366f1" },
       };
-
-      if (!(window as any).Razorpay) {
-        alert("Payment gateway loading... please wait a second and try again.");
-        return;
-      }
 
       const rzp = new (window as any).Razorpay(options);
       rzp.open();
     } catch (err: any) {
-      console.error("Unlock Error:", err);
-      alert(err.message || "Failed to initiate payment. Please try again.");
+      alert(err.message || "Failed to initiate payment.");
     }
   }
-
-  const canGenerate = isAuthenticated && idea.trim().length > 0 && (stack.length > 0 || (typeof budget === "number" && budget >= 0)) && !loading && !hasReachedLimit
+  const canGenerate = isAuthenticated && idea.trim().length > 0 && !loading && !hasReachedLimit
 
   return (
     <>
       <div className="relative">
-      {/* ── Hero header ──────────────────────────────────────────────────── */}
       <div className="mb-10">
         <div className="flex items-center gap-2 mb-3">
           <FlaskConical size={13} style={{ color: "#6366f1" }} />
@@ -1057,681 +805,295 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
         </p>
       </div>
 
+      {!isAuthenticated && <PlaygroundLockWall tools={tools} />}
 
-      {/* ── Guest lock wall ───────────────────────────────────────────── */}
-      {!isAuthenticated && (
-        <div className="relative">
-          <PlaygroundLockWall tools={tools} />
-        </div>
-      )}
-
-      {/* ── Paywall ── */}
       {isAuthenticated && hasReachedLimit && (
         <div className="mt-12 py-10">
           <PlaygroundPaywall onUnlock={handleUnlockPro} />
         </div>
       )}
 
-      {isAuthenticated && !hasReachedLimit && <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
-
-        {/* ── Left: browser + input ──────────────────────────────────────── */}
-        <div className="lg:col-span-2 space-y-4">
-
-          {/* Starter stacks */}
-          <div>
-            <p className="text-[0.6875rem] font-semibold tracking-[0.13em] uppercase mb-2.5" style={{ color: "#C4B0A0" }}>
-              Starter stacks
-            </p>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-              {presetsWithTools.map(preset => (
-                <button
-                  key={preset.name}
-                  onClick={() => loadPreset(preset)}
-                  className="text-left rounded-2xl p-3.5 transition-all duration-150 hover:scale-[1.02] active:scale-[0.99]"
-                  style={{
-                    background: "rgba(255,255,255,0.8)",
-                    border: "1px solid rgba(140,110,80,0.1)",
-                  }}
-                >
-                  {/* Tool logo row */}
-                  <div className="flex items-center gap-1 mb-3 flex-wrap">
-                    {preset.toolData.slice(0, 5).map(t => (
-                      <LogoBubble key={t.slug} tool={t} size={24} />
-                    ))}
-                    {preset.toolData.length > 5 && (
-                      <div
-                        className="w-6 h-6 rounded-lg flex items-center justify-center text-[9px] font-bold"
-                        style={{ background: "rgba(140,110,80,0.07)", color: "#A0907E" }}
-                      >
-                        +{preset.toolData.length - 5}
-                      </div>
-                    )}
-                  </div>
-                  <p className="text-xs font-bold leading-tight" style={{ color: "#1C1611" }}>{preset.name}</p>
-                  <p className="text-[10px] mt-0.5" style={{ color: "#C4B0A0" }}>{preset.description}</p>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Tool browser */}
-          <div
-            className="rounded-2xl overflow-hidden"
-            style={{ background: "rgba(255,255,255,0.7)", border: "1px solid rgba(140,110,80,0.1)" }}
-          >
-            {/* Search bar */}
-            <div className="px-4 pt-4 pb-3" style={{ borderBottom: "1px solid rgba(140,110,80,0.07)" }}>
-              <div
-                className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl"
-                style={{ background: "rgba(140,110,80,0.04)", border: "1px solid rgba(140,110,80,0.1)" }}
-              >
-                <Search size={13} style={{ color: "#C4B0A0" }} />
-                <input
-                  type="text"
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                  placeholder={`Search ${tools.length} tools…`}
-                  className="flex-1 bg-transparent outline-none text-sm"
-                  style={{ color: "#1C1611" }}
-                />
-                {search && (
-                  <button onClick={() => setSearch("")} className="hover:opacity-60 transition-opacity">
-                    <X size={12} style={{ color: "#C4B0A0" }} />
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Category strip — horizontal scroll, no wrap */}
-            <div
-              className="flex gap-1.5 px-4 py-2.5 overflow-x-auto"
-              style={{
-                borderBottom: "1px solid rgba(140,110,80,0.07)",
-                scrollbarWidth: "none",
-                msOverflowStyle: "none",
-              }}
-            >
-              <style jsx global>{`.cat-strip::-webkit-scrollbar { display: none; }`}</style>
-              {CATEGORIES.map(cat => (
-                <button
-                  key={cat.slug}
-                  onClick={() => setActiveCategory(cat.slug)}
-                  className="text-xs px-3 py-1.5 rounded-lg font-medium transition-all duration-150 whitespace-nowrap flex-shrink-0"
-                  style={{
-                    background: activeCategory === cat.slug ? "#6366f1" : "transparent",
-                    color: activeCategory === cat.slug ? "#fff" : "#A0907E",
-                    fontWeight: activeCategory === cat.slug ? 700 : 500,
-                  }}
-                >
-                  {cat.name}
-                </button>
-              ))}
-            </div>
-
-            {/* Tool grid */}
-            <div className="p-4">
-              {filteredTools.length > 0 ? (
-                <div
-                  className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2 overflow-y-auto"
-                  style={{ maxHeight: 400 }}
-                >
-                  {filteredTools.map(tool => (
-                    <BrowserCard
-                      key={tool.slug}
-                      tool={tool}
-                      inStack={isInStack(tool.slug)}
-                      onToggle={handleToggle}
-                      usdToInrRate={usdToInrRate}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="py-10 text-center">
-                  <p className="text-sm" style={{ color: "#C4B0A0" }}>No tools match "{search}"</p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Idea input */}
-          <div
-            className="rounded-2xl p-5"
-            style={{ background: "rgba(255,255,255,0.7)", border: "1px solid rgba(140,110,80,0.1)" }}
-          >
-            <div className="flex flex-col sm:flex-row gap-5 mb-3">
-              <div className="flex-1">
-                <label className="block text-sm font-bold mb-3" style={{ color: "#1C1611" }}>
-                  Describe what you want to build
-                </label>
-                <textarea
-                  ref={textareaRef}
-                  value={idea}
-                  onChange={e => setIdea(e.target.value)}
-                  placeholder="e.g. A SaaS for freelancers to track invoices and auto-remind clients when payments are overdue…"
-                  rows={3}
-                  className="w-full resize-none rounded-xl text-sm outline-none placeholder:text-[#C4B0A0]"
-                  style={{
-                    background: "rgba(140,110,80,0.03)",
-                    border: "1px solid rgba(140,110,80,0.12)",
-                    padding: "12px 14px",
-                    color: "#1C1611",
-                    lineHeight: "1.65",
-                    transition: "border-color 200ms",
-                  }}
-                  onFocus={e => (e.target.style.borderColor = "rgba(99,102,241,0.35)")}
-                  onBlur={e => (e.target.style.borderColor = "rgba(140,110,80,0.12)")}
-                />
-              </div>
-
-              <div className="w-full sm:w-52">
-                <label className="block text-sm font-bold mb-3" style={{ color: "#1C1611" }}>
-                  Monthly Budget (₹)
-                </label>
-                <div 
-                  className="flex items-center gap-2.5 px-4 py-3 rounded-xl transition-all duration-200"
-                  style={{ 
-                    background: "rgba(140,110,80,0.03)", 
-                    border: "1px solid rgba(140,110,80,0.12)",
-                  }}
-                >
-                  <DollarSign size={14} style={{ color: "#6366f1" }} />
-                  <input 
-                    type="number"
-                    value={budget}
-                    onChange={e => setBudget(e.target.value === "" ? "" : Number(e.target.value))}
-                    placeholder="e.g. 5000"
-                    className="bg-transparent outline-none text-sm font-bold w-full"
-                    style={{ color: "#1C1611" }}
-                  />
-                </div>
-                <p className="text-[10px] mt-2 leading-relaxed" style={{ color: "#C4B0A0" }}>
-                  AI will suggest a stack <br /> that fits this budget.
-                </p>
-              </div>
-            </div>
-
-            {/* Example prompts */}
-            <div className="mt-3 flex flex-wrap gap-1.5">
-              {EXAMPLE_PROMPTS.map(prompt => (
-                <button
-                  key={prompt}
-                  onClick={() => { setIdea(prompt); textareaRef.current?.focus() }}
-                  className="text-xs px-2.5 py-1 rounded-lg transition-all duration-150"
-                  style={{
-                    background: "rgba(140,110,80,0.05)",
-                    color: "#7A6A57",
-                    border: "1px solid rgba(140,110,80,0.1)",
-                  }}
-                >
-                  {prompt}
-                </button>
-              ))}
-            </div>
-
-            {/* Generate row */}
-            <div
-              className="flex items-center justify-between mt-4 pt-4 flex-wrap gap-3"
-              style={{ borderTop: "1px solid rgba(140,110,80,0.08)" }}
-            >
-              {/* Stack status */}
-              <div className="flex items-center gap-2 flex-wrap">
-                {stack.length === 0 ? (
-                  <span className="text-xs" style={{ color: "#C4B0A0" }}>Add tools from the browser above</span>
-                ) : (
-                  <>
-                    <div className="flex items-center -space-x-1.5">
-                      {stack.slice(0, 5).map(t => {
-                        const logo = getLogoUrl(t.website, t.logoUrl)
-                        return (
-                          <div
-                            key={t.slug}
-                            className="w-6 h-6 rounded-lg overflow-hidden flex items-center justify-center"
-                            style={{
-                              background: "rgba(255,255,255,0.9)",
-                              border: "1.5px solid #FAF7F2",
-                            }}
-                          >
-                            {logo
-                              ? <img src={logo} alt={t.name} className="w-4 h-4 object-contain" />
-                              : <span style={{ fontSize: 8, fontWeight: 900, color: "#7A6A57" }}>{t.name[0]}</span>
-                            }
-                          </div>
-                        )
-                      })}
-                      {stack.length > 5 && (
-                        <div
-                          className="w-6 h-6 rounded-lg flex items-center justify-center text-[9px] font-bold"
-                          style={{ background: "rgba(140,110,80,0.08)", border: "1.5px solid #FAF7F2", color: "#7A6A57" }}
-                        >
-                          +{stack.length - 5}
+      {isAuthenticated && !hasReachedLimit && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
+          <div className="lg:col-span-2 space-y-4">
+            <div>
+              <p className="text-[0.6875rem] font-semibold tracking-[0.13em] uppercase mb-2.5" style={{ color: "#C4B0A0" }}>
+                Starter stacks
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                {presetsWithTools.map(preset => (
+                  <button
+                    key={preset.name}
+                    onClick={() => loadPreset(preset)}
+                    className="text-left rounded-2xl p-3.5 transition-all duration-150 hover:scale-[1.02] active:scale-[0.99]"
+                    style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(140,110,80,0.1)" }}
+                  >
+                    <div className="flex items-center gap-1 mb-3 flex-wrap">
+                      {preset.toolData.slice(0, 5).map(t => <LogoBubble key={t.slug} tool={t} size={24} />)}
+                      {preset.toolData.length > 5 && (
+                        <div className="w-6 h-6 rounded-lg flex items-center justify-center text-[9px] font-bold" style={{ background: "rgba(140,110,80,0.07)", color: "#A0907E" }}>
+                          +{preset.toolData.length - 5}
                         </div>
                       )}
                     </div>
-                    <span className="text-xs font-medium" style={{ color: "#7A6A57" }}>
-                      {stack.length} tool{stack.length !== 1 ? "s" : ""}
-                    </span>
-                    <span className="text-xs" style={{ color: "#C4B0A0" }}>·</span>
-                    <span className="text-xs font-semibold" style={{ color: totalCostInr === 0 ? "#059669" : (budget && totalCostInr > (typeof budget === "number" ? budget : 0) ? "#ef4444" : "#1C1611") }}>
-                      { totalCostInr === 0
-                        ? "Free to start"
-                        : `from ₹${Math.round(totalCostInr)}/mo`
-                      }
-                    </span>
-                    {budget && totalCostInr > (typeof budget === "number" ? budget : 0) && (
-                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-50 text-red-500 border border-red-100 animate-pulse">
-                        Over Budget
-                      </span>
-                    )}
-                    <span className="text-[10px]" style={{ color: "#C4B0A0" }}>
-                      *Est. at $1 = ₹{usdToInrRate}
-                    </span>
-                  </>
-                )}
+                    <p className="text-xs font-bold leading-tight" style={{ color: "#1C1611" }}>{preset.name}</p>
+                    <p className="text-[10px] mt-0.5" style={{ color: "#C4B0A0" }}>{preset.description}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-2xl overflow-hidden" style={{ background: "rgba(255,255,255,0.7)", border: "1px solid rgba(140,110,80,0.1)" }}>
+              <div className="px-4 pt-4 pb-3" style={{ borderBottom: "1px solid rgba(140,110,80,0.07)" }}>
+                <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl" style={{ background: "rgba(140,110,80,0.04)", border: "1px solid rgba(140,110,80,0.1)" }}>
+                  <Search size={13} style={{ color: "#C4B0A0" }} />
+                  <input
+                    type="text"
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                    placeholder={`Search ${tools.length} tools…`}
+                    className="flex-1 bg-transparent outline-none text-sm"
+                    style={{ color: "#1C1611" }}
+                  />
+                  {search && <button onClick={() => setSearch("")}><X size={12} style={{ color: "#C4B0A0" }} /></button>}
+                </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                {/* Model Selector Pill */}
-                {isAuthenticated && (
-                  <ModelSelector value={selectedModelId} onChange={setSelectedModelId} />
-                )}
-
-                {output && !loading && (
+              <div className="flex gap-1.5 px-4 py-2.5 overflow-x-auto no-scrollbar" style={{ borderBottom: "1px solid rgba(140,110,80,0.07)" }}>
+                {CATEGORIES.map(cat => (
                   <button
-                    onClick={() => { setOutput(""); setIdea("") }}
-                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-150"
-                    style={{ background: "rgba(140,110,80,0.06)", color: "#7A6A57", border: "1px solid rgba(140,110,80,0.1)" }}
-                  >
-                    <RotateCcw size={11} /> Reset
-                  </button>
-                )}
-
-                {!isAuthenticated ? (
-                  <Link
-                    href="/login"
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 hover:opacity-90 shadow-sm"
-                    style={{ background: "#6366f1", color: "#fff" }}
-                  >
-                    Sign in to generate <ArrowRight size={13} />
-                  </Link>
-                ) : (
-                  <button
-                    onClick={generate}
-                    disabled={!canGenerate}
-                    title={!canGenerate ? 
-                      (idea.trim().length === 0 ? "Describe your idea to generate a plan" : 
-                       (stack.length === 0 && (budget === "" || budget < 0)) ? "Add tools or set a budget to suggest a stack" :
-                       hasReachedLimit ? "Usage limit reached" : "Please fill in all details") 
-                      : "Generate build plan"
-                    }
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 disabled:opacity-35 disabled:cursor-not-allowed group shadow-sm hover:shadow-md"
+                    key={cat.slug}
+                    onClick={() => setActiveCategory(cat.slug)}
+                    className="text-xs px-3 py-1.5 rounded-lg font-medium transition-all duration-150 whitespace-nowrap"
                     style={{
-                      background: canGenerate ? "#1C1611" : "rgba(140,110,80,0.12)",
-                      color: canGenerate ? "#fff" : "#A0907E",
+                      background: activeCategory === cat.slug ? "#6366f1" : "transparent",
+                      color: activeCategory === cat.slug ? "#fff" : "#A0907E",
                     }}
                   >
-                    {loading ? (
-                      <><Loader2 size={13} className="animate-spin" /> Generating…</>
-                    ) : (
-                      <>
-                        <Sparkles size={13} className={canGenerate ? "text-[#6366f1] group-hover:scale-110 transition-transform" : "opacity-40"} />
-                        Generate plan
-                        <ArrowRight size={14} className={canGenerate ? "group-hover:translate-x-0.5 transition-transform" : "opacity-40"} />
-                      </>
-                    )}
+                    {cat.name}
                   </button>
-                )}
+                ))}
               </div>
-            </div>
-          </div>
-        </div>
 
-        {/* ── Right: stack panel ─────────────────────────────────────────── */}
-        <div className="lg:col-span-1 lg:sticky lg:top-28">
-          <div
-            className="rounded-2xl overflow-hidden"
-            style={{ background: "rgba(255,255,255,0.7)", border: "1px solid rgba(140,110,80,0.1)" }}
-          >
-            {/* Header */}
-            <div
-              className="flex items-center justify-between px-5 py-4"
-              style={{ borderBottom: "1px solid rgba(140,110,80,0.08)" }}
-            >
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-sm" style={{ color: "#1C1611" }}>Your Stack</span>
-                {stack.length > 0 && (
-                  <span
-                    className="text-xs font-bold px-2 py-0.5 rounded-full tabular-nums"
-                    style={{ background: "rgba(99,102,241,0.1)", color: "#6366f1" }}
-                  >
-                    {stack.length}
-                  </span>
-                )}
-              </div>
-              {stack.length > 0 && (
-                <button
-                  onClick={clear}
-                  className="flex items-center gap-1 text-xs font-medium transition-opacity hover:opacity-50"
-                  style={{ color: "#C4B0A0" }}
-                >
-                  <Trash2 size={10} /> Clear all
-                </button>
-              )}
-            </div>
-
-            {/* Empty state */}
-            {stack.length === 0 && (
-              <div className="px-5 py-12 text-center">
-                <div
-                  className="w-10 h-10 rounded-2xl flex items-center justify-center mx-auto mb-3"
-                  style={{ background: "rgba(140,110,80,0.06)", border: "1px solid rgba(140,110,80,0.1)" }}
-                >
-                  <FlaskConical size={18} style={{ color: "rgba(140,110,80,0.3)" }} />
-                </div>
-                <p className="text-sm font-medium mb-1" style={{ color: "#C4B0A0" }}>Stack is empty</p>
-                <p className="text-xs" style={{ color: "rgba(196,176,160,0.7)" }}>
-                  Load a starter stack or pick tools from the browser
-                </p>
-              </div>
-            )}
-
-            {/* Tool list */}
-            {stack.length > 0 && (
-              <>
-                <div
-                  className="divide-y overflow-y-auto"
-                  style={{ borderColor: "rgba(140,110,80,0.06)", maxHeight: 320 }}
-                >
-                  {stack.map(tool => {
-                    const p = PRICING_COLOR[tool.pricingModel] ?? PRICING_COLOR.freemium
-                    const logoSrc = getLogoUrl(tool.website, tool.logoUrl)
-                    return (
-                      <div key={tool.slug} className="flex items-center gap-3 px-5 py-3 group">
-                        <div
-                          className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden"
-                          style={{ background: "rgba(140,110,80,0.05)", border: "1px solid rgba(140,110,80,0.1)" }}
-                        >
-                          {logoSrc
-                            ? <img src={logoSrc} alt={tool.name} className="w-5 h-5 object-contain" />
-                            : <span className="text-[10px] font-black" style={{ color: "#7A6A57" }}>{tool.name[0]}</span>
-                          }
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-semibold truncate" style={{ color: "#1C1611" }}>{tool.name}</p>
-                          <div className="flex items-center gap-1.5 mt-0.5">
-                            <span
-                              className="text-[9px] font-semibold px-1.5 py-0.5 rounded-md"
-                              style={{ background: p.bg, color: p.color }}
-                            >
-                              {PRICING_LABEL[tool.pricingModel]}
-                            </span>
-                            {tool.startingPriceInr ? (
-                              <span className="text-[9px]" style={{ color: "#C4B0A0" }}>₹{tool.startingPriceInr}/mo</span>
-                            ) : tool.startingPriceUsd ? (
-                              <span className="text-[9px]" style={{ color: "#C4B0A0" }}>₹{Math.round(tool.startingPriceUsd * usdToInrRate)}/mo*</span>
-                            ) : null}
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => remove(tool.slug)}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg hover:bg-black/5"
-                          style={{ color: "#C4B0A0" }}
-                          title="Remove"
-                        >
-                          <X size={11} />
-                        </button>
-                      </div>
-                    )
-                  })}
-                </div>
-
-                {/* Cost summary */}
-                <div
-                  className="px-5 py-4 space-y-2"
-                  style={{ borderTop: "1px solid rgba(140,110,80,0.08)", background: "rgba(140,110,80,0.02)" }}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs" style={{ color: "#A0907E" }}>Min. monthly</span>
-                    <span className="text-sm font-black" style={{ color: "#1C1611" }}>
-                      {totalCostInr === 0
-                        ? "Free"
-                        : `₹${Math.round(totalCostInr)}/mo`
-                      }
-                    </span>
+              <div className="p-4">
+                {filteredTools.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2 overflow-y-auto max-h-[400px]">
+                    {filteredTools.map(tool => (
+                      <BrowserCard
+                        key={tool.slug}
+                        tool={tool}
+                        inStack={isInStack(tool.slug)}
+                        onToggle={handleToggle}
+                        usdToInrRate={usdToInrRate}
+                      />
+                    ))}
                   </div>
-                  {/* Per-tool breakdown */}
-                  {stack.filter(t => t.startingPriceInr || t.startingPriceUsd).map(t => (
-                    <div key={t.slug} className="flex items-center justify-between">
-                      <span className="text-[10px]" style={{ color: "#C4B0A0" }}>{t.name}</span>
-                      <span className="text-[10px] font-semibold tabular-nums" style={{ color: "#7A6A57" }}>
-                        {t.startingPriceInr 
-                          ? `₹${t.startingPriceInr}` 
-                          : `₹${Math.round((t.startingPriceUsd ?? 0) * usdToInrRate)}*`
-                        }/mo
-                      </span>
-                    </div>
-                  ))}
-                  {stack.every(t => !t.startingPriceInr && !t.startingPriceUsd) && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px]" style={{ color: "#C4B0A0" }}>
-                        {stack.filter(t => !t.startingPriceUsd).map(t => t.name).join(", ")}
-                      </span>
-                      <span className="text-[10px] font-semibold" style={{ color: "#059669" }}>Free</span>
-                    </div>
-                  )}
-                  <p className="text-[9px] pt-1" style={{ color: "rgba(196,176,160,0.7)" }}>
-                    Starting plan prices only. Actual cost scales with usage.
-                  </p>
-
-                  {/* View Cost Breakdown Button */}
-                  {stack.length > 0 && totalCostInr > 0 && (
-                    <Link
-                      href={`/checkout/stack?slugs=${stack.map(t => t.slug).join(",")}`}
-                      className="flex items-center justify-center gap-2 w-full py-3 mt-3 rounded-xl font-bold text-xs transition-all duration-200 shadow-sm hover:shadow-md hover:scale-[1.01] active:scale-[0.99]"
-                      style={{ 
-                        background: "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)", 
-                        color: "#fff",
-                      }}
-                    >
-                      <Zap size={13} />
-                      View Cost Breakdown
-                    </Link>
-                  )}
-
-                  {/* Quick Export Options (Always available if stack is not empty) */}
-                  {stack.length > 0 && (
-                    <div className="pt-4 mt-2 space-y-2" style={{ borderTop: "1px solid rgba(140,110,80,0.06)" }}>
-                      <p className="text-[10px] font-bold uppercase tracking-widest px-1" style={{ color: "rgba(140,110,80,0.4)" }}>
-                        Export Stack
-                      </p>
-                      <div className="grid grid-cols-3 gap-2">
-                        <button
-                          onClick={() => setShowEmailModal(true)}
-                          className="flex items-center justify-center gap-2 py-2 rounded-xl text-[10px] font-bold transition-all duration-150 hover:bg-black/5 active:scale-95"
-                          style={{ background: "rgba(140,110,80,0.05)", color: "#7A6A57", border: "1px solid rgba(140,110,80,0.08)" }}
-                        >
-                          <Mail size={12} /> Email
-                        </button>
-                        <button
-                          onClick={handleExportPDF}
-                          className="flex items-center justify-center gap-2 py-2 rounded-xl text-[10px] font-bold transition-all duration-150 hover:bg-black/5 active:scale-95"
-                          style={{ background: "rgba(140,110,80,0.05)", color: "#7A6A57", border: "1px solid rgba(140,110,80,0.08)" }}
-                        >
-                          <FileText size={12} /> PDF
-                        </button>
-                        <button
-                          onClick={handleExportNotion}
-                          disabled={exporting}
-                          className="flex items-center justify-center gap-2 py-2 rounded-xl text-[10px] font-bold transition-all duration-150 hover:bg-black/5 active:scale-95"
-                          style={{ background: "rgba(140,110,80,0.05)", color: "#7A6A57", border: "1px solid rgba(140,110,80,0.08)" }}
-                        >
-                          {exporting ? <Loader2 size={12} className="animate-spin" /> : <ExternalLink size={12} />} Notion
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      </div>}
-
-      {/* ── Output ────────────────────────────────────────────────────────── */}
-      {(output || loading) && (
-        <div
-          ref={outputRef}
-          className="mt-5 rounded-2xl overflow-hidden"
-          style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(140,110,80,0.1)" }}
-        >
-          <div
-            className="flex items-center justify-between px-6 py-4"
-            style={{ borderBottom: "1px solid rgba(140,110,80,0.08)" }}
-          >
-            <div className="flex items-center gap-2.5">
-              <Sparkles size={14} style={{ color: "#6366f1" }} />
-              <span className="text-xs font-bold uppercase tracking-widest" style={{ color: "#6366f1" }}>
-                Build Plan
-              </span>
-              {loading && (
-                <div className="flex items-center gap-1.5">
-                  <Loader2 size={12} className="animate-spin" style={{ color: "#C4B0A0" }} />
-                  <span className="text-xs" style={{ color: "#C4B0A0" }}>Thinking…</span>
-                </div>
-              )}
-            </div>
-            {!loading && output && (
-              <div className="flex items-center gap-2">
-                 <button
-                  onClick={() => setShowEmailModal(true)}
-                  className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all duration-150"
-                  style={{
-                    background: "rgba(140,110,80,0.06)",
-                    color: "#7A6A57",
-                    border: "1px solid rgba(140,110,80,0.1)",
-                  }}
-                >
-                  <Mail size={11} /> Email
-                </button>
-
-                <button
-                  onClick={handleExportPDF}
-                  disabled={pdfExporting}
-                  className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all duration-150"
-                  style={{
-                    background: "rgba(140,110,80,0.06)",
-                    color: "#7A6A57",
-                    border: "1px solid rgba(140,110,80,0.1)",
-                  }}
-                >
-                  {pdfExporting ? (
-                    <><Loader2 size={11} className="animate-spin" /> ...</>
-                  ) : (
-                    <><Download size={11} /> PDF</>
-                  )}
-                </button>
-
-                {notionUrl ? (
-                  <a
-                    href={notionUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg transition-all duration-150"
-                    style={{ background: "#1C1611", color: "#fff" }}
-                  >
-                    <ExternalLink size={11} /> Notion
-                  </a>
                 ) : (
-                  <button
-                    onClick={handleExportNotion}
-                    disabled={exporting}
-                    className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all duration-150"
-                    style={{
-                      background: "rgba(140,110,80,0.06)",
-                      color: "#1C1611",
-                      border: "1px solid rgba(140,110,80,0.1)",
-                    }}
-                  >
-                    {exporting ? (
-                      <><Loader2 size={11} className="animate-spin" /> ...</>
-                    ) : (
-                      <><FileText size={11} /> Notion</>
-                    )}
-                  </button>
+                  <div className="py-10 text-center"><p className="text-sm" style={{ color: "#C4B0A0" }}>No tools match "{search}"</p></div>
                 )}
+              </div>
+            </div>
+
+            <div className="p-6 rounded-3xl space-y-6" style={{ background: "#fff", border: "1px solid rgba(140,110,80,0.1)", boxShadow: "0 20px 50px -12px rgba(140,110,80,0.12)" }}>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold uppercase tracking-widest flex items-center gap-2" style={{ color: "#A0907E" }}>
+                    <Sparkles size={12} className="text-[#6366f1]" />
+                    Describe your idea
+                  </label>
+                  <div className="flex items-center gap-4">
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex items-center gap-2 bg-[rgba(140,110,80,0.04)] px-3 py-1.5 rounded-lg border border-[rgba(140,110,80,0.08)] transition-all focus-within:border-[#6366f1]/30">
+                        <span className="text-[10px] font-bold uppercase tracking-tight" style={{ color: "#A0907E" }}>
+                          {budget === "" ? "Budget: Flexible" : "Target Budget"}
+                        </span>
+                        <div className="flex items-center gap-1">
+                          <span className="text-xs font-bold" style={{ color: budget === "" ? "#A0907E" : "#1C1611" }}>₹</span>
+                          <input
+                            type="number"
+                            value={budget}
+                            onChange={e => setBudget(e.target.value === "" ? "" : Number(e.target.value))}
+                            placeholder="Flexible"
+                            className="w-16 bg-transparent outline-none text-xs font-bold"
+                            style={{ color: "#1C1611" }}
+                          />
+                        </div>
+                      </div>
+                      <p className="text-[9px] font-medium opacity-60" style={{ color: "#7A6A57" }}>
+                        {budget === "" ? "AI will suggest an optimal budget based on tools" : "AI will suggest a stack that fits this budget"}
+                      </p>
+                    </div>
+                    <ModelSelector selectedId={selectedModelId} onSelect={setSelectedModelId} loading={loading} />
+                  </div>
+                </div>
+                
+                <div className="relative group">
+                  <textarea
+                    ref={textareaRef}
+                    value={idea}
+                    onChange={e => setIdea(e.target.value)}
+                    placeholder="E.g. I want to build a real-time analytics dashboard for D2C brands in India using Shopify data..."
+                    className="w-full min-h-[160px] p-5 rounded-2xl outline-none transition-all duration-300 resize-none text-[0.9375rem] leading-relaxed"
+                    style={{
+                      background: "rgba(140,110,80,0.03)",
+                      border: "1px solid rgba(140,110,80,0.1)",
+                      color: "#1C1611",
+                    }}
+                  />
+                  <div className="absolute bottom-4 right-4 flex items-center gap-2 opacity-0 group-focus-within:opacity-100 transition-opacity">
+                    <span className="text-[10px] font-medium" style={{ color: "#C4B0A0" }}>Press ⌘+Enter to build</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-2">
+                <div className="flex flex-wrap gap-2">
+                  {SUGGESTIONS.map(s => (
+                    <button
+                      key={s}
+                      onClick={() => setIdea(s)}
+                      className="text-[10px] font-medium px-3 py-1.5 rounded-full border transition-all duration-150 hover:bg-[rgba(140,110,80,0.05)]"
+                      style={{ background: "#fff", borderColor: "rgba(140,110,80,0.1)", color: "#7A6A57" }}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
 
                 <button
                   onClick={generate}
-                  className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all duration-150"
-                  style={{ background: "rgba(99,102,241,0.08)", color: "#6366f1", border: "1px solid rgba(99,102,241,0.15)" }}
+                  disabled={!canGenerate}
+                  title={!canGenerate ? (idea.trim().length === 0 ? "Describe your idea to generate a plan" : hasReachedLimit ? "Usage limit reached" : "Please fill in all details") : "Generate build plan"}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 disabled:opacity-35 disabled:cursor-not-allowed group shadow-sm hover:shadow-md"
+                  style={{
+                    background: canGenerate ? "#1C1611" : "rgba(140,110,80,0.1)",
+                    color: canGenerate ? "#fff" : "#A0907E",
+                  }}
                 >
-                  <RotateCcw size={11} /> Regenerate
+                  {loading ? (
+                    <><Loader2 size={13} className="animate-spin" /> {isSelectingTools ? "Architecting..." : "Generating…"}</>
+                  ) : (
+                    <>
+                      <Sparkles size={13} className={canGenerate ? "text-[#6366f1] group-hover:scale-110 transition-transform" : "opacity-40"} />
+                      Build Roadmap
+                    </>
+                  )}
                 </button>
               </div>
-            )}
+            </div>
           </div>
 
-          <div className="px-6 py-6">
-            {loading && !output && (
-              <div className="flex flex-col items-center gap-3 py-16">
-                <Loader2 size={24} className="animate-spin" style={{ color: "#6366f1" }} />
-                <p className="text-sm font-semibold" style={{ color: "#1C1611" }}>
-                  Building your plan…
-                </p>
-                <p className="text-xs" style={{ color: "#C4B0A0" }}>
-                  Analysing {stack.length} tools · usually 5–10 seconds
-                </p>
+          <div className="space-y-4">
+            <div className="p-6 rounded-3xl" style={{ background: "#fff", border: "1px solid rgba(140,110,80,0.1)" }}>
+              <div className="flex items-center justify-between mb-6">
+                <span className="text-xs font-bold uppercase tracking-widest" style={{ color: "#A0907E" }}>Your Stack</span>
+                {stack.length > 0 && <button onClick={clear} className="text-[10px] font-bold text-red-500 hover:underline">Clear all</button>}
               </div>
-            )}
-            {output && <MarkdownOutput text={output} />}
+
+              {stack.length > 0 ? (
+                <div className="space-y-2.5 mb-8">
+                  {stack.map(tool => (
+                    <div key={tool.slug} className="flex items-center justify-between p-3 rounded-xl" style={{ background: "rgba(140,110,80,0.04)", border: "1px solid rgba(140,110,80,0.05)" }}>
+                      <div className="flex items-center gap-3">
+                        <LogoBubble tool={tool as any} size={32} />
+                        <div>
+                          <p className="text-xs font-bold" style={{ color: "#1C1611" }}>{tool.name}</p>
+                          <p className="text-[9px] font-medium" style={{ color: "#C4B0A0" }}>{tool.categories?.[0]}</p>
+                        </div>
+                      </div>
+                      <button onClick={() => remove(tool.slug)} className="p-1.5 rounded-lg hover:bg-red-50 text-[#C4B0A0] hover:text-red-500 transition-colors">
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="py-12 flex flex-col items-center gap-3 text-center opacity-40">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "rgba(140,110,80,0.1)" }}><FlaskConical size={16} /></div>
+                  <p className="text-xs font-bold" style={{ color: "#1C1611" }}>Stack is empty</p>
+                  <p className="text-[10px]" style={{ color: "#7A6A57" }}>Load a starter stack or pick tools from the browser</p>
+                </div>
+              )}
+
+              <div className="pt-6 border-t border-[rgba(140,110,80,0.08)]">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-bold uppercase tracking-tighter" style={{ color: "#C4B0A0" }}>Est. Monthly Cost</span>
+                  <span className="text-sm font-black" style={{ color: "#1C1611" }}>₹{Math.round(totalCostInr).toLocaleString("en-IN")}</span>
+                </div>
+                <div className="flex items-center gap-2 p-3 rounded-xl bg-indigo-50 border border-indigo-100 mb-4">
+                  <CreditCard size={12} className="text-indigo-500" />
+                  <p className="text-[9px] leading-relaxed text-indigo-700 font-medium">Get all these tools in one bill with <strong>StackFind Managed Billing</strong>. Pay via UPI/Netbanking.</p>
+                </div>
+                <button className="w-full py-2.5 rounded-xl text-[11px] font-bold transition-all hover:opacity-90" style={{ background: "#6366f1", color: "#fff" }}>Request Managed Billing</button>
+              </div>
+            </div>
+
+            <div className="p-6 rounded-3xl min-h-[400px] flex flex-col" style={{ background: "#fff", border: "1px solid rgba(140,110,80,0.1)" }}>
+              <div className="flex items-center justify-between mb-5">
+                <span className="text-xs font-bold uppercase tracking-widest" style={{ color: "#A0907E" }}>Build Plan</span>
+                {loading && (
+                  <div className="flex items-center gap-1.5">
+                    <Loader2 size={12} className="animate-spin" style={{ color: "#6366f1" }} />
+                    <span className="text-xs" style={{ color: "#6366f1" }}>{isSelectingTools ? "Architecting your stack..." : "Thinking..."}</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex-1 overflow-y-auto max-h-[600px] pr-2 custom-scrollbar">
+                {output ? (
+                  <MarkdownOutput text={output} />
+                ) : (
+                  <div className="h-full flex flex-col items-center justify-center text-center py-20 opacity-30">
+                    <FileText size={32} className="mb-4" />
+                    <p className="text-xs font-bold">No plan generated yet</p>
+                    <p className="text-[10px] max-w-[160px] mx-auto mt-1">Describe your idea and click build to see the execution roadmap</p>
+                  </div>
+                )}
+                {loading && !output && (
+                  <div className="flex flex-col items-center gap-3 py-16">
+                    <Loader2 size={24} className="animate-spin" style={{ color: "#6366f1" }} />
+                    <p className="text-sm font-semibold" style={{ color: "#1C1611" }}>{isSelectingTools ? "AI is selecting the best tools for you..." : "Building your plan..."}</p>
+                    <p className="text-xs" style={{ color: "#C4B0A0" }}>{isSelectingTools ? "Matching your idea with the best-fit database, auth, and payment tools..." : `Analysing ${stack.length} tools · usually 5–10 seconds`}</p>
+                  </div>
+                )}
+                <div ref={outputRef} />
+              </div>
+
+              {output && !loading && (
+                <div className="pt-6 mt-6 border-t border-[rgba(140,110,80,0.08)] grid grid-cols-2 gap-2">
+                  <button onClick={copyOutput} className="flex items-center justify-center gap-2 py-2 rounded-xl text-[10px] font-bold border border-[rgba(140,110,80,0.1)] hover:bg-[rgba(140,110,80,0.03)] transition-colors">
+                    {copied ? <><Check size={12} /> Copied</> : <><Copy size={12} /> Copy Plan</>}
+                  </button>
+                  <div className="relative group">
+                    <button className="w-full flex items-center justify-center gap-2 py-2 rounded-xl text-[10px] font-bold bg-[#1C1611] text-white hover:opacity-90 transition-opacity">
+                      <Share2 size={12} /> Export Plan
+                    </button>
+                    <div className="absolute bottom-full left-0 right-0 mb-2 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity z-50">
+                      <div className="p-1 rounded-xl shadow-2xl bg-white border border-[rgba(140,110,80,0.1)] space-y-1">
+                        <button onClick={handleExportNotion} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[10px] font-bold hover:bg-gray-50 text-left">
+                          <Layout size={12} /> {exporting ? "Exporting..." : "To Notion"}
+                        </button>
+                        <button onClick={() => setShowEmailModal(true)} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[10px] font-bold hover:bg-gray-50 text-left">
+                          <Send size={12} /> To Email
+                        </button>
+                        <button onClick={handleExportPdf} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[10px] font-bold hover:bg-gray-50 text-left">
+                          <Download size={12} /> {pdfExporting ? "Preparing..." : "Download PDF"}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
-
-      {/* ── Error ─────────────────────────────────────────────────────────── */}
-      {error && !loading && (
-        <div
-          className="mt-5 rounded-2xl px-6 py-5 flex items-start gap-3"
-          style={{ background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.18)" }}
-        >
-          <span className="text-lg mt-0.5 flex-shrink-0">⚠️</span>
-          <div className="flex-1">
-            <p className="text-sm font-bold mb-1" style={{ color: "#DC2626" }}>Generation failed</p>
-            <p className="text-sm" style={{ color: "#7A2020" }}>{error}</p>
-            {error.includes("ANTHROPIC_API_KEY") && (
-              <p className="text-xs mt-2" style={{ color: "#9A3A3A" }}>
-                Go to <strong>Vercel → Project → Settings → Environment Variables</strong> and add{" "}
-                <code className="px-1 py-0.5 rounded text-xs" style={{ background: "rgba(239,68,68,0.1)" }}>
-                  ANTHROPIC_API_KEY
-                </code>.
-              </p>
-            )}
-          </div>
-          <button onClick={() => setError("")} className="hover:opacity-50 transition-opacity flex-shrink-0">
-            <X size={14} style={{ color: "#DC2626" }} />
-          </button>
-        </div>
-      )}
-
-      {/* ── Idle placeholder ──────────────────────────────────────────────── */}
-      {!output && !loading && !error && stack.length > 0 && idea.trim() && (
-        <div
-          className="mt-5 rounded-2xl py-14 text-center"
-          style={{ background: "rgba(99,102,241,0.02)", border: "1px dashed rgba(99,102,241,0.15)" }}
-        >
-          <Sparkles size={18} className="mx-auto mb-2.5" style={{ color: "rgba(99,102,241,0.3)" }} />
-          <p className="text-sm font-medium" style={{ color: "#A0907E" }}>
-            Ready — click Generate plan to continue
-          </p>
-        </div>
-      )}
-
       </div>
-      
+
       <ExportEmailModal
         isOpen={showEmailModal}
         onClose={() => setShowEmailModal(false)}
         onExport={handleExportEmail}
-        initialEmail={profile?.email}
       />
     </>
   )

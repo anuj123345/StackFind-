@@ -93,21 +93,6 @@ export const StackExportEmail = ({
             })}
           </Section>
 
-          <Section style={planSection}>
-            <Text style={sectionTitle}>Execution Strategy</Text>
-            <div style={planCard}>
-              {isGenericPlan ? (
-                <div style={planEmptyState}>
-                  <Text style={planText}>{plan}</Text>
-                  <Link href="https://stackfind.in/playground" style={ctaButton}>
-                    Generate Full Roadmap →
-                  </Link>
-                </div>
-              ) : (
-                <Text style={planText}>{plan}</Text>
-              )}
-            </div>
-          </Section>
 
           <Hr style={hr} />
 
@@ -287,13 +272,6 @@ const planCard = {
   marginTop: '12px',
 };
 
-const planText = {
-  fontSize: '15px',
-  lineHeight: '1.7',
-  color: '#475569',
-  whiteSpace: 'pre-wrap' as const,
-  margin: '0',
-};
 
 const planEmptyState = {
   textAlign: 'center' as const,

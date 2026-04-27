@@ -53,7 +53,8 @@ function parseMarkdownToRichText(text: string): any[] {
 
 export async function POST(req: NextRequest) {
   try {
-    const { idea, stack, output } = await req.json()
+    const { idea, stack, plan, output } = await req.json()
+    const finalPlan = plan || output || ""
     
     const notionToken = (process.env.NOTION_TOKEN || "").trim()
     const parentPageId = (process.env.NOTION_PARENT_PAGE_ID || "").trim()
@@ -151,7 +152,7 @@ export async function POST(req: NextRequest) {
     ]
 
     // 2. Parse Markdown Output to Notion Blocks
-    const lines = output.split("\n")
+    const lines = finalPlan.split("\n")
     for (const line of lines) {
       const trimmed = line.trim()
       if (!trimmed && blocks[blocks.length - 1]?.type !== "divider") continue
@@ -256,6 +257,10 @@ export async function POST(req: NextRequest) {
 
     console.log("Notion: Creating page with", blocks.length, "blocks")
 
+    // Notion pages.create has a limit of 100 children.
+    const initialBlocks = blocks.slice(0, 100)
+    const remainingBlocks = blocks.slice(100)
+
     const response = await notion.pages.create({
       parent: { page_id: parentPageId },
       icon: { external: { url: "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/zap.png" } },
@@ -274,19 +279,37 @@ export async function POST(req: NextRequest) {
           ]
         }
       },
-      children: blocks.slice(0, 100)
+      children: initialBlocks
     })
+
+    // If there are more than 100 blocks, append them to the created page
+    if (remainingBlocks.length > 0) {
+      console.log("Notion: Appending", remainingBlocks.length, "additional blocks")
+      // Split remaining blocks into chunks of 100 (Notion API limit for append)
+      for (let i = 0; i < remainingBlocks.length; i += 100) {
+        const chunk = remainingBlocks.slice(i, i + 100)
+        await notion.blocks.children.append({
+          block_id: response.id,
+          children: chunk
+        })
+      }
+    }
 
     console.log("Notion: Page created successfully:", (response as any).url)
     return NextResponse.json({ success: true, url: (response as any).url })
   } catch (error: any) {
     console.error("Notion Export API Error:", error)
-    // Return specific error to client
-    const errorMessage = error.message || "Unknown Notion error"
-    const statusCode = error.status || 500
+    
+    let errorMessage = error.message || "Unknown Notion error"
+    if (error.code === 'object_not_found') {
+      errorMessage = "Parent page not found. Please verify NOTION_PARENT_PAGE_ID and ensure the integration is shared with the page."
+    } else if (error.code === 'unauthorized') {
+      errorMessage = "Invalid Notion Token. Please check NOTION_TOKEN environment variable."
+    }
+
     return NextResponse.json({ 
-      error: `Notion Error: ${errorMessage}. Please ensure the 'StackFind' integration is shared with your parent page.`,
+      error: errorMessage,
       details: error.code || null
-    }, { status: statusCode })
+    }, { status: error.status || 500 })
   }
 }

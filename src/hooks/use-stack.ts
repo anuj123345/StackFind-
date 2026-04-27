@@ -70,5 +70,9 @@ export function useStack() {
 
   const isInStack = useCallback((slug: string) => stack.some(t => t.slug === slug), [stack])
 
-  return { stack, add, remove, toggle, clear, isInStack }
+  const setFullStack = useCallback((tools: StackTool[]) => {
+    dispatch(tools)
+  }, [dispatch])
+
+  return { stack, add, remove, toggle, clear, isInStack, setFullStack }
 }
