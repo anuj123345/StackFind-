@@ -905,7 +905,8 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
   const canGenerate = isAuthenticated && idea.trim().length > 0 && (stack.length > 0 || (typeof budget === "number" && budget >= 0)) && !loading && !hasReachedLimit
 
   return (
-    <div>
+    <>
+      <div className="relative">
       {/* ── Hero header ──────────────────────────────────────────────────── */}
       <div className="mb-10">
         <div className="flex items-center gap-2 mb-3">
@@ -1568,13 +1569,14 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
         </div>
       )}
 
-    </div>
-    
-    <ExportEmailModal
-      isOpen={showEmailModal}
-      onClose={() => setShowEmailModal(false)}
-      onExport={handleExportEmail}
-      initialEmail={profile?.email}
-    />
+      </div>
+      
+      <ExportEmailModal
+        isOpen={showEmailModal}
+        onClose={() => setShowEmailModal(false)}
+        onExport={handleExportEmail}
+        initialEmail={profile?.email}
+      />
+    </>
   )
 }
