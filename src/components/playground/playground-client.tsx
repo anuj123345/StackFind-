@@ -1,106 +1,111 @@
 "use client"
 
-import { useState, useEffect, useRef, useMemo, useCallback } from "react"
+import { useState, useRef, useMemo, useCallback, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { 
-  Search, 
-  Sparkles, 
-  Loader2, 
-  Check, 
-  X, 
-  ChevronRight, 
-  Zap, 
-  Layers, 
-  ArrowRight,
-  ChevronDown,
-  Info,
-  DollarSign,
-  Calendar,
-  Code,
-  Layout,
-  ExternalLink,
-  Plus,
-  Trash2,
-  Copy,
-  Download,
-  Share2,
-  Send,
-  FlaskConical,
-  CreditCard,
-  Lock,
-  ArrowUpRight,
-  Menu,
-  ChevronUp,
-  FileText
-} from "lucide-react"
-import { useSearchParams } from "next/navigation"
-import { useStack, StackTool } from "@/hooks/use-stack"
-import { PlaygroundTool } from "@/lib/queries"
-import { incrementPlaygroundUsage } from "@/lib/actions"
+import { useStack, type StackTool } from "@/hooks/use-stack"
+import { getLogoUrl } from "@/lib/logo"
+import type { PlaygroundTool } from "@/lib/queries"
+import { incrementPlaygroundUsage } from "@/app/actions/usage"
 import { PlaygroundPaywall } from "./playground-paywall"
-import { PlaygroundLockWall } from "./playground-lock-wall"
+import Link from "next/link"
+import { useSearchParams } from "next/navigation"
+import {
+  FlaskConical, Trash2, X, Sparkles, Loader2, Plus, Check,
+  Search, Copy, RotateCcw, DollarSign, ArrowRight, ChevronDown, Zap, FileText, ExternalLink,
+  Download, Mail
+} from "lucide-react"
+import jsPDF from "jspdf"
+import autoTable from "jspdf-autotable"
+import { getToolLogoBase64 } from "@/lib/utils/logo-resolver"
 import { ExportEmailModal } from "./export-email-modal"
-import { LogoBubble } from "./logo-bubble"
-import { BrowserCard } from "./browser-card"
-import { jsPDF } from "jspdf"
-import "jspdf-autotable"
 
-// ─── Constants & Types ───────────────────────────────────────────────────────
+// ΓöÇΓöÇΓöÇ Constants ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
-const CATEGORIES = [
-  { name: "All Tools", slug: "all" },
-  { name: "Frontend & UI", slug: "frontend-ui" },
-  { name: "Backend & DB", slug: "backend-database" },
-  { name: "Auth & Security", slug: "auth-security" },
-  { name: "Payments", slug: "payments-billing" },
-  { name: "AI & ML", slug: "ai-machine-learning" },
-  { name: "Analytics", slug: "analytics-marketing" },
-  { name: "DevOps", slug: "devops-hosting" },
-]
+const PRICING_LABEL: Record<string, string> = {
+  free: "Free", freemium: "Freemium", paid: "Paid", open_source: "Open Source",
+}
+const PRICING_COLOR: Record<string, { bg: string; color: string }> = {
+  free:        { bg: "rgba(16,185,129,0.1)",  color: "#059669" },
+  freemium:    { bg: "rgba(99,102,241,0.1)",  color: "#6366f1" },
+  paid:        { bg: "rgba(217,119,6,0.1)",   color: "#D97706" },
+  open_source: { bg: "rgba(59,130,246,0.1)",  color: "#3b82f6" },
+}
 
 const MODELS = [
-  { id: "gpt-4o", name: "GPT-4o (Smartest)", icon: Sparkles },
-  { id: "gpt-4-turbo", name: "GPT-4 Turbo", icon: Zap },
-  { id: "claude-3-5-sonnet", name: "Claude 3.5 Sonnet", icon: Layers },
+  { id: "anthropic/claude-3-5-sonnet-20241022", name: "anthropic / claude-3.5-sonnet", provider: "Anthropic" },
+  { id: "anthropic/claude-3-5-haiku-20241022",  name: "anthropic / claude-3.5-haiku",  provider: "Anthropic" },
+  { id: "meta/llama-3.3-70b-instruct",     name: "meta / llama-3.3-70b-instruct",     provider: "NVIDIA NIM" },
+  { id: "moonshotai/kimi-k2.5",            name: "moonshot / kimi-k2.5",              provider: "NVIDIA NIM" },
+  { id: "qwen/qwen2.5-coder-32b-instruct", name: "qwen / qwen2.5-coder-32b",       provider: "NVIDIA NIM" },
 ]
 
-const PRESET_STACKS = [
-  {
-    name: "SaaS Starter",
-    slugs: ["nextjs", "tailwind-css", "supabase", "clerk", "stripe", "resend"],
-    description: "The gold standard for modern SaaS apps"
-  },
-  {
-    name: "AI Micro-SaaS",
-    slugs: ["nextjs", "openai", "supabase", "clerk", "razorpay", "vercel"],
-    description: "Launch AI wrappers and tools in hours"
-  },
-  {
-    name: "Mobile App Backend",
-    slugs: ["react-native", "supabase", "clerk", "revenuecat", "onesignal"],
-    description: "Everything you need for a cross-platform app"
-  },
-  {
-    name: "E-commerce Build",
-    slugs: ["nextjs", "shopify", "sanity", "stripe", "klaviyo"],
-    description: "Scalable store with custom frontend"
-  }
+const CATEGORIES = [
+  { slug: "all",             name: "All"            },
+  { slug: "chatbots",         name: "Chat Assistants"},
+  { slug: "coding",          name: "Coding"         },
+  { slug: "image-generation", name: "Image Gen"      },
+  { slug: "video",           name: "Video Gen"      },
+  { slug: "writing",         name: "Writing"        },
+  { slug: "audio",           name: "Audio & Voice"  },
+  { slug: "backend-db",      name: "Backend & DB"   },
+  { slug: "deployment",      name: "Deployment"     },
+  { slug: "auth",            name: "Auth"           },
+  { slug: "payments",        name: "Payments"       },
+  { slug: "automation",      name: "Automation"     },
+  { slug: "marketing",       name: "Marketing AI"   },
+  { slug: "productivity",    name: "Productivity"   },
+  { slug: "emails",          name: "Email"          },
+  { slug: "analytics",       name: "Analytics"      },
+  { slug: "error-tracking",  name: "Error Tracking" },
+  { slug: "version-control", name: "Version Control"},
+  { slug: "redis",           name: "Redis"          },
+  { slug: "vector-db",       name: "Vector DB"      },
+  { slug: "domain",          name: "Domain"         },
+  { slug: "dns",             name: "DNS & CDN"      },
+  { slug: "others",          name: "Others"         },
 ]
 
-const SUGGESTIONS = [
-  "AI-powered SEO content generator for Shopify stores",
-  "Real-time fitness tracking dashboard for gyms",
+const PRESET_STACKS: { name: string; emoji: string; description: string; slugs: string[] }[] = [
+  {
+    name: "MVP SaaS",
+    emoji: "≡ƒÜÇ",
+    description: "Ship fast",
+    slugs: ["cursor", "github", "vercel", "supabase", "clerk", "stripe", "resend", "sentry"],
+  },
+  {
+    name: "AI App",
+    emoji: "≡ƒñû",
+    description: "LLM-powered",
+    slugs: ["cursor", "github", "vercel", "supabase", "clerk", "pinecone", "upstash", "resend"],
+  },
+  {
+    name: "Indian Startup",
+    emoji: "≡ƒç«≡ƒç│",
+    description: "Built for India",
+    slugs: ["cursor", "github", "vercel", "supabase", "clerk", "razorpay", "resend", "posthog"],
+  },
+  {
+    name: "Indie Hacker",
+    emoji: "ΓÜí",
+    description: "Zero to shipped",
+    slugs: ["cursor", "github", "railway", "pocketbase", "better-auth", "lemon-squeezy", "resend", "posthog"],
+  },
+]
+
+const EXAMPLE_PROMPTS = [
+  "Freelancer invoicing tool with auto-reminders",
+  "B2B analytics dashboard for multiple apps",
+  "AI customer support bot trained on your docs",
+  "Paid newsletter with subscription billing",
   "Digital products marketplace with instant checkout",
   "Internal OKR tracker for early-stage startups",
 ]
 
-// ─── Markdown renderer ───────────────────────────────────────────────────────
+// ΓöÇΓöÇΓöÇ Markdown renderer ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 function MarkdownOutput({ text }: { text: string }) {
   const html = useMemo(() => {
-    // 1. Strip the [STACK: ...] block from rendering
-    let out = text.replace(/\[\s*STACK:[\s\S]*?\]/gi, "").trim()
-    
+    let out = text
     out = out.replace(/\|(.+)\|\n\|[-| :]+\|\n((?:\|.+\|\n?)*)/g, (_, header, rows) => {
       const ths = header.split("|").filter((c: string) => c.trim()).map((c: string) =>
         `<th class="pg-th">${c.trim()}</th>`).join("")
@@ -142,109 +147,355 @@ function MarkdownOutput({ text }: { text: string }) {
     <>
       <div className="pg-output" dangerouslySetInnerHTML={{ __html: html }} />
       <style jsx global>{`
-        .pg-output { line-height: 1.7; color: #475569; font-size: 0.9375rem; }
-        .pg-h2 { font-size: 1.25rem; font-weight: 800; color: #1C1611; margin: 2rem 0 1rem; letter-spacing: -0.01em; }
-        .pg-h3 { font-size: 1.05rem; font-weight: 700; color: #1C1611; margin: 1.5rem 0 0.75rem; }
-        .pg-p { margin-bottom: 1.25rem; }
-        .pg-strong { color: #1C1611; font-weight: 600; }
-        .pg-ol, .pg-ul { margin-bottom: 1.5rem; padding-left: 1.25rem; }
-        .pg-ol li, .pg-ul li { margin-bottom: 0.5rem; }
-        .pg-ol { list-style-type: decimal; }
-        .pg-ul { list-style-type: disc; }
-        .pg-blockquote { 
-          border-left: 3px solid #E2E8F0; 
-          padding-left: 1rem; 
-          color: #64748B; 
-          font-style: italic; 
-          margin: 1.5rem 0;
+        .pg-output { font-size: 0.9rem; line-height: 1.8; color: #7A6A57; }
+        .pg-h2 {
+          font-family: 'Bricolage Grotesque Variable', sans-serif;
+          font-size: 1.125rem; font-weight: 800; color: #1C1611;
+          margin: 2rem 0 0.75rem; padding-bottom: 0.5rem;
+          border-bottom: 1px solid rgba(140,110,80,0.12);
         }
-        .pg-table { 
-          width: 100%; 
-          border-collapse: collapse; 
-          margin: 1.5rem 0; 
-          font-size: 0.875rem;
-          background: rgba(255,255,255,0.5);
-          border-radius: 12px;
-          overflow: hidden;
-          border: 1px solid rgba(140,110,80,0.1);
+        .pg-h2:first-child { margin-top: 0; }
+        .pg-h3 {
+          font-family: 'Bricolage Grotesque Variable', sans-serif;
+          font-size: 0.9375rem; font-weight: 700; color: #1C1611;
+          margin: 1.5rem 0 0.375rem;
         }
-        .pg-th { 
-          background: rgba(140,110,80,0.05); 
-          text-align: left; 
-          padding: 0.75rem 1rem; 
-          font-weight: 700; 
-          color: #1C1611;
-          text-transform: uppercase;
-          font-size: 0.75rem;
-          letter-spacing: 0.05em;
-        }
-        .pg-td { 
-          padding: 0.75rem 1rem; 
-          border-top: 1px solid rgba(140,110,80,0.05);
-        }
-        .pg-alert {
-          padding: 1rem 1.25rem;
-          border-radius: 12px;
-          margin: 1.5rem 0;
-          font-size: 0.875rem;
-          line-height: 1.6;
-        }
-        .pg-alert-note { background: #F8FAFC; border: 1px solid #E2E8F0; color: #475569; }
-        .pg-alert-tip { background: #F0FDF4; border: 1px solid #BBF7D0; color: #166534; }
-        .pg-alert-important { background: #F5F3FF; border: 1px solid #DDD6FE; color: #5B21B6; }
-        .pg-alert-warning { background: #FFFBEB; border: 1px solid #FEF3C7; color: #92400E; }
-        .pg-alert-caution { background: #FEF2F2; border: 1px solid #FECACA; color: #991B1B; }
+        .pg-p { margin: 0.6rem 0; }
+        .pg-strong { color: #1C1611; font-weight: 700; }
+        .pg-ul { margin: 0.75rem 0 0.75rem 1.5rem; }
+        .pg-ol { margin: 0.75rem 0 0.75rem 1.5rem; }
+        .pg-ul li { list-style-type: disc; margin: 0.3rem 0; }
+        .pg-ol li { list-style-type: decimal; margin: 0.3rem 0; }
+        .pg-table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; font-size: 0.8125rem; }
+        .pg-th { text-align: left; padding: 10px 16px; font-weight: 700; color: #1C1611; background: rgba(140,110,80,0.05); border: 1px solid rgba(140,110,80,0.12); }
+        .pg-td { padding: 10px 16px; color: #7A6A57; border: 1px solid rgba(140,110,80,0.09); }
+        .pg-td strong, .pg-th strong { font-weight: 700; color: #1C1611; }
+        tr:last-child .pg-td { font-weight: 700; color: #1C1611; background: rgba(140,110,80,0.03); }
+        
+        .pg-blockquote { border-left: 3px solid rgba(140,110,80,0.2); padding-left: 1rem; margin: 1rem 0; color: #7A6A57; font-style: italic; }
+        .pg-alert { padding: 1rem; border-radius: 0.75rem; margin: 1rem 0; font-size: 0.8125rem; border: 1px solid transparent; }
+        .pg-alert-note { background: rgba(99,102,241,0.05); border-color: rgba(99,102,241,0.15); color: #6366f1; }
+        .pg-alert-tip { background: rgba(16,185,129,0.05); border-color: rgba(16,185,129,0.15); color: #059669; }
+        .pg-alert-important { background: rgba(239,68,68,0.05); border-color: rgba(239,68,68,0.15); color: #ef4444; }
+        .pg-alert-warning { background: rgba(245,158,11,0.05); border-color: rgba(245,158,11,0.15); color: #f59e0b; }
+        .pg-alert-caution { background: rgba(239,68,68,0.08); border-color: rgba(239,68,68,0.2); color: #b91c1c; font-weight: 600; }
       `}</style>
     </>
   )
 }
 
-// ─── Subcomponents ───────────────────────────────────────────────────────────
+// ΓöÇΓöÇΓöÇ Tool logo bubble ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
-function ModelSelector({ selectedId, onSelect, loading }: { 
-  selectedId: string, 
-  onSelect: (id: string) => void,
-  loading: boolean
+function LogoBubble({ tool, size = 28 }: { tool: PlaygroundTool; size?: number }) {
+  const logoSrc = getLogoUrl(tool.website, tool.logo_url)
+  return (
+    <div
+      className="rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden"
+      style={{
+        width: size, height: size,
+        background: "rgba(255,255,255,0.9)",
+        border: "1px solid rgba(140,110,80,0.12)",
+      }}
+    >
+      {logoSrc
+        ? <img src={logoSrc} alt={tool.name} style={{ width: size * 0.7, height: size * 0.7, objectFit: "contain" }} />
+        : <span style={{ fontSize: size * 0.4, fontWeight: 900, color: "#7A6A57" }}>{tool.name[0]}</span>
+      }
+    </div>
+  )
+}
+
+// ΓöÇΓöÇΓöÇ Browser tool card ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+function BrowserCard({ tool, inStack, onToggle, usdToInrRate }: {
+  tool: PlaygroundTool
+  inStack: boolean
+  onToggle: (tool: PlaygroundTool) => void
+  usdToInrRate: number
 }) {
-  const selected = MODELS.find(m => m.id === selectedId) || MODELS[0]
-  const [open, setOpen] = useState(false)
+  const p = PRICING_COLOR[tool.pricing_model] ?? PRICING_COLOR.freemium
+  const logoSrc = getLogoUrl(tool.website, tool.logo_url)
 
   return (
-    <div className="relative">
+    <button
+      onClick={() => onToggle(tool)}
+      className="w-full text-left rounded-xl p-4 transition-all duration-150 group"
+      style={{
+        background: inStack ? "rgba(99,102,241,0.05)" : "rgba(255,255,255,0.6)",
+        border: `1px solid ${inStack ? "rgba(99,102,241,0.22)" : "rgba(140,110,80,0.09)"}`,
+      }}
+    >
+      <div className="flex items-start gap-2.5">
+        <div
+          className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden mt-0.5"
+          style={{ background: "rgba(140,110,80,0.05)", border: "1px solid rgba(140,110,80,0.1)" }}
+        >
+          {logoSrc
+            ? <img src={logoSrc} alt={tool.name} className="w-6 h-6 object-contain" />
+            : <span className="text-xs font-black" style={{ color: "#7A6A57" }}>{tool.name[0]}</span>
+          }
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between gap-1 mb-0.5">
+            <p className="text-xs font-bold truncate" style={{ color: "#1C1611" }}>{tool.name}</p>
+            <div
+              className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-150"
+              style={{
+                background: inStack ? "#6366f1" : "transparent",
+                border: inStack ? "none" : "1.5px solid rgba(140,110,80,0.2)",
+              }}
+            >
+              {inStack
+                ? <Check size={9} style={{ color: "#fff" }} strokeWidth={3} />
+                : <Plus size={9} style={{ color: "#C4B0A0" }} strokeWidth={2.5} />
+              }
+            </div>
+          </div>
+          <p className="text-[10px] leading-snug line-clamp-2 mb-1.5" style={{ color: "#A0907E" }}>
+            {tool.tagline}
+          </p>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-md" style={{ background: p.bg, color: p.color }}>
+              {PRICING_LABEL[tool.pricing_model]}
+            </span>
+            {tool.starting_price_inr ? (
+              <span className="text-[9px]" style={{ color: "#C4B0A0" }}>Γé╣{tool.starting_price_inr}/mo</span>
+            ) : tool.starting_price_usd ? (
+              <span className="text-[9px]" style={{ color: "#C4B0A0" }}>Γé╣{Math.round(tool.starting_price_usd * usdToInrRate)}/mo*</span>
+            ) : null}
+            {tool.managed_billing_enabled && (
+              <div 
+                className="flex items-center gap-0.5 px-1 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-tight"
+                style={{ background: "rgba(99,102,241,0.08)", color: "#6366f1" }}
+                title="StackFind Managed INR Billing supported"
+              >
+                <Sparkles size={8} /> Managed
+              </div>
+            )}
+            {tool.is_made_in_india && (
+              <span className="text-[9px]">≡ƒç«≡ƒç│</span>
+            )}
+          </div>
+        </div>
+      </div>
+    </button>
+  )
+}
+
+// ΓöÇΓöÇΓöÇ Lock wall for guests ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+function PlaygroundLockWall({ tools }: { tools: PlaygroundTool[] }) {
+  const sampleTools = tools.slice(0, 9)
+
+  return (
+    <div>
+      {/* Blurred playground preview */}
+      <div
+        className="relative rounded-2xl overflow-hidden"
+        style={{ filter: "blur(5px)", pointerEvents: "none", userSelect: "none", opacity: 0.5 }}
+        aria-hidden
+      >
+        {/* Fake preset row */}
+        <div className="mb-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+            {PRESET_STACKS.map(preset => (
+              <div
+                key={preset.name}
+                className="rounded-2xl p-3.5"
+                style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(140,110,80,0.1)" }}
+              >
+                <div className="flex items-center gap-1 mb-3 flex-wrap">
+                  {[0,1,2,3,4].map(i => (
+                    <div key={i} className="w-6 h-6 rounded-lg" style={{ background: "rgba(140,110,80,0.12)" }} />
+                  ))}
+                </div>
+                <p className="text-xs font-bold" style={{ color: "#1C1611" }}>{preset.name}</p>
+                <p className="text-[10px] mt-0.5" style={{ color: "#C4B0A0" }}>{preset.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Fake tool browser */}
+        <div
+          className="rounded-2xl overflow-hidden"
+          style={{ background: "rgba(255,255,255,0.7)", border: "1px solid rgba(140,110,80,0.1)" }}
+        >
+          <div className="px-4 pt-4 pb-3" style={{ borderBottom: "1px solid rgba(140,110,80,0.07)" }}>
+            <div
+              className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl"
+              style={{ background: "rgba(140,110,80,0.04)", border: "1px solid rgba(140,110,80,0.1)" }}
+            >
+              <Search size={13} style={{ color: "#C4B0A0" }} />
+              <span className="text-sm" style={{ color: "#C4B0A0" }}>Search toolsΓÇª</span>
+            </div>
+          </div>
+          <div className="p-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
+              {sampleTools.map((tool, i) => {
+                const p = PRICING_COLOR[tool.pricing_model] ?? PRICING_COLOR.freemium
+                const logoSrc = getLogoUrl(tool.website, tool.logo_url)
+                return (
+                  <div
+                    key={i}
+                    className="rounded-xl p-3"
+                    style={{ background: "rgba(255,255,255,0.6)", border: "1px solid rgba(140,110,80,0.09)" }}
+                  >
+                    <div className="flex items-start gap-2.5">
+                      <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden mt-0.5"
+                        style={{ background: "rgba(140,110,80,0.05)", border: "1px solid rgba(140,110,80,0.1)" }}>
+                        {logoSrc
+                          ? <img src={logoSrc} alt={tool.name} className="w-6 h-6 object-contain" />
+                          : <span className="text-xs font-black" style={{ color: "#7A6A57" }}>{tool.name[0]}</span>
+                        }
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold truncate mb-0.5" style={{ color: "#1C1611" }}>{tool.name}</p>
+                        <p className="text-[10px] leading-snug line-clamp-2 mb-1.5" style={{ color: "#A0907E" }}>{tool.tagline}</p>
+                        <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-md" style={{ background: p.bg, color: p.color }}>
+                          {PRICING_LABEL[tool.pricing_model]}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Lock overlay */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center" style={{ minHeight: 400 }}>
+        <div
+          className="rounded-2xl px-8 py-8 text-center w-full max-w-md mx-auto"
+          style={{
+            background: "#FFFFFF",
+            border: "1px solid rgba(140,110,80,0.14)",
+            boxShadow: "0 8px 48px rgba(140,110,80,0.18), 0 2px 12px rgba(140,110,80,0.1)",
+          }}
+        >
+          <div
+            className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4"
+            style={{ background: "rgba(99,102,241,0.08)" }}
+          >
+            <FlaskConical size={22} style={{ color: "#6366f1" }} />
+          </div>
+          <p
+            className="font-black mb-2 leading-tight"
+            style={{
+              fontFamily: "'Bricolage Grotesque Variable', sans-serif",
+              fontSize: "1.5rem",
+              color: "#1C1611",
+              letterSpacing: "-0.02em",
+            }}
+          >
+            Sign in to use the Playground
+          </p>
+          <p className="text-[0.875rem] mb-6 leading-relaxed" style={{ color: "#7A6A57" }}>
+            Build your stack, describe your idea, and get a complete build plan with timelines and cost breakdown.
+          </p>
+          <Link
+            href={`/login?next=${encodeURIComponent("/playground?unlock=pro")}`}
+            className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl font-bold text-[0.9375rem] transition-all duration-200 hover:opacity-90"
+            style={{ background: "#6366f1", color: "#fff" }}
+          >
+            Sign in free <ArrowRight size={14} />
+          </Link>
+          <p className="text-[0.75rem] mt-3" style={{ color: "#C4B0A0" }}>
+            Free forever ┬╖ No credit card
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+
+// ΓöÇΓöÇΓöÇ Custom Model Selector ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+function ModelSelector({ value, onChange }: { value: string; onChange: (id: string) => void }) {
+  const [isOpen, setIsOpen] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+  
+  const selectedModel = MODELS.find(m => m.id === value) || MODELS[0]
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
+
+  return (
+    <div className="relative" ref={containerRef}>
       <button
-        onClick={() => !loading && setOpen(!open)}
-        disabled={loading}
-        className="flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all duration-200"
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2.5 pl-3.5 pr-2.5 py-2 rounded-xl text-[0.8125rem] font-bold transition-all duration-200 outline-none border border-transparent hover:border-[#6366f1]/30"
         style={{ 
-          background: "rgba(140,110,80,0.05)", 
-          border: "1px solid rgba(140,110,80,0.1)",
-          opacity: loading ? 0.6 : 1
+          background: "rgba(140,110,80,0.06)", 
+          color: "#1C1611",
         }}
       >
-        <selected.icon size={12} style={{ color: "#6366f1" }} />
-        <span className="text-[11px] font-bold" style={{ color: "#1C1611" }}>{selected.name}</span>
-        <ChevronDown size={10} style={{ color: "#A0907E" }} />
+        <span className="truncate max-w-[120px] sm:max-w-none">
+          {selectedModel.name.split(" / ")[1] || selectedModel.name}
+        </span>
+        <motion.div
+          animate={{ rotate: isOpen ? 180 : 0 }}
+          transition={{ duration: 0.2, ease: "circOut" }}
+          className="opacity-40"
+        >
+          <ChevronDown size={12} />
+        </motion.div>
       </button>
 
       <AnimatePresence>
-        {open && (
+        {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: 5 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 5 }}
-            className="absolute top-full left-0 mt-1 w-48 z-50 rounded-xl overflow-hidden shadow-xl p-1"
-            style={{ background: "#fff", border: "1px solid rgba(140,110,80,0.1)" }}
+            initial={{ opacity: 0, y: 8, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 4, scale: 0.95 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
+            className="absolute right-0 bottom-full mb-2 min-w-[220px] z-[100] rounded-2xl overflow-hidden shadow-2xl p-1.5"
+            style={{
+              background: "rgba(255, 255, 255, 0.92)",
+              backdropFilter: "blur(12px)",
+              border: "1px solid rgba(140, 110, 80, 0.15)",
+              boxShadow: "0 20px 50px rgba(0,0,0,0.15), 0 4px 12px rgba(0,0,0,0.05)",
+            }}
           >
+            <div className="px-3 py-2 border-b border-black/[0.04] mb-1">
+              <p className="text-[10px] font-bold uppercase tracking-wider opacity-40">Select Model</p>
+            </div>
             {MODELS.map(m => {
-              const Icon = m.icon
+              const isSelected = m.id === value
               return (
                 <button
                   key={m.id}
-                  onClick={() => { onSelect(m.id); setOpen(false) }}
-                  className="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-left transition-colors hover:bg-[rgba(140,110,80,0.05)]"
+                  onClick={() => { onChange(m.id); setIsOpen(false) }}
+                  className="w-full text-left px-3 py-2.5 rounded-xl transition-all duration-150 flex flex-col gap-0.5 group"
+                  style={{
+                    background: isSelected ? "#6366f1" : "transparent",
+                  }}
                 >
-                  <Icon size={12} style={{ color: m.id === selectedId ? "#6366f1" : "#A0907E" }} />
-                  <span className="text-xs font-medium" style={{ color: "#1C1611" }}>{m.name}</span>
+                  <span 
+                    className="text-[0.8125rem] font-bold truncate"
+                    style={{ color: isSelected ? "#fff" : "#1C1611" }}
+                  >
+                    {m.name.split(" / ")[1] || m.name}
+                  </span>
+                  <div className="flex items-center justify-between">
+                    <span 
+                      className="text-[10px] font-medium opacity-60"
+                      style={{ color: isSelected ? "rgba(255,255,255,0.8)" : "#7A6A57" }}
+                    >
+                      {m.provider}
+                    </span>
+                    {isSelected && <Check size={10} className="text-white" />}
+                  </div>
                 </button>
               )
             })}
@@ -255,7 +506,7 @@ function ModelSelector({ selectedId, onSelect, loading }: {
   )
 }
 
-// ─── Main component ──────────────────────────────────────────────────────────
+// ΓöÇΓöÇΓöÇ Main component ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 interface Props {
   tools: PlaygroundTool[]
@@ -924,7 +1175,7 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
                         {budget === "" ? "AI will suggest an optimal budget based on tools" : "AI will suggest a stack that fits this budget"}
                       </p>
                     </div>
-                    <ModelSelector selectedId={selectedModelId} onSelect={setSelectedModelId} loading={loading} />
+                    <ModelSelector value={selectedModelId} onChange={setSelectedModelId} />
                   </div>
                 </div>
                 
