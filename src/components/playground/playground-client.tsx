@@ -1413,6 +1413,31 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
                       View Cost Breakdown
                     </Link>
                   )}
+
+                  {/* Quick Export Options (Always available if stack is not empty) */}
+                  {stack.length > 0 && (
+                    <div className="pt-4 mt-2 space-y-2" style={{ borderTop: "1px solid rgba(140,110,80,0.06)" }}>
+                      <p className="text-[10px] font-bold uppercase tracking-widest px-1" style={{ color: "rgba(140,110,80,0.4)" }}>
+                        Export Stack
+                      </p>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          onClick={() => setShowEmailModal(true)}
+                          className="flex items-center justify-center gap-2 py-2 rounded-xl text-[10px] font-bold transition-all duration-150 hover:bg-black/5 active:scale-95"
+                          style={{ background: "rgba(140,110,80,0.05)", color: "#7A6A57", border: "1px solid rgba(140,110,80,0.08)" }}
+                        >
+                          <Mail size={12} /> Email
+                        </button>
+                        <button
+                          onClick={handleExportPDF}
+                          className="flex items-center justify-center gap-2 py-2 rounded-xl text-[10px] font-bold transition-all duration-150 hover:bg-black/5 active:scale-95"
+                          style={{ background: "rgba(140,110,80,0.05)", color: "#7A6A57", border: "1px solid rgba(140,110,80,0.08)" }}
+                        >
+                          <FileText size={12} /> PDF
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </>
             )}
