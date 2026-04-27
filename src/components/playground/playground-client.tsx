@@ -671,9 +671,15 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
   }
 
   async function handleExportNotion() {
-    if (exporting || stack.length === 0) return
+    if (exporting) return
+    if (stack.length === 0) {
+      setError("Please select at least one tool for your stack.")
+      return
+    }
+    
     setExporting(true)
     setError("")
+    setNotionUrl("")
 
     const isGenericPlan = !output || output.includes("No detailed build plan generated yet");
     const finalPlan = isGenericPlan 
@@ -681,25 +687,36 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
       : output;
 
     try {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 25000) // 25s timeout
+
       const res = await fetch("/api/playground/export/notion", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          idea,
+          idea: idea || "Custom project architecture",
           stack,
           output: finalPlan
-        })
+        }),
+        signal: controller.signal
       })
+
+      clearTimeout(timeoutId)
 
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || "Failed to export to Notion")
 
-      setNotionUrl(data.url)
-      // Open in new tab automatically if possible
-      window.open(data.url, '_blank');
+      if (data.url) {
+        setNotionUrl(data.url)
+        // Try to open, but browsers often block this after an async fetch
+        const newWindow = window.open(data.url, '_blank')
+        if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+          setError("Notion page created! Click the 'View on Notion' button that appeared.")
+        }
+      }
     } catch (err: any) {
-      console.error(err)
-      setError(err.message)
+      console.error("Notion Export Error:", err)
+      setError(err.name === 'AbortError' ? "Notion export timed out. Please try again." : err.message)
     } finally {
       setExporting(false)
     }
@@ -814,55 +831,71 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
       doc.text("EXECUTION STRATEGY", 20, currentY)
       currentY += 10
 
-      doc.setFontSize(10)
-      doc.setFont("helvetica", "normal")
-      doc.setTextColor(71, 85, 105)
-
       const planToRender = output.includes("No detailed build plan generated yet")
         ? `Quick Summary:\nYou have selected a stack of ${stack.length} tools. For a detailed step-by-step implementation guide including API integrations and costs, please use the 'Generate Plan' feature in the StackFind Playground.`
         : output
 
-      // Basic Markdown Renderer for PDF
       const lines = planToRender.split("\n")
-      lines.forEach(line => {
+      
+      // Helper to render text cleanly in PDF
+      const renderCleanText = (text: string, x: number, y: number, fontSize: number, maxWidth: number) => {
+        // 1. Strip Markdown artifacts that break PDF rendering
+        let clean = text
+          .replace(/^> \[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]/i, "") // Strip callout headers
+          .replace(/^> /g, "")                                          // Strip blockquote markers
+          .replace(/\*\*/g, "")                                         // Strip bold markers (avoid & issue)
+          .replace(/\[(.*?)\]\(.*?\)/g, "$1")                           // Strip links but keep text
+          .trim()
+
+        if (!clean) return 0
+
+        doc.setFontSize(fontSize)
+        doc.setTextColor(71, 85, 105)
+        doc.setFont("helvetica", "normal")
+        
+        const wrappedLines = doc.splitTextToSize(clean, maxWidth)
+        
+        // Ensure we handle the split text correctly to avoid any weird joining issues
+        if (Array.isArray(wrappedLines)) {
+          wrappedLines.forEach((l, idx) => {
+            doc.text(l, x, y + (idx * fontSize * 0.5))
+          })
+          return wrappedLines.length * (fontSize * 0.5)
+        } else {
+          doc.text(wrappedLines, x, y)
+          return fontSize * 0.5
+        }
+      }
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim()
+        if (!line || line.startsWith("|")) continue // Skip empty and tables
+
         if (currentY > pageHeight - 20) {
           doc.addPage()
           currentY = 30
         }
 
-        if (line.startsWith("### ")) {
-          doc.setFont("helvetica", "bold")
-          doc.setFontSize(12)
-          doc.setTextColor(30, 41, 59)
-          const text = line.replace("### ", "")
-          doc.text(text, 20, currentY)
-          currentY += 8
-        } else if (line.startsWith("## ")) {
+        if (line.startsWith("## ")) {
           doc.setFont("helvetica", "bold")
           doc.setFontSize(14)
           doc.setTextColor(30, 41, 59)
-          const text = line.replace("## ", "")
-          doc.text(text, 20, currentY)
+          doc.text(line.replace("## ", ""), 20, currentY)
           currentY += 10
+        } else if (line.startsWith("### ")) {
+          doc.setFont("helvetica", "bold")
+          doc.setFontSize(12)
+          doc.setTextColor(30, 41, 59)
+          doc.text(line.replace("### ", ""), 20, currentY)
+          currentY += 8
         } else if (line.startsWith("- ") || line.startsWith("* ")) {
-          doc.setFont("helvetica", "normal")
-          doc.setFontSize(10)
-          doc.setTextColor(71, 85, 105)
-          const text = "• " + line.substring(2)
-          const splitText = doc.splitTextToSize(text, pageWidth - 45)
-          doc.text(splitText, 25, currentY)
-          currentY += (splitText.length * 5) + 1
-        } else if (line.trim()) {
-          doc.setFont("helvetica", "normal")
-          doc.setFontSize(10)
-          doc.setTextColor(71, 85, 105)
-          const splitText = doc.splitTextToSize(line, pageWidth - 40)
-          doc.text(splitText, 20, currentY)
-          currentY += (splitText.length * 5) + 2
+          const height = renderCleanText("• " + line.substring(2), 25, currentY, 10, pageWidth - 45)
+          currentY += height + 3
         } else {
-          currentY += 4
+          const height = renderCleanText(line, 20, currentY, 10, pageWidth - 40)
+          currentY += height + 3
         }
-      })
+      }
 
       // Footer
       doc.setFontSize(8)

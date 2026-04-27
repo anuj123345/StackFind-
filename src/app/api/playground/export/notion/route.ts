@@ -254,20 +254,21 @@ export async function POST(req: NextRequest) {
       }
     )
 
-    // Notion limit is 100 blocks per request
+    console.log("Notion: Creating page with", blocks.length, "blocks")
+
     const response = await notion.pages.create({
       parent: { page_id: parentPageId },
       icon: { external: { url: "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/zap.png" } },
       cover: {
         type: "external",
-        external: { url: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80" } // Tech/Security dark cover
+        external: { url: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80" }
       },
       properties: {
         title: {
           title: [
             {
               text: {
-                content: `🚀 Blueprint: ${idea.substring(0, 40)}${idea.length > 40 ? "..." : ""}`
+                content: `🚀 Blueprint: ${idea.substring(0, 50)}${idea.length > 50 ? "..." : ""}`
               }
             }
           ]
@@ -276,9 +277,16 @@ export async function POST(req: NextRequest) {
       children: blocks.slice(0, 100)
     })
 
+    console.log("Notion: Page created successfully:", (response as any).url)
     return NextResponse.json({ success: true, url: (response as any).url })
   } catch (error: any) {
-    console.error("Notion Export Error:", error)
-    return NextResponse.json({ error: error.message || "Failed to export to Notion" }, { status: 500 })
+    console.error("Notion Export API Error:", error)
+    // Return specific error to client
+    const errorMessage = error.message || "Unknown Notion error"
+    const statusCode = error.status || 500
+    return NextResponse.json({ 
+      error: `Notion Error: ${errorMessage}. Please ensure the 'StackFind' integration is shared with your parent page.`,
+      details: error.code || null
+    }, { status: statusCode })
   }
 }
