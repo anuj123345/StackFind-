@@ -671,9 +671,15 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
   }
 
   async function handleExportNotion() {
-    if (exporting || !output) return
+    if (exporting || stack.length === 0) return
     setExporting(true)
     setError("")
+
+    const isGenericPlan = !output || output.includes("No detailed build plan generated yet");
+    const finalPlan = isGenericPlan 
+      ? `Quick Summary:\nYou have selected a stack of ${stack.length} tools. For a detailed step-by-step implementation guide including API integrations and costs, please use the 'Generate Plan' feature in the StackFind Playground.`
+      : output;
+
     try {
       const res = await fetch("/api/playground/export/notion", {
         method: "POST",
@@ -681,7 +687,7 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
         body: JSON.stringify({
           idea,
           stack,
-          output
+          output: finalPlan
         })
       })
 
@@ -689,7 +695,10 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
       if (!res.ok) throw new Error(data.error || "Failed to export to Notion")
 
       setNotionUrl(data.url)
+      // Open in new tab automatically if possible
+      window.open(data.url, '_blank');
     } catch (err: any) {
+      console.error(err)
       setError(err.message)
     } finally {
       setExporting(false)
@@ -717,6 +726,7 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
       doc.setFontSize(18)
       doc.setTextColor(30, 41, 59)
       doc.text("Project Blueprint", 38, 29)
+      doc.link(38, 20, 60, 12, { url: "https://stackfind.in" })
       
       doc.setFontSize(9)
       doc.setFont("helvetica", "normal")
@@ -857,7 +867,9 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
       // Footer
       doc.setFontSize(8)
       doc.setTextColor(148, 163, 184)
-      doc.text("StackFind — Built for Indian Founders. Visit stackfind.in for more tools.", pageWidth / 2, pageHeight - 10, { align: "center" })
+      const footerText = "StackFind — Built for Indian Founders. Visit stackfind.in for more tools."
+      doc.text(footerText, pageWidth / 2, pageHeight - 10, { align: "center" })
+      doc.link(pageWidth / 2 - 40, pageHeight - 15, 80, 10, { url: "https://stackfind.in" })
 
       doc.save(`StackFind-Blueprint-${Date.now()}.pdf`)
     } catch (err: any) {
@@ -1498,7 +1510,7 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
                       <p className="text-[10px] font-bold uppercase tracking-widest px-1" style={{ color: "rgba(140,110,80,0.4)" }}>
                         Export Stack
                       </p>
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="grid grid-cols-3 gap-2">
                         <button
                           onClick={() => setShowEmailModal(true)}
                           className="flex items-center justify-center gap-2 py-2 rounded-xl text-[10px] font-bold transition-all duration-150 hover:bg-black/5 active:scale-95"
@@ -1512,6 +1524,14 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
                           style={{ background: "rgba(140,110,80,0.05)", color: "#7A6A57", border: "1px solid rgba(140,110,80,0.08)" }}
                         >
                           <FileText size={12} /> PDF
+                        </button>
+                        <button
+                          onClick={handleExportNotion}
+                          disabled={exporting}
+                          className="flex items-center justify-center gap-2 py-2 rounded-xl text-[10px] font-bold transition-all duration-150 hover:bg-black/5 active:scale-95"
+                          style={{ background: "rgba(140,110,80,0.05)", color: "#7A6A57", border: "1px solid rgba(140,110,80,0.08)" }}
+                        >
+                          {exporting ? <Loader2 size={12} className="animate-spin" /> : <ExternalLink size={12} />} Notion
                         </button>
                       </div>
                     </div>
