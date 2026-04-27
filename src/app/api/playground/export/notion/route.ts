@@ -4,13 +4,12 @@ import { Client } from "@notionhq/client"
 // Simple Markdown to Notion Block Parser
 function parseMarkdownToRichText(text: string): any[] {
   const result: any[] = []
-  // Matches bold **text**, links [text](url), and plain text
-  const regex = /(\*\*.*?\*\*|\[.*?\]\(.*?\))/g
+  // Matches bold **text**, italics *text* or _text_, links [text](url)
+  const regex = /(\*\*.*?\*\*|\*.*?\*|_.*?_|\[.*?\]\(.*?\))/g
   let lastIndex = 0
   let match
 
   while ((match = regex.exec(text)) !== null) {
-    // Add text before the match
     if (match.index > lastIndex) {
       result.push({
         type: "text",
@@ -20,14 +19,18 @@ function parseMarkdownToRichText(text: string): any[] {
 
     const part = match[0]
     if (part.startsWith("**") && part.endsWith("**")) {
-      // Bold
       result.push({
         type: "text",
         text: { content: part.slice(2, -2) },
         annotations: { bold: true }
       })
+    } else if ((part.startsWith("*") && part.endsWith("*")) || (part.startsWith("_") && part.endsWith("_"))) {
+      result.push({
+        type: "text",
+        text: { content: part.slice(1, -1) },
+        annotations: { italic: true }
+      })
     } else if (part.startsWith("[")) {
-      // Link
       const linkMatch = part.match(/\[(.*?)\]\((.*?)\)/)
       if (linkMatch) {
         result.push({
@@ -40,7 +43,6 @@ function parseMarkdownToRichText(text: string): any[] {
     lastIndex = regex.lastIndex
   }
 
-  // Add remaining text
   if (lastIndex < text.length) {
     result.push({
       type: "text",
@@ -263,10 +265,10 @@ export async function POST(req: NextRequest) {
 
     const response = await notion.pages.create({
       parent: { page_id: parentPageId },
-      icon: { external: { url: "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/zap.png" } },
+      icon: { emoji: "🚀" },
       cover: {
         type: "external",
-        external: { url: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80" }
+        external: { url: "https://images.unsplash.com/photo-1614064641935-44cfe65dceec?q=80&w=2070&auto=format&fit=crop" }
       },
       properties: {
         title: {

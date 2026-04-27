@@ -105,7 +105,14 @@ export async function POST(req: NextRequest) {
             const messages: any[] = [
               { 
                 role: "system", 
-                content: "You are a senior technical co-founder. ALWAYS start your response on the very first line with a [STACK: slug1, slug2, ...] block." 
+                content: `You are a senior technical co-founder and solution architect. 
+                Your goal is to help founders build their project by selecting the right tools and creating a detailed plan.
+                
+                CRITICAL INSTRUCTION: 
+                - ALWAYS start your response on the very first line with a [STACK: slug1, slug2, ...] block.
+                - Use only the slugs provided in the "AVAILABLE TOOLS" list.
+                - Select exactly 3-6 tools.
+                - After the stack block, provide a comprehensive build plan.` 
               },
               { role: "user", content: prompt }
             ]
