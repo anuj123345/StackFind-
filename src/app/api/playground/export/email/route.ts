@@ -8,9 +8,9 @@ export async function POST(req: Request) {
   try {
     const { email, idea, techStack, plan } = await req.json();
 
-    if (!email || !idea || !techStack || !plan) {
+    if (!email || !techStack || !Array.isArray(techStack) || techStack.length === 0) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'Please select at least one tool to export' },
         { status: 400 }
       );
     }
@@ -18,8 +18,12 @@ export async function POST(req: Request) {
     const { data, error } = await resend.emails.send({
       from: 'StackFind <onboarding@resend.dev>', // Change this to your verified domain in production
       to: email,
-      subject: `Project Blueprint: ${idea}`,
-      react: StackExportEmail({ idea, techStack, plan }),
+      subject: `Project Blueprint: ${idea || "Custom Tool Stack"}`,
+      react: StackExportEmail({ 
+        idea: idea || "Custom Tool Stack", 
+        techStack, 
+        plan: plan || "No detailed build plan generated yet. Select tools and click 'Generate Plan' in the playground for a custom roadmap." 
+      }),
     });
 
     if (error) {
