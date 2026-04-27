@@ -34,6 +34,7 @@ import {
   FileText
 } from "lucide-react"
 import { useSearchParams } from "next/navigation"
+import { useStack, StackTool } from "@/hooks/use-stack"
 import { PlaygroundTool } from "@/lib/queries"
 import { incrementPlaygroundUsage } from "@/lib/actions"
 import { PlaygroundPaywall } from "./playground-paywall"
