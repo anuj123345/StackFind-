@@ -12,7 +12,7 @@ import { useSearchParams } from "next/navigation"
 import {
   FlaskConical, Trash2, X, Sparkles, Loader2, Plus, Check,
   Search, Copy, RotateCcw, DollarSign, ArrowRight, ChevronDown, Zap, FileText, ExternalLink,
-  Download, Mail
+  Download, Mail, CreditCard, Share2, Send, Layout
 } from "lucide-react"
 import jsPDF from "jspdf"
 import autoTable from "jspdf-autotable"
@@ -80,19 +80,19 @@ const PRESET_STACKS: { name: string; emoji: string; description: string; slugs: 
   },
   {
     name: "Indian Startup",
-    emoji: "≡ƒç«≡ƒç│",
+    emoji: "🇮🇳",
     description: "Built for India",
     slugs: ["cursor", "github", "vercel", "supabase", "clerk", "razorpay", "resend", "posthog"],
   },
   {
     name: "Indie Hacker",
-    emoji: "ΓÜí",
+    emoji: "⚡",
     description: "Zero to shipped",
     slugs: ["cursor", "github", "railway", "pocketbase", "better-auth", "lemon-squeezy", "resend", "posthog"],
   },
 ]
 
-const EXAMPLE_PROMPTS = [
+const SUGGESTIONS = [
   "Freelancer invoicing tool with auto-reminders",
   "B2B analytics dashboard for multiple apps",
   "AI customer support bot trained on your docs",
@@ -105,7 +105,7 @@ const EXAMPLE_PROMPTS = [
 
 function MarkdownOutput({ text }: { text: string }) {
   const html = useMemo(() => {
-    let out = text
+    let out = text.replace(/\[\s*STACK:[\s\S]*?\]/gi, "")
     out = out.replace(/\|(.+)\|\n\|[-| :]+\|\n((?:\|.+\|\n?)*)/g, (_, header, rows) => {
       const ths = header.split("|").filter((c: string) => c.trim()).map((c: string) =>
         `<th class="pg-th">${c.trim()}</th>`).join("")
@@ -620,7 +620,7 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
-          tools: stack, 
+          tools: stack.length > 0 ? stack : tools, 
           productIdea: idea,
           budget: budget === "" ? 0 : budget,
           modelId: selectedModelId,
