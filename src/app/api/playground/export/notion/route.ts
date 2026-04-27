@@ -127,13 +127,15 @@ export async function POST(req: NextRequest) {
         external: { url: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?ixlib=rb-4.0.3&auto=format&fit=crop&w=2426&q=80" }
       },
       properties: {
-        title: [
-          {
-            text: {
-              content: `Project Blueprint: ${idea.substring(0, 50)}${idea.length > 50 ? "..." : ""}`
+        title: {
+          title: [
+            {
+              text: {
+                content: `Project Blueprint: ${idea.substring(0, 50)}${idea.length > 50 ? "..." : ""}`
+              }
             }
-          }
-        ]
+          ]
+        }
       },
       children: blocks.slice(0, 100) // Notion has a limit of 100 children per request
     })
