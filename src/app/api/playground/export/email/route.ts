@@ -1,6 +1,7 @@
 import { Resend } from 'resend';
 import { StackExportEmail } from '@/components/email/stack-export-template';
 import { NextResponse } from 'next/server';
+import { render } from '@react-email/render';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -15,15 +16,17 @@ export async function POST(req: Request) {
       );
     }
 
+    const emailHtml = await render(StackExportEmail({ 
+      idea: idea || "Custom Tool Stack", 
+      techStack, 
+      plan: plan || "No detailed build plan generated yet. Select tools and click 'Generate Plan' in the playground for a custom roadmap." 
+    }));
+
     const { data, error } = await resend.emails.send({
       from: 'StackFind <onboarding@resend.dev>', // Change this to your verified domain in production
       to: email,
       subject: `Project Blueprint: ${idea || "Custom Tool Stack"}`,
-      react: StackExportEmail({ 
-        idea: idea || "Custom Tool Stack", 
-        techStack, 
-        plan: plan || "No detailed build plan generated yet. Select tools and click 'Generate Plan' in the playground for a custom roadmap." 
-      }),
+      html: emailHtml,
     });
 
     if (error) {

@@ -16,6 +16,7 @@
     "@notionhq/client": "^5.20.0",
     "@radix-ui/react-slot": "^1.2.4",
     "@react-email/components": "^1.0.12",
+    "@react-email/render": "^2.0.7",
     "@supabase/ssr": "^0.10.2",
     "@supabase/supabase-js": "^2.103.3",
     "@upstash/ratelimit": "^2.0.8",

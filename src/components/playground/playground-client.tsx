@@ -697,7 +697,7 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
   }
 
   async function handleExportPDF() {
-    if (pdfExporting || !output) return
+    if (pdfExporting || stack.length === 0) return
     setPdfExporting(true)
     setError("")
 
