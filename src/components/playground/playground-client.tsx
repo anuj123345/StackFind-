@@ -747,12 +747,13 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
       }
 
       const data = await res.json()
-      setNotionUrl(data.url)
+      if (data.url) {
+        window.open(data.url, "_blank")
+      }
     } catch (err: any) {
       setError(err.name === "AbortError" ? "Export timed out. Please try again." : err.message)
     } finally {
-      setExporting(true)
-      setTimeout(() => setExporting(false), 5000)
+      setExporting(false)
     }
   }
   async function handleExportPdf() {
