@@ -55,8 +55,8 @@ export async function POST(req: NextRequest) {
   try {
     const { idea, stack, output } = await req.json()
     
-    const notionToken = process.env.NOTION_TOKEN
-    const parentPageId = process.env.NOTION_PARENT_PAGE_ID
+    const notionToken = (process.env.NOTION_TOKEN || "").trim()
+    const parentPageId = (process.env.NOTION_PARENT_PAGE_ID || "").trim()
 
     if (!notionToken || !parentPageId) {
       return NextResponse.json(
