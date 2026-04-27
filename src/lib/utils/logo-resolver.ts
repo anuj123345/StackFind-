@@ -3,7 +3,8 @@
  * Uses a favicon service to ensure we get a logo even if the tool URL is new.
  */
 
-export const getToolLogoBase64 = async (url: string): Promise<string | null> => {
+export const getToolLogoBase64 = async (url: string | null): Promise<string | null> => {
+  if (!url) return null;
   try {
     // Extract domain from URL
     const domain = new URL(url).hostname;

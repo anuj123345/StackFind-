@@ -738,7 +738,7 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
 
       // Prepare table data with logos
       const tableData = await Promise.all(stack.map(async (tool) => {
-        const logoBase64 = await getToolLogoBase64(tool.website)
+        const logoBase64 = await getToolLogoBase64(tool.website || null)
         return [
           { content: "", logo: logoBase64 }, // Placeholder for logo cell
           tool.name,
