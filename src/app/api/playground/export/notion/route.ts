@@ -50,7 +50,24 @@ function parseMarkdownToRichText(text: string): any[] {
     })
   }
 
-  return result.length > 0 ? result : [{ type: "text", text: { content: text } }]
+  // Notion API limit: A single rich text object cannot exceed 2000 characters.
+  // We need to split any text content that exceeds 2000 characters.
+  const chunkedResult: any[] = []
+  for (const item of result) {
+    if (item.text.content.length > 2000) {
+      const content = item.text.content
+      for (let i = 0; i < content.length; i += 2000) {
+        chunkedResult.push({
+          ...item,
+          text: { ...item.text, content: content.substring(i, i + 2000) }
+        })
+      }
+    } else {
+      chunkedResult.push(item)
+    }
+  }
+
+  return chunkedResult.length > 0 ? chunkedResult : [{ type: "text", text: { content: text.substring(0, 2000) } }]
 }
 
 export async function POST(req: NextRequest) {
