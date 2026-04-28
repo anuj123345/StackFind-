@@ -32,11 +32,8 @@ const PRICING_COLOR: Record<string, { bg: string; color: string }> = {
 }
 
 const MODELS = [
-  { id: "anthropic/claude-3-5-sonnet-20241022", name: "anthropic / claude-3.5-sonnet", provider: "Anthropic" },
-  { id: "anthropic/claude-3-5-haiku-20241022",  name: "anthropic / claude-3.5-haiku",  provider: "Anthropic" },
   { id: "meta/llama-3.3-70b-instruct",     name: "meta / llama-3.3-70b-instruct",     provider: "NVIDIA NIM" },
   { id: "moonshotai/kimi-k2.5",            name: "moonshot / kimi-k2.5",              provider: "NVIDIA NIM" },
-  { id: "qwen/qwen2.5-coder-32b-instruct", name: "qwen / qwen2.5-coder-32b",       provider: "NVIDIA NIM" },
 ]
 
 const CATEGORIES = [
