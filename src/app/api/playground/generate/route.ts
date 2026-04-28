@@ -122,7 +122,7 @@ export async function POST(req: NextRequest) {
 
             if (isReasoningModel) {
               // Reasoning models use thought streaming and bypass standard tool calls
-              const streamResponse = await nimClient.chat.completions.create({
+              const streamResponse: any = await nimClient.chat.completions.create({
                 model: actualModel,
                 messages,
                 max_tokens: 8192,
@@ -200,7 +200,7 @@ export async function POST(req: NextRequest) {
                   })
                 }
 
-                const finalStream = await nimClient.chat.completions.create({
+                const finalStream: any = await nimClient.chat.completions.create({
                   model: actualModel,
                   messages,
                   tools: nimTools as any,
