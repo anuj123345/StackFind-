@@ -117,67 +117,107 @@ export async function POST(req: NextRequest) {
               { role: "user", content: prompt }
             ]
 
-            const nimTools = [
-              {
-                type: 'function',
-                function: {
-                  name: 'get_live_tool_intelligence',
-                  description: 'Fetch real-time metadata from a tool\'s website to verify pricing, tagline, or features.',
-                  parameters: {
-                    type: 'object',
-                    properties: {
-                      url: { type: 'string', description: 'The official website URL of the tool' }
-                    },
-                    required: ['url']
-                  }
-                }
-              }
-            ]
+            const actualModel = modelId.includes("/") ? modelId : "meta/llama-3.3-70b-instruct"
+            const isReasoningModel = actualModel.includes("deepseek") || actualModel.includes("devstral")
 
-            let response = await nimClient.chat.completions.create({
-              model: modelId.includes("/") ? modelId : "meta/llama-3.3-70b-instruct",
-              messages,
-              tools: nimTools as any,
-              tool_choice: "auto",
-              max_tokens: 2000,
-            })
-
-            const message = response.choices[0].message
-            
-            if (message.tool_calls && message.tool_calls.length > 0) {
-              controller.enqueue(encoder.encode("> [!NOTE]\n> AI is verifying live tool data...\n\n"))
-              messages.push(message)
-
-              for (const toolCall of message.tool_calls) {
-                if (toolCall.type !== 'function') continue
-                const args = JSON.parse(toolCall.function.arguments)
-                const intelligence = await getLiveToolIntelligence(args.url)
-                
-                messages.push({
-                  role: "tool",
-                  tool_call_id: toolCall.id,
-                  name: "get_live_tool_intelligence",
-                  content: JSON.stringify(intelligence),
-                })
-              }
-
-              const finalStream = await nimClient.chat.completions.create({
-                model: modelId.includes("/") ? modelId : "meta/llama-3.3-70b-instruct",
+            if (isReasoningModel) {
+              // Reasoning models use thought streaming and bypass standard tool calls
+              const streamResponse = await nimClient.chat.completions.create({
+                model: actualModel,
                 messages,
-                tools: nimTools as any,
-                max_tokens: 2000,
+                max_tokens: 8192,
                 stream: true,
-              })
+                extra_body: { chat_template_kwargs: { thinking: true } }
+              } as any)
 
-              for await (const chunk of finalStream) {
+              let isFirstReasoning = true
+              let hasFinishedReasoning = false
+
+              for await (const chunk of streamResponse) {
+                // Check if reasoning_content exists in delta (DeepSeek specific)
+                const reasoning = (chunk.choices[0]?.delta as any)?.reasoning_content
+                if (reasoning) {
+                  if (isFirstReasoning) {
+                    controller.enqueue(encoder.encode("> [!TIP]\n> **AI Thought Process:**\n> "))
+                    isFirstReasoning = false
+                  }
+                  // Replace newlines with quote markers to maintain markdown blockquote formatting
+                  const text = reasoning.replace(/\n/g, "\n> ")
+                  controller.enqueue(encoder.encode(text))
+                }
+
                 const content = chunk.choices[0]?.delta?.content
-                if (content && !content.trim().startsWith('{"type": "function"')) {
+                if (content) {
+                  if (!isFirstReasoning && !hasFinishedReasoning) {
+                    controller.enqueue(encoder.encode("\n\n---\n\n"))
+                    hasFinishedReasoning = true
+                  }
                   controller.enqueue(encoder.encode(content))
                 }
               }
             } else {
-              if (message.content) {
-                controller.enqueue(encoder.encode(message.content))
+              const nimTools = [
+                {
+                  type: 'function',
+                  function: {
+                    name: 'get_live_tool_intelligence',
+                    description: 'Fetch real-time metadata from a tool\'s website to verify pricing, tagline, or features.',
+                    parameters: {
+                      type: 'object',
+                      properties: {
+                        url: { type: 'string', description: 'The official website URL of the tool' }
+                      },
+                      required: ['url']
+                    }
+                  }
+                }
+              ]
+
+              let response = await nimClient.chat.completions.create({
+                model: actualModel,
+                messages,
+                tools: nimTools as any,
+                tool_choice: "auto",
+                max_tokens: 2000,
+              })
+
+              const message = response.choices[0].message
+              
+              if (message.tool_calls && message.tool_calls.length > 0) {
+                controller.enqueue(encoder.encode("> [!NOTE]\n> AI is verifying live tool data...\n\n"))
+                messages.push(message)
+
+                for (const toolCall of message.tool_calls) {
+                  if (toolCall.type !== 'function') continue
+                  const args = JSON.parse(toolCall.function.arguments)
+                  const intelligence = await getLiveToolIntelligence(args.url)
+                  
+                  messages.push({
+                    role: "tool",
+                    tool_call_id: toolCall.id,
+                    name: "get_live_tool_intelligence",
+                    content: JSON.stringify(intelligence),
+                  })
+                }
+
+                const finalStream = await nimClient.chat.completions.create({
+                  model: actualModel,
+                  messages,
+                  tools: nimTools as any,
+                  max_tokens: 2000,
+                  stream: true,
+                })
+
+                for await (const chunk of finalStream) {
+                  const content = chunk.choices[0]?.delta?.content
+                  if (content && !content.trim().startsWith('{"type": "function"')) {
+                    controller.enqueue(encoder.encode(content))
+                  }
+                }
+              } else {
+                if (message.content) {
+                  controller.enqueue(encoder.encode(message.content))
+                }
               }
             }
           }
