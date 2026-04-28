@@ -135,7 +135,7 @@ export function ToolCard({
                     )}
                     {(hasInrBilling || hasUpi) && (
                       <span className="text-[9px] font-bold text-[#7A6A57]/60 tracking-wider">
-                        {hasInrBilling && "₹ INR"} {hasUpi && "· UPI"}
+                        {hasInrBilling && <>&#8377; INR</>} {hasUpi && "· UPI"}
                       </span>
                     )}
                   </div>

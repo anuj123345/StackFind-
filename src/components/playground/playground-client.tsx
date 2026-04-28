@@ -272,7 +272,7 @@ function BrowserCard({ tool, inStack, onToggle, usdToInrRate }: {
               </div>
             )}
             {tool.is_made_in_india && (
-              <span className="text-[9px]">≡ƒç«≡ƒç│</span>
+              <span className="text-[9px]" title="Made in India">&#127470;&#127475;</span>
             )}
           </div>
         </div>
@@ -1148,15 +1148,15 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
 
             <div className="p-6 rounded-3xl space-y-6" style={{ background: "#fff", border: "1px solid rgba(140,110,80,0.1)", boxShadow: "0 20px 50px -12px rgba(140,110,80,0.12)" }}>
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <label className="text-xs font-bold uppercase tracking-widest flex items-center gap-2" style={{ color: "#A0907E" }}>
                     <Sparkles size={12} className="text-[#6366f1]" />
                     Describe your idea
                   </label>
-                  <div className="flex items-center gap-4">
-                    <div className="flex flex-col gap-1.5">
-                      <div className="flex items-center gap-2 bg-[rgba(140,110,80,0.04)] px-3 py-1.5 rounded-lg border border-[rgba(140,110,80,0.08)] transition-all focus-within:border-[#6366f1]/30">
-                        <span className="text-[10px] font-bold uppercase tracking-tight" style={{ color: "#A0907E" }}>
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
+                    <div className="flex flex-col gap-1.5 w-full sm:w-auto">
+                      <div className="flex items-center gap-2 bg-[rgba(140,110,80,0.04)] px-3 py-1.5 rounded-lg border border-[rgba(140,110,80,0.08)] transition-all focus-within:border-[#6366f1]/30 w-full sm:w-auto">
+                        <span className="text-[10px] font-bold uppercase tracking-tight whitespace-nowrap" style={{ color: "#A0907E" }}>
                           {budget === "" ? "Budget: Flexible" : "Target Budget"}
                         </span>
                         <div className="flex items-center gap-1">
@@ -1171,11 +1171,13 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
                           />
                         </div>
                       </div>
-                      <p className="text-[9px] font-medium opacity-60" style={{ color: "#7A6A57" }}>
+                      <p className="text-[9px] font-medium opacity-60 w-full" style={{ color: "#7A6A57" }}>
                         {budget === "" ? "AI will suggest an optimal budget based on tools" : "AI will suggest a stack that fits this budget"}
                       </p>
                     </div>
-                    <ModelSelector value={selectedModelId} onChange={setSelectedModelId} />
+                    <div className="w-full sm:w-auto">
+                      <ModelSelector value={selectedModelId} onChange={setSelectedModelId} />
+                    </div>
                   </div>
                 </div>
                 
@@ -1198,8 +1200,8 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
                 </div>
               </div>
 
-              <div className="flex items-center justify-between pt-2">
-                <div className="flex flex-wrap gap-2">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-2">
+                <div className="flex flex-wrap gap-2 w-full sm:w-auto">
                   {SUGGESTIONS.map(s => (
                     <button
                       key={s}
@@ -1216,7 +1218,7 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
                   onClick={generate}
                   disabled={!canGenerate}
                   title={!canGenerate ? (idea.trim().length === 0 ? "Describe your idea to generate a plan" : hasReachedLimit ? "Usage limit reached" : "Please fill in all details") : "Generate build plan"}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 disabled:opacity-35 disabled:cursor-not-allowed group shadow-sm hover:shadow-md"
+                  className="w-full sm:w-auto flex items-center justify-center sm:justify-start gap-2 px-5 py-3 sm:py-2.5 rounded-xl font-bold text-sm transition-all duration-200 disabled:opacity-35 disabled:cursor-not-allowed group shadow-sm hover:shadow-md shrink-0"
                   style={{
                     background: canGenerate ? "#1C1611" : "rgba(140,110,80,0.1)",
                     color: canGenerate ? "#fff" : "#A0907E",

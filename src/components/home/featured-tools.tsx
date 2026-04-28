@@ -113,7 +113,7 @@ function FeaturedCard({ tool, delay, color }: { tool: ToolWithCategoryNames; del
                     {PRICING_LABEL[tool.pricing_model]}
                   </span>
                   {tool.has_inr_billing && (
-                    <span className="text-[10px] font-medium" style={{ color: "#C4B0A0" }}>₹ INR</span>
+                    <span className="text-[10px] font-medium" style={{ color: "#C4B0A0" }}>&#8377; INR</span>
                   )}
                   {tool.has_upi && (
                     <span className="text-[10px] font-medium" style={{ color: "#C4B0A0" }}>· UPI</span>
