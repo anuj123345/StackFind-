@@ -258,9 +258,9 @@ function BrowserCard({ tool, inStack, onToggle, usdToInrRate }: {
               {PRICING_LABEL[tool.pricing_model]}
             </span>
             {tool.starting_price_inr ? (
-              <span className="text-[9px]" style={{ color: "#C4B0A0" }}>Γé╣{tool.starting_price_inr}/mo</span>
+              <span className="text-[9px]" style={{ color: "#C4B0A0" }}>&#8377;{tool.starting_price_inr}/mo</span>
             ) : tool.starting_price_usd ? (
-              <span className="text-[9px]" style={{ color: "#C4B0A0" }}>Γé╣{Math.round(tool.starting_price_usd * usdToInrRate)}/mo*</span>
+              <span className="text-[9px]" style={{ color: "#C4B0A0" }}>&#8377;{Math.round(tool.starting_price_usd * usdToInrRate)}/mo*</span>
             ) : null}
             {tool.managed_billing_enabled && (
               <div 
