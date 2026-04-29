@@ -14,8 +14,6 @@ import {
   Search, Copy, RotateCcw, DollarSign, ArrowRight, ChevronDown, Zap, FileText, ExternalLink,
   Download, Mail, CreditCard, Share2, Send, Layout
 } from "lucide-react"
-import jsPDF from "jspdf"
-import autoTable from "jspdf-autotable"
 import { getToolLogoBase64 } from "@/lib/utils/logo-resolver"
 import { ExportEmailModal } from "./export-email-modal"
 
@@ -525,10 +523,7 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
   const [isSelectingTools, setIsSelectingTools] = useState(false)
-  const [exporting, setExporting] = useState(false)
-  const [notionUrl, setNotionUrl] = useState("")
   const [showEmailModal, setShowEmailModal] = useState(false)
-  const [pdfExporting, setPdfExporting] = useState(false)
   const [copied, setCopied] = useState(false)
   const searchParams = useSearchParams()
   const [sessionUsage, setSessionUsage] = useState(profile?.playground_usage_count || 0)
@@ -705,233 +700,6 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
     await navigator.clipboard.writeText(output)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
-  }
-
-  async function handleExportNotion() {
-    if (exporting) return
-    if (stack.length === 0) {
-      setError("Please select at least one tool for your stack.")
-      return
-    }
-    
-    setExporting(true)
-    setError("")
-    setNotionUrl("")
-
-    const isGenericPlan = !output || output.includes("No detailed build plan generated yet");
-    const finalPlan = isGenericPlan 
-      ? `Quick Summary:\nYou have selected a stack of ${stack.length} tools. For a detailed step-by-step implementation guide including API integrations and costs, please use the 'Generate Plan' feature in the StackFind Playground.`
-      : output;
-
-    try {
-      const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 25000) // 25s timeout
-
-      const res = await fetch("/api/playground/export/notion", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          idea,
-          stack: stack.map(t => ({ name: t.name, tagline: t.tagline, website: t.website })),
-          plan: finalPlan
-        }),
-        signal: controller.signal
-      })
-
-      clearTimeout(timeoutId)
-
-      if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.error || "Export failed")
-      }
-
-      const data = await res.json()
-      if (data.url) {
-        window.open(data.url, "_blank")
-      }
-    } catch (err: any) {
-      setError(err.name === "AbortError" ? "Export timed out. Please try again." : err.message)
-    } finally {
-      setExporting(false)
-    }
-  }
-  async function handleExportPdf() {
-    if (pdfExporting) return
-    setPdfExporting(true)
-    
-    try {
-      const doc = new jsPDF()
-      const pageWidth = doc.internal.pageSize.getWidth()
-      const pageHeight = doc.internal.pageSize.getHeight()
-
-      // Header
-      doc.setFillColor(99, 102, 241)
-      doc.rect(0, 0, pageWidth, 40, "F")
-      
-      doc.setTextColor(255, 255, 255)
-      doc.setFontSize(24)
-      doc.setFont("helvetica", "bold")
-      doc.text("StackFind Blueprint", 20, 25)
-      
-      doc.setFontSize(10)
-      doc.setFont("helvetica", "normal")
-      doc.text(new Date().toLocaleDateString("en-IN", { day: 'numeric', month: 'long', year: 'numeric' }), pageWidth - 60, 25)
-
-      let currentY = 55
-
-      // Project Info
-      doc.setTextColor(30, 41, 59)
-      doc.setFontSize(12)
-      doc.setFont("helvetica", "bold")
-      doc.text("PROJECT IDEA", 20, currentY)
-      currentY += 8
-      
-      doc.setFontSize(10)
-      doc.setFont("helvetica", "normal")
-      doc.setTextColor(71, 85, 105)
-      const splitIdea = doc.splitTextToSize(idea || "Custom Project Build", pageWidth - 40)
-      doc.text(splitIdea, 20, currentY)
-      currentY += (splitIdea.length * 5) + 15
-
-      // Stack Table
-      doc.setTextColor(30, 41, 59)
-      doc.setFontSize(12)
-      doc.setFont("helvetica", "bold")
-      doc.text("SELECTED TECHNOLOGY STACK", 20, currentY)
-      currentY += 10
-
-      const tableData = stack.map(t => [
-        { content: "", logo: t.logoUrl }, // Placeholder for logo
-        t.name,
-        t.categories?.[0] || "General",
-        t.startingPriceInr ? `₹${t.startingPriceInr}/mo` : "Free/Usage"
-      ])
-
-      ;(doc as any).autoTable({
-        startY: currentY,
-        head: [["", "Tool", "Category", "Starting Price"]],
-        body: tableData,
-        theme: "striped",
-        headStyles: { 
-          fillColor: [248, 250, 252], 
-          textColor: [71, 85, 105],
-          fontSize: 9,
-          fontStyle: "bold"
-        },
-        styles: { 
-          fontSize: 9, 
-          cellPadding: 6,
-          lineColor: [241, 245, 249],
-          lineWidth: 0.1
-        },
-        columnStyles: {
-          0: { cellWidth: 15 },
-          1: { fontStyle: "bold" }
-        },
-        didDrawCell: (data: any) => {
-          if (data.section === "body" && data.column.index === 0) {
-            const rowIndex = data.row.index
-            const logo = (tableData[rowIndex][0] as any).logo
-            if (logo) {
-              doc.addImage(logo, "PNG", data.cell.x + 3.5, data.cell.y + 2.5, 8, 8)
-            }
-          }
-        }
-      })
-
-      currentY = (doc as any).lastAutoTable.finalY + 20
-
-      // Execution Plan
-      if (currentY > pageHeight - 60) {
-        doc.addPage()
-        currentY = 30
-      }
-
-      doc.setFontSize(10)
-      doc.setFont("helvetica", "bold")
-      doc.setTextColor(99, 102, 241)
-      doc.text("EXECUTION STRATEGY", 20, currentY)
-      currentY += 10
-
-      const planToRender = (!output || output.includes("No detailed build plan generated yet"))
-        ? `Quick Summary:\nYou have selected a stack of ${stack.length} tools. For a detailed step-by-step implementation guide including API integrations and costs, please use the 'Generate Plan' feature in the StackFind Playground.`
-        : output
-
-      const lines = planToRender.split("\n")
-      
-      // Helper to render text cleanly in PDF
-      const renderCleanText = (text: string, x: number, y: number, fontSize: number, maxWidth: number) => {
-        // 1. Strip Markdown artifacts that break PDF rendering
-        let clean = text
-          .replace(/^> \[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]/i, "") // Strip callout headers
-          .replace(/^> /g, "")                                          // Strip blockquote markers
-          .replace(/\*\*/g, "")                                         // Strip bold markers (avoid & issue)
-          .replace(/\[(.*?)\]\(.*?\)/g, "$1")                           // Strip links but keep text
-          .trim()
-
-        if (!clean) return 0
-
-        doc.setFontSize(fontSize)
-        doc.setTextColor(71, 85, 105)
-        doc.setFont("helvetica", "normal")
-        
-        const wrappedLines = doc.splitTextToSize(clean, maxWidth)
-        
-        if (Array.isArray(wrappedLines)) {
-          wrappedLines.forEach((l, idx) => {
-            doc.text(l, x, y + (idx * fontSize * 0.5))
-          })
-          return wrappedLines.length * (fontSize * 0.5)
-        } else {
-          doc.text(wrappedLines, x, y)
-          return fontSize * 0.5
-        }
-      }
-
-      for (let i = 0; i < lines.length; i++) {
-        const line = lines[i].trim()
-        if (!line || line.startsWith("|")) continue // Skip empty and tables
-
-        if (currentY > pageHeight - 20) {
-          doc.addPage()
-          currentY = 30
-        }
-
-        if (line.startsWith("## ")) {
-          doc.setFont("helvetica", "bold")
-          doc.setFontSize(14)
-          doc.setTextColor(30, 41, 59)
-          doc.text(line.replace("## ", ""), 20, currentY)
-          currentY += 10
-        } else if (line.startsWith("### ")) {
-          doc.setFont("helvetica", "bold")
-          doc.setFontSize(12)
-          doc.setTextColor(30, 41, 59)
-          doc.text(line.replace("### ", ""), 20, currentY)
-          currentY += 8
-        } else if (line.startsWith("- ") || line.startsWith("* ")) {
-          const height = renderCleanText("• " + line.substring(2), 25, currentY, 10, pageWidth - 45)
-          currentY += height + 3
-        } else {
-          const height = renderCleanText(line, 20, currentY, 10, pageWidth - 40)
-          currentY += height + 3
-        }
-      }
-
-      // Footer
-      doc.setFontSize(8)
-      doc.setTextColor(148, 163, 184)
-      const footerText = "StackFind — Built for Indian Founders. Visit stackfind.in for more tools."
-      doc.text(footerText, pageWidth / 2, pageHeight - 10, { align: "center" })
-      doc.link(pageWidth / 2 - 40, pageHeight - 15, 80, 10, { url: "https://stackfind.in" })
-
-      doc.save(`StackFind-Blueprint-${Date.now()}.pdf`)
-    } catch (err: any) {
-      console.error(err)
-      setError("Failed to generate PDF: " + err.message)
-    } finally {
-      setPdfExporting(false)
-    }
   }
 
   async function handleExportEmail(email: string) {
@@ -1278,7 +1046,13 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
                   <CreditCard size={12} className="text-indigo-500" />
                   <p className="text-[9px] leading-relaxed text-indigo-700 font-medium">Get all these tools in one bill with <strong>StackFind Managed Billing</strong>. Pay via UPI/Netbanking.</p>
                 </div>
-                <button className="w-full py-2.5 rounded-xl text-[11px] font-bold transition-all hover:opacity-90" style={{ background: "#6366f1", color: "#fff" }}>Request Managed Billing</button>
+                <Link 
+                  href={`/checkout/stack?slugs=${stack.map(t => t.slug).join(",")}`}
+                  className="w-full py-2.5 rounded-xl text-[11px] font-bold transition-all hover:opacity-90 flex items-center justify-center" 
+                  style={{ background: "#6366f1", color: "#fff" }}
+                >
+                  Request Managed Billing
+                </Link>
               </div>
             </div>
 
@@ -1296,18 +1070,27 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
               <div className="flex-1 overflow-y-auto max-h-[600px] pr-2 custom-scrollbar">
                 {output ? (
                   <MarkdownOutput text={output} />
-                ) : (
+                ) : !loading && !error ? (
                   <div className="h-full flex flex-col items-center justify-center text-center py-20 opacity-30">
                     <FileText size={32} className="mb-4" />
                     <p className="text-xs font-bold">No plan generated yet</p>
                     <p className="text-[10px] max-w-[160px] mx-auto mt-1">Describe your idea and click build to see the execution roadmap</p>
                   </div>
-                )}
+                ) : null}
                 {loading && !output && (
                   <div className="flex flex-col items-center gap-3 py-16">
                     <Loader2 size={24} className="animate-spin" style={{ color: "#6366f1" }} />
                     <p className="text-sm font-semibold" style={{ color: "#1C1611" }}>{isSelectingTools ? "AI is selecting the best tools for you..." : "Building your plan..."}</p>
                     <p className="text-xs" style={{ color: "#C4B0A0" }}>{isSelectingTools ? "Matching your idea with the best-fit database, auth, and payment tools..." : `Analysing ${stack.length} tools · usually 5–10 seconds`}</p>
+                  </div>
+                )}
+                {error && (
+                  <div className="mt-4 p-4 rounded-xl bg-red-50 border border-red-100">
+                    <p className="text-xs font-bold text-red-600 mb-1">Stream interrupted or failed</p>
+                    <p className="text-[10px] text-red-500 mb-3">{error}</p>
+                    <button onClick={generate} className="px-4 py-2 bg-red-600 text-white rounded-lg text-[10px] font-bold hover:bg-red-700 transition-colors flex items-center gap-2">
+                      <RotateCcw size={12} /> Retry Generation
+                    </button>
                   </div>
                 )}
                 <div ref={outputRef} />
@@ -1324,14 +1107,8 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
                     </button>
                     <div className="absolute bottom-full left-0 right-0 mb-2 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity z-50">
                       <div className="p-1 rounded-xl shadow-2xl bg-white border border-[rgba(140,110,80,0.1)] space-y-1">
-                        <button onClick={handleExportNotion} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[10px] font-bold hover:bg-gray-50 text-left">
-                          <Layout size={12} /> {exporting ? "Exporting..." : "To Notion"}
-                        </button>
                         <button onClick={() => setShowEmailModal(true)} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[10px] font-bold hover:bg-gray-50 text-left">
                           <Send size={12} /> To Email
-                        </button>
-                        <button onClick={handleExportPdf} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[10px] font-bold hover:bg-gray-50 text-left">
-                          <Download size={12} /> {pdfExporting ? "Preparing..." : "Download PDF"}
                         </button>
                       </div>
                     </div>
