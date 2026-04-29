@@ -303,17 +303,22 @@ export function ToolsDirectory({
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  className="max-w-md w-full mx-4 p-8 rounded-[32px] bg-white border border-black/[0.08] shadow-[0_32px_120px_-20px_rgba(140,110,80,0.3)] text-center relative overflow-hidden"
+                  className="max-w-md w-full mx-4 pt-10 px-8 pb-8 rounded-[32px] bg-white border border-black/[0.08] shadow-[0_32px_120px_-20px_rgba(140,110,80,0.3)] text-center relative mt-8"
                 >
-                  {/* Decorative background glow */}
-                  <div className="absolute -top-24 -left-24 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl" />
-                  <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl" />
+                  {/* Inner container for clipped background glows */}
+                  <div className="absolute inset-0 overflow-hidden rounded-[32px] pointer-events-none">
+                    <div className="absolute -top-24 -left-24 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl" />
+                    <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl" />
+                  </div>
 
-                  <div className="relative">
-                    <div className="w-14 h-14 rounded-2xl bg-indigo-600 flex items-center justify-center mx-auto mb-6 shadow-xl shadow-indigo-200">
-                      <Lock size={24} className="text-white" />
+                  {/* Floating Lock Badge */}
+                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 z-10">
+                    <div className="w-16 h-16 rounded-2xl bg-indigo-600 flex items-center justify-center shadow-xl shadow-indigo-600/30 ring-4 ring-white">
+                      <Lock size={26} className="text-white" />
                     </div>
-                    
+                  </div>
+
+                  <div className="relative z-10 mt-4">
                     <h2 className="font-display text-2xl font-black text-[#1C1611] mb-3 leading-tight tracking-tight">
                       Access {lockedCount}+ Curated Tools
                     </h2>
