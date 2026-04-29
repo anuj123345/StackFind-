@@ -17,21 +17,25 @@ export async function incrementPlaygroundUsage() {
     .eq('id', user.id)
     .single()
 
-  if (fetchError) {
+  let currentUsage = 0;
+  if (profile) {
+    currentUsage = profile.playground_usage_count || 0;
+  } else if (fetchError && fetchError.code !== 'PGRST116') {
+    // PGRST116 means no rows found, which is fine, we will upsert. Other errors should be caught.
     return { success: false, error: fetchError.message }
   }
 
   // Increment usage count with zero type-safety during build to ensure success
-  const { error: updateError } = await client
+  const { error: upsertError } = await client
     .from('profiles')
-    .update({ 
-      playground_usage_count: (profile.playground_usage_count || 0) + 1,
+    .upsert({ 
+      id: user.id,
+      playground_usage_count: currentUsage + 1,
       updated_at: new Date().toISOString()
-    })
-    .eq('id', user.id)
+    }, { onConflict: 'id' })
 
-  if (updateError) {
-    return { success: false, error: updateError.message }
+  if (upsertError) {
+    return { success: false, error: upsertError.message }
   }
 
   return { success: true }

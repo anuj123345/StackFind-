@@ -18,6 +18,7 @@
 - **Transitions**: Use Framer Motion for smooth entrances.
 
 ## Recent Updates (2026-04-29)
+- **DeepSeek & Playground Usage Fixes**: Fixed `incrementPlaygroundUsage` failing to upsert missing user profiles (which prevented the usage limit from triggering). Adjusted the DeepSeek model integration to correctly treat `deepseek-v3.2` as a standard model instead of a reasoning model.
 - **Playground Fixes**: Stabilized AI generation stream with a retry option, restored Managed Billing link redirection, and cleaned up export options (retaining only Email).
 - **Managed Billing & Razorpay**: Implemented a full checkout flow for Indian founders. Integrated Razorpay for INR payments with automated convenience fee (5%) and GST (18%) calculations.
 - **Cinematic Welcome**: Added 'Assembly of Light' welcome intro (`welcome-intro.tsx`) with particle animations andlogo reveal. Persistence via `sessionStorage`.

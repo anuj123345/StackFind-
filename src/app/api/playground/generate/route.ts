@@ -118,7 +118,7 @@ export async function POST(req: NextRequest) {
             ]
 
             const actualModel = modelId.includes("/") ? modelId : "meta/llama-3.3-70b-instruct"
-            const isReasoningModel = actualModel.includes("deepseek") || actualModel.includes("devstral")
+            const isReasoningModel = actualModel.includes("r1") || actualModel.includes("devstral")
 
             if (isReasoningModel) {
               // Reasoning models use thought streaming and bypass standard tool calls
@@ -127,7 +127,7 @@ export async function POST(req: NextRequest) {
                 messages,
                 max_tokens: 8192,
                 stream: true,
-                extra_body: { chat_template_kwargs: { thinking: true } }
+                ...(actualModel.includes("r1") ? { extra_body: { chat_template_kwargs: { thinking: true } } } : {})
               } as any)
 
               let isFirstReasoning = true
