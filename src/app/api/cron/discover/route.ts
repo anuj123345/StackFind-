@@ -131,7 +131,7 @@ async function fetchPH(daysBack = 1): Promise<PHPost[]> {
   const dateStr = date.toISOString().split("T")[0]
 
   const query = `{
-    posts(order: VOTES, postedAfter: "${dateStr}T00:00:00Z", postedBefore: "${dateStr}T23:59:59Z", topic: "artificial-intelligence") {
+    posts(first: 50, order: VOTES, postedAfter: "${dateStr}T00:00:00Z", postedBefore: "${dateStr}T23:59:59Z", topic: "artificial-intelligence") {
       edges {
         node {
           name tagline description url website votesCount
@@ -212,7 +212,7 @@ export async function GET(req: NextRequest) {
     // Ensures a category exists, creates it if not
     async function ensureCategory(slug: string, name: string): Promise<string | null> {
       if (catMap[slug]) return catMap[slug]
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("categories")
         .insert({ slug, name, description: `AI tools for ${name.toLowerCase()}`, icon: null })
         .select("id")
@@ -220,6 +220,9 @@ export async function GET(req: NextRequest) {
       if (data) {
         catMap[slug] = data.id
         return data.id
+      }
+      if (error) {
+        console.error(`[cron/discover] Failed to create category ${slug}:`, error)
       }
       return null
     }
@@ -268,7 +271,10 @@ export async function GET(req: NextRequest) {
         .select("id")
         .single()
 
-      if (error || !tool) continue
+      if (error || !tool) {
+        console.error(`[cron/discover] Failed to insert tool ${slug}:`, error)
+        continue
+      }
 
       // Link detected categories — auto-create any that don't exist yet
       const categories = detectCategories(post.name, post.tagline, post.description, post.topics)
@@ -279,10 +285,13 @@ export async function GET(req: NextRequest) {
           .join(" ")
         const catId = await ensureCategory(catSlug, catName)
         if (catId) {
-          await supabase
+          const { error: insertErr } = await supabase
             .from("tool_categories")
             .insert({ tool_id: tool.id, category_id: catId })
-            .throwOnError()
+            
+          if (insertErr) {
+             console.error("[cron/discover] Failed to link category", { tool_id: tool.id, category_id: catId, error: insertErr })
+          }
         }
       }
 

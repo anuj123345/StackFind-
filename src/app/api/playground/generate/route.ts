@@ -119,11 +119,8 @@ export async function POST(req: NextRequest) {
 
             let actualModel = modelId.includes("/") ? modelId : "meta/llama-3.3-70b-instruct"
             
-            // NVIDIA NIM Deepseek models are currently experiencing severe outages (hanging or 404/410 errors).
-            // Fallback to llama-3.3-70b-instruct to ensure the playground remains functional.
-            if (actualModel.includes("deepseek")) {
-              actualModel = "meta/llama-3.3-70b-instruct"
-            }
+            // Allow Deepseek models to execute without fallback
+            // actualModel will be preserved
             const isReasoningModel = actualModel.includes("r1") || actualModel.includes("devstral")
 
             if (isReasoningModel) {

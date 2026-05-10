@@ -91,10 +91,10 @@ export default async function ToolDetailPage({ params }: PageProps) {
                 </p>
 
                 <div className="flex flex-wrap gap-2">
-                  {tool.categoryNames.map(cat => (
+                  {tool.categoryNames.map((cat, i) => (
                     <Link
                       key={cat}
-                      href={`/tools?category=${cat.toLowerCase().replace(/\s+/g, "-")}`}
+                      href={`/tools?category=${tool.categorySlugs[i]}`}
                       className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full transition-colors"
                       style={{ background: "rgba(140,110,80,0.06)", color: "#7A6A57", border: "1px solid rgba(140,110,80,0.1)" }}
                     >

@@ -25,17 +25,17 @@ export async function incrementPlaygroundUsage() {
     return { success: false, error: fetchError.message }
   }
 
-  // Increment usage count with zero type-safety during build to ensure success
-  const { error: upsertError } = await client
+  // Increment usage count using update instead of upsert to comply with RLS policies
+  const { error: updateError } = await client
     .from('profiles')
-    .upsert({ 
-      id: user.id,
+    .update({ 
       playground_usage_count: currentUsage + 1,
       updated_at: new Date().toISOString()
-    }, { onConflict: 'id' })
+    })
+    .eq('id', user.id)
 
-  if (upsertError) {
-    return { success: false, error: upsertError.message }
+  if (updateError) {
+    return { success: false, error: updateError.message }
   }
 
   return { success: true }

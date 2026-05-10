@@ -3,7 +3,7 @@ import { getServerAdminStatus } from '@/lib/auth'
 import type { Tool, Category } from '@/types/database'
 
 // Tool with category names flattened
-export type ToolWithCategoryNames = Tool & { categoryNames: string[] }
+export type ToolWithCategoryNames = Tool & { categoryNames: string[], categorySlugs: string[] }
 
 interface ToolWithRel {
   tool_categories?: {
@@ -14,21 +14,25 @@ interface ToolWithRel {
   }[]
 }
 
-function flattenCategories<T extends Tool>(tool: T & ToolWithRel): T & { categoryNames: string[] } {
+function flattenCategories<T extends Tool>(tool: T & ToolWithRel): T & { categoryNames: string[], categorySlugs: string[] } {
   const categoryNames: string[] = (tool.tool_categories ?? [])
     .map((tc) => tc.categories?.name)
+    .filter((n): n is string => !!n)
+    
+  const categorySlugs: string[] = (tool.tool_categories ?? [])
+    .map((tc) => tc.categories?.slug)
     .filter((n): n is string => !!n)
   
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { tool_categories: _, ...rest } = tool
-  return { ...(rest as T), categoryNames }
+  return { ...(rest as T), categoryNames, categorySlugs }
 }
 
 export async function getFeaturedTools(limit = 6): Promise<ToolWithCategoryNames[]> {
   const supabase = await createClient()
   const { data } = await supabase
     .from('tools')
-    .select('*, tool_categories(categories(name))')
+    .select('*, tool_categories(categories(name, slug))')
     .eq('status', 'approved')
     .not('featured_until', 'is', null)
     .gte('featured_until', new Date().toISOString())
@@ -41,7 +45,7 @@ export async function getLatestTools(limit = 8): Promise<ToolWithCategoryNames[]
   const supabase = await createClient()
   const { data } = await supabase
     .from('tools')
-    .select('*, tool_categories(categories(name))')
+    .select('*, tool_categories(categories(name, slug))')
     .eq('status', 'approved')
     .order('approved_at', { ascending: false })
     .limit(limit)
@@ -52,7 +56,7 @@ export async function getMadeInIndiaTools(limit = 12): Promise<ToolWithCategoryN
   const supabase = await createClient()
   const { data } = await supabase
     .from('tools')
-    .select('*, tool_categories(categories(name))')
+    .select('*, tool_categories(categories(name, slug))')
     .eq('status', 'approved')
     .eq('is_made_in_india', true)
     .order('upvotes', { ascending: false })
@@ -64,7 +68,7 @@ export async function getAllTools(): Promise<ToolWithCategoryNames[]> {
   const supabase = await createClient()
   const { data } = await supabase
     .from('tools')
-    .select('*, tool_categories(categories(name))')
+    .select('*, tool_categories(categories(name, slug))')
     .eq('status', 'approved')
     .order('upvotes', { ascending: false })
   return (data ?? []).map(flattenCategories)
@@ -83,7 +87,7 @@ export async function getToolBySlug(slug: string): Promise<ToolWithCategoryNames
   const supabase = await createClient()
   const { data } = await supabase
     .from('tools')
-    .select('*, tool_categories(categories(name))')
+    .select('*, tool_categories(categories(name, slug))')
     .eq('slug', slug)
     .eq('status', 'approved')
     .single()
@@ -94,7 +98,7 @@ export async function getRelatedTools(slug: string, categoryNames: string[], lim
   const supabase = await createClient()
   const { data } = await supabase
     .from('tools')
-    .select('*, tool_categories(categories(name))')
+    .select('*, tool_categories(categories(name, slug))')
     .eq('status', 'approved')
     .neq('slug', slug)
     .order('upvotes', { ascending: false })

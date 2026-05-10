@@ -58,10 +58,7 @@ export function ToolsDirectory({
     const q = search.toLowerCase().trim()
     return tools.filter(t => {
       if (q && !t.name.toLowerCase().includes(q) && !t.tagline.toLowerCase().includes(q)) return false
-      if (category && !t.categoryNames.some(c => {
-        const asSlug = c.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "")
-        return asSlug === category
-      })) return false
+      if (category && !t.categorySlugs.includes(category)) return false
       if (pricing && t.pricing_model !== pricing) return false
       if (indiaOnly && !t.is_made_in_india) return false
       return true
