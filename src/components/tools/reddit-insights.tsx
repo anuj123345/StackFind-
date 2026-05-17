@@ -3,15 +3,7 @@
 import { useEffect, useState } from "react"
 import { MessageSquare, TrendingUp, ExternalLink } from "lucide-react"
 
-interface RedditPost {
-  title: string
-  score: number
-  subreddit: string
-  url: string
-  numComments: number
-  selftext: string
-  createdUtc: number
-}
+import { getRedditInsights, type RedditPost } from "@/app/actions/reddit"
 
 function timeAgo(utc: number): string {
   const diff = Math.floor(Date.now() / 1000) - utc
@@ -52,26 +44,9 @@ export function RedditInsights({ toolName }: { toolName: string }) {
   const [error, setError] = useState(false)
 
   useEffect(() => {
-    const query = encodeURIComponent(`${toolName} review OR tutorial OR experience OR project`)
-    fetch(
-      `https://www.reddit.com/search.json?q=${query}&sort=top&t=year&limit=8&type=link`,
-      { headers: { Accept: "application/json" } }
-    )
-      .then(r => {
-        if (!r.ok) throw new Error("fetch failed")
-        return r.json()
-      })
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .then(json => {
-        const items = (json?.data?.children ?? []).map((c: any) => ({
-          title: c.data.title as string,
-          score: c.data.score as number,
-          subreddit: c.data.subreddit as string,
-          url: `https://reddit.com${c.data.permalink}`,
-          numComments: c.data.num_comments as number,
-          selftext: ((c.data.selftext as string) || "").slice(0, 300),
-          createdUtc: c.data.created_utc as number,
-        }))
+    getRedditInsights(toolName)
+      .then(items => {
+        if (items.length === 0) setError(true) // or keep empty
         setPosts(items)
       })
       .catch(() => setError(true))
@@ -211,22 +186,8 @@ export function RedditBuzzSidebar({ toolName }: { toolName: string }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const query = encodeURIComponent(`${toolName} review OR tutorial OR experience OR project`)
-    fetch(`https://www.reddit.com/search.json?q=${query}&sort=top&t=year&limit=8&type=link`)
-      .then(r => r.json())
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .then(json => {
-        const items = (json?.data?.children ?? []).map((c: any) => ({
-          title: c.data.title as string,
-          score: c.data.score as number,
-          subreddit: c.data.subreddit as string,
-          url: `https://reddit.com${c.data.permalink}`,
-          numComments: c.data.num_comments as number,
-          selftext: "",
-          createdUtc: c.data.created_utc as number,
-        }))
-        setPosts(items)
-      })
+    getRedditInsights(toolName)
+      .then(items => setPosts(items))
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [toolName])
