@@ -226,7 +226,8 @@ export async function POST(req: NextRequest) {
           }
           controller.close()
         } catch (err: any) {
-          controller.enqueue(encoder.encode(`\n\n[Error: ${err.message}]`))
+          console.error("Playground Generation Error:", err)
+          controller.enqueue(encoder.encode(`\n\n[Error details: ${err.name} - ${err.message}. Stack: ${err.stack}. Object: ${JSON.stringify(err)}]`))
           controller.close()
         }
       }
