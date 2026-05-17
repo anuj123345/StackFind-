@@ -54,8 +54,8 @@ export function RedditInsights({ toolName }: { toolName: string }) {
   useEffect(() => {
     const query = encodeURIComponent(`${toolName} review OR tutorial OR experience OR project`)
     fetch(
-      `https://www.reddit.com/search.json?q=${query}&sort=top&t=year&limit=8&type=link`,
-      { headers: { Accept: "application/json" } }
+      `https://www.reddit.com/search.json?q=${query}&sort=top&t=year&limit=8&type=link&_t=${Date.now()}`,
+      { headers: { Accept: "application/json" }, cache: "no-store" }
     )
       .then(r => {
         if (!r.ok) throw new Error("fetch failed")
@@ -212,7 +212,7 @@ export function RedditBuzzSidebar({ toolName }: { toolName: string }) {
 
   useEffect(() => {
     const query = encodeURIComponent(`${toolName} review OR tutorial OR experience OR project`)
-    fetch(`https://www.reddit.com/search.json?q=${query}&sort=top&t=year&limit=8&type=link`)
+    fetch(`https://www.reddit.com/search.json?q=${query}&sort=top&t=year&limit=8&type=link&_t=${Date.now()}`, { cache: "no-store" })
       .then(r => r.json())
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .then(json => {
