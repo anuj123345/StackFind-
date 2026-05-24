@@ -30,9 +30,8 @@ const PRICING_COLOR: Record<string, { bg: string; color: string }> = {
 }
 
 const MODELS = [
-  { id: "deepseek-ai/deepseek-v4-pro",          name: "deepseek / deepseek-v4-pro",          provider: "NVIDIA NIM" },
-  { id: "mistralai/mistral-large-2-instruct",   name: "mistralai / mistral-large-2",         provider: "NVIDIA NIM" },
   { id: "meta/llama-3.3-70b-instruct",          name: "meta / llama-3.3-70b-instruct",       provider: "NVIDIA NIM" },
+  { id: "mistralai/mistral-large-3-675b-instruct-2512", name: "mistral / mistral-large-3",       provider: "NVIDIA NIM" },
   { id: "moonshotai/kimi-k2.6",                 name: "moonshot / kimi-k2.6",                provider: "NVIDIA NIM" },
 ]
 
