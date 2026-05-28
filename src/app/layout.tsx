@@ -15,12 +15,17 @@ const onest = Onest({
 
 export const metadata: Metadata = {
   title: "StackFind — Discover the Best AI Tools",
-  description: "The most curated directory of AI tools. Find the right stack for your workflow. India-first pricing, INR billing, and Made-in-India tools.",
-  keywords: ["AI tools", "AI directory", "artificial intelligence", "productivity", "Made in India"],
+  description: "The most curated directory of AI tools. Find the right AI stack for any project.",
+  keywords: ["AI tools", "AI directory", "artificial intelligence", "productivity", "developer tools"],
   openGraph: {
     title: "StackFind — Discover the Best AI Tools",
-    description: "The most curated directory of AI tools. India-first pricing & INR billing.",
+    description: "The most curated directory of AI tools. Find the right AI stack for any project.",
     type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "StackFind — Discover the Best AI Tools",
+    description: "The most curated directory of AI tools. Find the right AI stack for any project.",
   },
 }
 
