@@ -692,6 +692,56 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
         }
       }
       setTimeout(() => outputRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100)
+
+      // Post-stream fallback: try to extract stack from full response if not already done
+      if (!stackProcessed && accumulatedText) {
+        const match = accumulatedText.match(/\[\s*STACK:\s*([^\]]+)\]/i)
+        if (match) {
+          const slugs = match[1].split(",").map((s: string) => s.trim().toLowerCase()).filter(Boolean)
+          const selectedTools: StackTool[] = []
+          slugs.forEach((slug: string) => {
+            const tool = tools.find(t => t.slug === slug)
+            if (tool) {
+              selectedTools.push({
+                slug: tool.slug, name: tool.name, tagline: tool.tagline,
+                website: tool.website, logoUrl: tool.logo_url,
+                pricingModel: tool.pricing_model,
+                startingPriceUsd: tool.starting_price_usd,
+                startingPriceInr: tool.starting_price_inr,
+                managedBillingEnabled: tool.managed_billing_enabled,
+                convenienceFeePercent: tool.convenience_fee_percent,
+                categories: [tool.categoryName],
+              })
+            }
+          })
+          if (selectedTools.length > 0) {
+            setFullStack(selectedTools)
+            stackProcessed = true
+          }
+        }
+
+        // Last resort: match tool names/slugs mentioned anywhere in the response
+        if (!stackProcessed) {
+          const mentioned = tools.filter(t =>
+            accumulatedText.toLowerCase().includes(` ${t.slug} `) ||
+            accumulatedText.toLowerCase().includes(`**${t.name.toLowerCase()}**`) ||
+            accumulatedText.toLowerCase().includes(`| ${t.name.toLowerCase()}`)
+          ).slice(0, 7)
+          if (mentioned.length >= 2) {
+            setFullStack(mentioned.map(tool => ({
+              slug: tool.slug, name: tool.name, tagline: tool.tagline,
+              website: tool.website, logoUrl: tool.logo_url,
+              pricingModel: tool.pricing_model,
+              startingPriceUsd: tool.starting_price_usd,
+              startingPriceInr: tool.starting_price_inr,
+              managedBillingEnabled: tool.managed_billing_enabled,
+              convenienceFeePercent: tool.convenience_fee_percent,
+              categories: [tool.categoryName],
+            })))
+          }
+        }
+      }
+
       // Add AI response to message history
       if (accumulatedText) {
         setMessages(prev => [...prev, { role: "assistant", content: accumulatedText }])
@@ -1034,19 +1084,37 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
               </div>
 
               {stack.length > 0 ? (
-                <div className="space-y-2.5 mb-8">
-                  {stack.map(tool => (
-                    <div key={tool.slug} className="flex items-center justify-between p-3 rounded-xl" style={{ background: "rgba(140,110,80,0.04)", border: "1px solid rgba(140,110,80,0.05)" }}>
-                      <div className="flex items-center gap-3">
-                        <LogoBubble tool={tool as any} size={32} />
-                        <div>
-                          <p className="text-xs font-bold" style={{ color: "#1C1611" }}>{tool.name}</p>
-                          <p className="text-[9px] font-medium" style={{ color: "#C4B0A0" }}>{tool.categories?.[0]}</p>
-                        </div>
+                <div className="space-y-4 mb-8">
+                  {Object.entries(
+                    stack.reduce((acc: Record<string, typeof stack>, tool) => {
+                      const cat = tool.categories?.[0] || "Other"
+                      if (!acc[cat]) acc[cat] = []
+                      acc[cat].push(tool)
+                      return acc
+                    }, {})
+                  ).map(([category, catTools]) => (
+                    <div key={category}>
+                      <p className="text-[9px] font-bold uppercase tracking-widest mb-2" style={{ color: "#C4B0A0" }}>
+                        {category}
+                      </p>
+                      <div className="space-y-1.5">
+                        {(catTools as typeof stack).map(tool => (
+                          <div key={tool.slug} className="flex items-center justify-between px-3 py-2 rounded-xl transition-all" style={{ background: "rgba(140,110,80,0.04)", border: "1px solid rgba(140,110,80,0.06)" }}>
+                            <div className="flex items-center gap-2.5">
+                              <LogoBubble tool={tool as any} size={26} />
+                              <div>
+                                <p className="text-xs font-bold leading-tight" style={{ color: "#1C1611" }}>{tool.name}</p>
+                                <p className="text-[9px]" style={{ color: "#C4B0A0" }}>
+                                  {tool.pricingModel === "free" ? "Free" : tool.pricingModel === "freemium" ? "Freemium" : tool.startingPriceInr ? `₹${tool.startingPriceInr}/mo` : tool.startingPriceUsd ? `$${tool.startingPriceUsd}/mo` : "Paid"}
+                                </p>
+                              </div>
+                            </div>
+                            <button onClick={() => remove(tool.slug)} className="p-1 rounded-lg hover:bg-red-50 text-[#C4B0A0] hover:text-red-500 transition-colors">
+                              <Trash2 size={11} />
+                            </button>
+                          </div>
+                        ))}
                       </div>
-                      <button onClick={() => remove(tool.slug)} className="p-1.5 rounded-lg hover:bg-red-50 text-[#C4B0A0] hover:text-red-500 transition-colors">
-                        <Trash2 size={12} />
-                      </button>
                     </div>
                   ))}
                 </div>
