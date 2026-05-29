@@ -157,7 +157,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
                   hasInrBilling={tool.has_inr_billing}
                   startingPriceInr={tool.starting_price_inr}
                   startingPriceUsd={tool.starting_price_usd}
-                  managedBillingEnabled={tool.managed_billing_enabled}
+                  managedBillingEnabled={tool.managed_billing_enabled ?? undefined}
                   inrPurchaseLink={tool.inr_purchase_link}
                   convenienceFeePercent={tool.convenience_fee_percent}
                 />
