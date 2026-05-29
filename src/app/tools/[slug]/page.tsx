@@ -152,7 +152,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
                 </div>
                 <PricingBreakdown 
                   toolId={tool.id}
-                  modelling={tool.pricing_modelling as any}
+                  modelling={tool.pricing_model}
                   hasUpi={tool.has_upi}
                   hasInrBilling={tool.has_inr_billing}
                   startingPriceInr={tool.starting_price_inr}
