@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { getServerUser } from "@/lib/auth"
+import type { TablesUpdate } from "@/types/database"
 
 // GET: fetch user's stack history
 export async function GET() {
@@ -65,7 +66,8 @@ export async function PATCH(req: NextRequest) {
   if (!id) return Response.json({ error: "Missing stack id" }, { status: 400 })
 
   const supabase = await createClient()
-  const updates: Record<string, boolean> = {}
+
+  const updates: TablesUpdate<"user_stacks"> = {}
   if (typeof is_saved === "boolean") updates.is_saved = is_saved
   if (typeof is_archived === "boolean") updates.is_archived = is_archived
 
@@ -73,7 +75,7 @@ export async function PATCH(req: NextRequest) {
     .from("user_stacks")
     .update(updates)
     .eq("id", id)
-    .eq("user_id", user.id) // RLS guard
+    .eq("user_id", user.id)
 
   if (error) return Response.json({ error: error.message }, { status: 500 })
   return Response.json({ success: true })
