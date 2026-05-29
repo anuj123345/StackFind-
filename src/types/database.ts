@@ -623,3 +623,11 @@ export const Constants = {
     },
   },
 } as const
+
+// ─── Convenience type aliases (backwards compatibility) ───────────────────────
+export type Tool = Tables<"tools">
+export type Category = Tables<"categories">
+export type PricingModel = Database["public"]["Enums"]["pricing_model"]
+export type ToolStatus = Database["public"]["Enums"]["tool_status"]
+export type SubmissionPlan = Database["public"]["Enums"]["submission_plan"]
+export type PaymentStatus = Database["public"]["Enums"]["payment_status"]
