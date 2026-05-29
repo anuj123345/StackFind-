@@ -25,24 +25,12 @@ export async function getServerAdminStatus(): Promise<boolean> {
   const isWhitelisted = adminEmails.includes(user.email.toLowerCase())
 
   if (isWhitelisted) {
-    // Automatically elevate profile in DB if matches whitelist
-    await supabase
-      .from('profiles')
-      .update({ is_admin: true })
-      .eq('id', user.id)
-      .eq('is_admin', false) // Only update if not already admin
-    
     return true
   }
 
-  // Fallback to database check for persistent admins
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('is_admin')
-    .eq('id', user.id)
-    .single()
-
-  return !!profile?.is_admin
+  // Fallback: use is_admin() RPC function
+  const { data: isAdmin } = await supabase.rpc('is_admin')
+  return !!isAdmin
 }
 
 export async function getIsAuthenticated(): Promise<boolean> {
