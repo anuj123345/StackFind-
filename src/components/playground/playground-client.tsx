@@ -511,6 +511,65 @@ interface Props {
   usdToInrRate: number
 }
 
+// ─── Master Stack types ───────────────────────────────────────────────────────
+
+interface MasterStackTool {
+  name: string
+  slug: string
+  pricing: string
+  website?: string | null
+  logoUrl?: string | null
+  fromDB: boolean
+  startingPriceUsd?: number | null
+  startingPriceInr?: number | null
+  managedBillingEnabled?: boolean | null
+  convenienceFeePercent?: number | null
+}
+
+type MasterStack = Record<string, MasterStackTool[]>
+
+function parseMasterStack(text: string, allTools: PlaygroundTool[]): MasterStack | null {
+  const match = text.match(/%%MASTER_STACK_START%%\s*([\s\S]*?)%%MASTER_STACK_END%%/)
+  if (!match) return null
+
+  try {
+    const json = JSON.parse(match[1].trim())
+    const bySlug = new Map(allTools.map(t => [t.slug, t]))
+    const byName = new Map(allTools.map(t => [t.name.toLowerCase(), t]))
+
+    const result: MasterStack = {}
+    for (const [category, toolList] of Object.entries(json)) {
+      if (!Array.isArray(toolList)) continue
+      result[category] = (toolList as any[]).map(t => {
+        const db = bySlug.get(t.slug) || byName.get((t.name || "").toLowerCase())
+        if (db) {
+          return {
+            name: db.name, slug: db.slug, pricing: db.pricing_model,
+            website: db.website, logoUrl: db.logo_url, fromDB: true,
+            startingPriceUsd: db.starting_price_usd,
+            startingPriceInr: db.starting_price_inr,
+            managedBillingEnabled: db.managed_billing_enabled,
+            convenienceFeePercent: db.convenience_fee_percent,
+          }
+        }
+        // Default mapper — tool not in DB, use JSON data as-is
+        return {
+          name: t.name || "Unknown",
+          slug: t.slug || (t.name || "").toLowerCase().replace(/[^a-z0-9]/g, "-"),
+          pricing: t.pricing || "unknown",
+          website: null, logoUrl: null, fromDB: false,
+          startingPriceUsd: null, startingPriceInr: null,
+          managedBillingEnabled: null, convenienceFeePercent: null,
+        }
+      })
+    }
+    return Object.keys(result).length > 0 ? result : null
+  } catch {
+    return null
+  }
+}
+
+
 export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate }: Props) {
   const { stack, add, remove, toggle: toggleStack, clear, isInStack, setFullStack } = useStack()
   const [activeCategory, setActiveCategory] = useState("all")
@@ -527,6 +586,7 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
   const searchParams = useSearchParams()
   const [sessionUsage, setSessionUsage] = useState(profile?.playground_usage_count || 0)
   const [messages, setMessages] = useState<{role:"user"|"assistant"; content:string}[]>([])
+  const [masterStack, setMasterStack] = useState<MasterStack | null>(null)
   const outputRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const chatEndRef = useRef<HTMLDivElement>(null)
@@ -693,42 +753,60 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
       }
       setTimeout(() => outputRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100)
 
-      // Post-stream fallback: try to extract stack from full response if not already done
-      if (!stackProcessed && accumulatedText) {
-        const match = accumulatedText.match(/\[\s*STACK:\s*([^\]]+)\]/i)
-        if (match) {
-          const slugs = match[1].split(",").map((s: string) => s.trim().toLowerCase()).filter(Boolean)
-          const selectedTools: StackTool[] = []
-          slugs.forEach((slug: string) => {
-            const tool = tools.find(t => t.slug === slug)
-            if (tool) {
-              selectedTools.push({
-                slug: tool.slug, name: tool.name, tagline: tool.tagline,
-                website: tool.website, logoUrl: tool.logo_url,
-                pricingModel: tool.pricing_model,
-                startingPriceUsd: tool.starting_price_usd,
-                startingPriceInr: tool.starting_price_inr,
-                managedBillingEnabled: tool.managed_billing_enabled,
-                convenienceFeePercent: tool.convenience_fee_percent,
-                categories: [tool.categoryName],
-              })
-            }
+      // Post-stream: comprehensive extraction — always re-scan full response
+      // This ensures Your Stack matches everything mentioned in the Build Plan
+      if (accumulatedText) {
+        const foundSlugs = new Set<string>()
+        const text = accumulatedText
+        const textLower = text.toLowerCase()
+
+        // Layer 1: explicit [STACK: slug1, slug2...] tag
+        const stackMatch = text.match(/\[\s*STACK:\s*([^\]]+)\]/i)
+        if (stackMatch) {
+          stackMatch[1].split(",").forEach((s: string) => {
+            const slug = s.trim().toLowerCase()
+            if (slug) foundSlugs.add(slug)
           })
-          if (selectedTools.length > 0) {
-            setFullStack(selectedTools)
-            stackProcessed = true
-          }
         }
 
-        // Last resort: match tool names/slugs mentioned anywhere in the response
-        if (!stackProcessed) {
-          const mentioned = tools.filter(t =>
-            accumulatedText.toLowerCase().includes(` ${t.slug} `) ||
-            accumulatedText.toLowerCase().includes(`**${t.name.toLowerCase()}**`) ||
-            accumulatedText.toLowerCase().includes(`| ${t.name.toLowerCase()}`)
-          ).slice(0, 7)
-          if (mentioned.length >= 2) {
-            setFullStack(mentioned.map(tool => ({
+        // Layer 2: bold tool names **Tool Name** in markdown
+        const boldMatches = [...text.matchAll(/\*\*([^*]{2,40})\*\*/g)]
+        boldMatches.forEach(m => {
+          const candidate = m[1].trim().toLowerCase()
+          const matched = tools.find(t =>
+            t.name.toLowerCase() === candidate ||
+            t.slug === candidate.replace(/\s+/g, "-")
+          )
+          if (matched) foundSlugs.add(matched.slug)
+        })
+
+        // Layer 3: table cells | Tool Name | (first column or category column)
+        const tableMatches = [...text.matchAll(/\|\s*([^|\n]{2,40}?)\s*\|/g)]
+        tableMatches.forEach(m => {
+          const cell = m[1].trim().toLowerCase()
+          const matched = tools.find(t => t.name.toLowerCase() === cell)
+          if (matched) foundSlugs.add(matched.slug)
+        })
+
+        // Layer 4: slug mentions e.g. "use supabase" or "(supabase)"
+        tools.forEach(t => {
+          const slug = t.slug.toLowerCase()
+          if (
+            textLower.includes(` ${slug} `) ||
+            textLower.includes(`(${slug})`) ||
+            textLower.includes(`/${slug}`) ||
+            textLower.includes(`${slug}:`)
+          ) {
+            foundSlugs.add(slug)
+          }
+        })
+
+        // Build final stack from all found slugs
+        const allFound: StackTool[] = []
+        foundSlugs.forEach(slug => {
+          const tool = tools.find(t => t.slug === slug)
+          if (tool) {
+            allFound.push({
               slug: tool.slug, name: tool.name, tagline: tool.tagline,
               website: tool.website, logoUrl: tool.logo_url,
               pricingModel: tool.pricing_model,
@@ -737,8 +815,35 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
               managedBillingEnabled: tool.managed_billing_enabled,
               convenienceFeePercent: tool.convenience_fee_percent,
               categories: [tool.categoryName],
-            })))
+            })
           }
+        })
+
+        if (allFound.length > 0) {
+          setFullStack(allFound)
+        }
+      }
+
+      // Parse master stack JSON from complete response
+      if (accumulatedText) {
+        const parsed = parseMasterStack(accumulatedText, tools)
+        if (parsed) {
+          setMasterStack(parsed)
+          // Also sync useStack with DB-matched tools for billing
+          const allMasterTools = (Object.values(parsed).flat() as MasterStackTool[])
+          const dbTools = allMasterTools
+            .filter(t => t.fromDB)
+            .map(t => ({
+              slug: t.slug, name: t.name, tagline: "",
+              website: t.website, logoUrl: t.logoUrl,
+              pricingModel: t.pricing as any,
+              startingPriceUsd: t.startingPriceUsd,
+              startingPriceInr: t.startingPriceInr,
+              managedBillingEnabled: t.managedBillingEnabled,
+              convenienceFeePercent: t.convenienceFeePercent,
+              categories: [],
+            }))
+          if (dbTools.length > 0) setFullStack(dbTools as any)
         }
       }
 
@@ -757,6 +862,7 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
     setMessages([])
     setOutput("")
     setError("")
+    setMasterStack(null)
     clear()
   }
 
@@ -1083,7 +1189,53 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
                 {stack.length > 0 && <button onClick={clear} className="text-[10px] font-bold text-red-500 hover:underline">Clear all</button>}
               </div>
 
-              {stack.length > 0 ? (
+              {masterStack ? (
+                // MasterStack-driven view — 1:1 parity with Build Plan
+                <div className="space-y-4 mb-6">
+                  {Object.entries(masterStack).map(([category, catTools]) => (
+                    <div key={category}>
+                      <p className="text-[9px] font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5" style={{ color: "#C4B0A0" }}>
+                        {category}
+                        <span className="text-[9px] font-medium" style={{ color: "rgba(140,110,80,0.4)" }}>
+                          {catTools.length} tool{catTools.length > 1 ? "s" : ""}
+                        </span>
+                      </p>
+                      <div className="space-y-1.5">
+                        {catTools.map(tool => (
+                          <div key={tool.slug} className="flex items-center justify-between px-3 py-2 rounded-xl"
+                            style={{ background: tool.fromDB ? "rgba(140,110,80,0.04)" : "rgba(99,102,241,0.04)", border: `1px solid ${tool.fromDB ? "rgba(140,110,80,0.06)" : "rgba(99,102,241,0.1)"}` }}>
+                            <div className="flex items-center gap-2.5">
+                              {tool.fromDB && tool.logoUrl ? (
+                                <div className="w-6 h-6 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0" style={{ background: "rgba(255,255,255,0.9)", border: "1px solid rgba(140,110,80,0.1)" }}>
+                                  <img src={tool.logoUrl} alt={tool.name} className="w-4 h-4 object-contain" />
+                                </div>
+                              ) : (
+                                <div className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: tool.fromDB ? "rgba(140,110,80,0.1)" : "rgba(99,102,241,0.1)" }}>
+                                  <span className="text-[9px] font-black" style={{ color: tool.fromDB ? "#7A6A57" : "#6366f1" }}>{tool.name[0]}</span>
+                                </div>
+                              )}
+                              <div>
+                                <p className="text-xs font-bold leading-tight" style={{ color: "#1C1611" }}>{tool.name}</p>
+                                <p className="text-[9px]" style={{ color: tool.fromDB ? "#C4B0A0" : "#6366f1" }}>
+                                  {tool.fromDB
+                                    ? (tool.pricing === "free" ? "Free" : tool.pricing === "freemium" ? "Freemium" : tool.startingPriceInr ? `₹${tool.startingPriceInr}/mo` : tool.startingPriceUsd ? `$${tool.startingPriceUsd}/mo` : "Paid")
+                                    : "Explore →"}
+                                </p>
+                              </div>
+                            </div>
+                            {tool.fromDB && (
+                              <button onClick={() => remove(tool.slug)} className="p-1 rounded-lg hover:bg-red-50 text-[#C4B0A0] hover:text-red-500 transition-colors">
+                                <Trash2 size={11} />
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : stack.length > 0 ? (
+                // Fallback: manual stack when no AI response yet
                 <div className="space-y-4 mb-8">
                   {Object.entries(
                     stack.reduce((acc: Record<string, typeof stack>, tool) => {
@@ -1094,12 +1246,10 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
                     }, {})
                   ).map(([category, catTools]) => (
                     <div key={category}>
-                      <p className="text-[9px] font-bold uppercase tracking-widest mb-2" style={{ color: "#C4B0A0" }}>
-                        {category}
-                      </p>
+                      <p className="text-[9px] font-bold uppercase tracking-widest mb-2" style={{ color: "#C4B0A0" }}>{category}</p>
                       <div className="space-y-1.5">
                         {(catTools as typeof stack).map(tool => (
-                          <div key={tool.slug} className="flex items-center justify-between px-3 py-2 rounded-xl transition-all" style={{ background: "rgba(140,110,80,0.04)", border: "1px solid rgba(140,110,80,0.06)" }}>
+                          <div key={tool.slug} className="flex items-center justify-between px-3 py-2 rounded-xl" style={{ background: "rgba(140,110,80,0.04)", border: "1px solid rgba(140,110,80,0.06)" }}>
                             <div className="flex items-center gap-2.5">
                               <LogoBubble tool={tool as any} size={26} />
                               <div>
