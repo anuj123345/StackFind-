@@ -911,7 +911,7 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
 
               <div className="p-4">
                 {filteredTools.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2 overflow-y-auto max-h-[400px]">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2 overflow-y-auto max-h-[260px]">
                     {filteredTools.map(tool => (
                       <BrowserCard
                         key={tool.slug}
@@ -928,9 +928,9 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
               </div>
             </div>
 
-            <div className="rounded-3xl overflow-hidden" style={{ background: "#fff", border: "1px solid rgba(140,110,80,0.1)", boxShadow: "0 20px 50px -12px rgba(140,110,80,0.12)" }}>
+            <div className="rounded-3xl" style={{ background: "#fff", border: "1px solid rgba(140,110,80,0.1)", boxShadow: "0 20px 50px -12px rgba(140,110,80,0.12)", overflow: "visible" }}>
               {/* Chat header */}
-              <div className="flex items-center justify-between px-5 py-3.5" style={{ borderBottom: "1px solid rgba(140,110,80,0.08)" }}>
+              <div className="flex items-center justify-between px-5 py-3.5 rounded-t-3xl" style={{ borderBottom: "1px solid rgba(140,110,80,0.08)", background: "#fff" }}>
                 <div className="flex items-center gap-2">
                   <Sparkles size={12} style={{ color: "#6366f1" }} />
                   <span className="text-xs font-bold uppercase tracking-widest" style={{ color: "#A0907E" }}>AI Stack Assistant</span>
