@@ -99,11 +99,13 @@ const SUGGESTIONS = [
 
 // ΓöÇΓöÇΓöÇ Markdown renderer ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
-function MarkdownOutput({ text }: { text: string }) {
+function MarkdownOutput({ text, compact }: { text: string; compact?: boolean }) {
   const html = useMemo(() => {
     let out = text
-      .replace(/%%MASTER_STACK_START%%[\s\S]*?(%%MASTER_STACK_END%%|$)/g, "")
+      .replace(/%%MASTER_STACK_START%%[\s\S]*/g, "")
       .replace(/\[\s*STACK:[\s\S]*?\]/gi, "")
+      // Convert markdown links [text](url) to just text or anchor
+      .replace(/\[([^\]]+)\]\(https?:\/\/[^)]+\)/g, "**$1**")
     out = out.replace(/\|(.+)\|\n\|[-| :]+\|\n((?:\|.+\|\n?)*)/g, (_, header, rows) => {
       const ths = header.split("|").filter((c: string) => c.trim()).map((c: string) =>
         `<th class="pg-th">${c.trim()}</th>`).join("")
@@ -143,9 +145,15 @@ function MarkdownOutput({ text }: { text: string }) {
 
   return (
     <>
-      <div className="pg-output" dangerouslySetInnerHTML={{ __html: html }} />
+      <div className={compact ? "pg-output compact" : "pg-output"} dangerouslySetInnerHTML={{ __html: html }} />
       <style jsx global>{`
         .pg-output { font-size: 0.9rem; line-height: 1.8; color: #7A6A57; }
+        .pg-output.compact { font-size: 0.8rem; line-height: 1.6; }
+        .pg-output.compact .pg-h2 { font-size: 0.875rem; margin: 1rem 0 0.5rem; }
+        .pg-output.compact .pg-h3 { font-size: 0.8125rem; margin: 0.75rem 0 0.25rem; }
+        .pg-output.compact .pg-table { font-size: 0.75rem; }
+        .pg-output.compact .pg-p { margin: 0.3rem 0; }
+        .pg-output.compact .pg-ul, .pg-output.compact .pg-ol { margin: 0.4rem 0 0.4rem 1.2rem; }
         .pg-h2 {
           font-family: 'Bricolage Grotesque Variable', sans-serif;
           font-size: 1.125rem; font-weight: 800; color: #1C1611;
@@ -711,8 +719,11 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
         
         const chunk = decoder.decode(value, { stream: true })
         accumulatedText += chunk
-        // Strip MASTER_STACK block from visible output
-        const visibleText = accumulatedText.replace(/%%MASTER_STACK_START%%[\s\S]*?(%%MASTER_STACK_END%%|$)/g, "").trim()
+        // Strip MASTER_STACK block from visible output (partial or complete)
+        const visibleText = accumulatedText
+          .replace(/%%MASTER_STACK_START%%[\s\S]*/g, "")
+          .replace(/\[\s*STACK:[\s\S]*?\]/gi, "")
+          .trim()
         setOutput(visibleText)
         
         // Check for [STACK: slug1, slug2] and update the UI
@@ -1126,13 +1137,16 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
                         <Sparkles size={10} style={{ color: "#6366f1" }} />
                       </div>
                     )}
-                    <div className="max-w-[85%] px-3.5 py-2.5 text-xs leading-relaxed"
+                    <div className="max-w-[85%] px-3.5 py-2.5"
                       style={{
                         background: msg.role === "user" ? "#1C1611" : "rgba(140,110,80,0.05)",
                         color: msg.role === "user" ? "#fff" : "#1C1611",
                         borderRadius: msg.role === "user" ? "1rem 1rem 0.25rem 1rem" : "1rem 1rem 1rem 0.25rem",
                       }}>
-                      {msg.content.replace(/%%MASTER_STACK_START%%[\s\S]*?(%%MASTER_STACK_END%%|$)/g, "").replace(/\[STACK:[^\]]+\]/gi, "").trim()}
+                      {msg.role === "user"
+                        ? <p className="text-xs leading-relaxed" style={{ color: "#fff" }}>{msg.content}</p>
+                        : <MarkdownOutput text={msg.content} compact />
+                      }
                     </div>
                   </div>
                 ))}
