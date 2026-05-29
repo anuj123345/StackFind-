@@ -47,23 +47,13 @@ export function Navbar() {
     supabase.auth.getUser().then(({ data }) => {
        setUser(data.user)
        if (data.user) {
-          supabase
-            .from('profiles')
-            .select('is_admin')
-            .eq('id', data.user.id)
-            .single()
-            .then(({ data: profile }) => setIsAdmin(!!profile?.is_admin))
+          supabase.rpc('is_admin').then(({ data: admin }) => setIsAdmin(!!admin))
        }
     })
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
       if (session?.user) {
-          supabase
-            .from('profiles')
-            .select('is_admin')
-            .eq('id', session.user.id)
-            .single()
-            .then(({ data: profile }) => setIsAdmin(!!profile?.is_admin))
+          supabase.rpc('is_admin').then(({ data: admin }) => setIsAdmin(!!admin))
       } else {
           setIsAdmin(false)
       }
