@@ -155,11 +155,11 @@ export default async function ToolDetailPage({ params }: PageProps) {
                   modelling={tool.pricing_model as any}
                   hasUpi={tool.has_upi}
                   hasInrBilling={tool.has_inr_billing}
-                  startingPriceInr={tool.starting_price_inr}
-                  startingPriceUsd={tool.starting_price_usd}
+                  startingPriceInr={tool.starting_price_inr ?? undefined}
+                  startingPriceUsd={tool.starting_price_usd ?? undefined}
                   managedBillingEnabled={tool.managed_billing_enabled ?? undefined}
-                  inrPurchaseLink={tool.inr_purchase_link}
-                  convenienceFeePercent={tool.convenience_fee_percent}
+                  inrPurchaseLink={tool.inr_purchase_link ?? undefined}
+                  convenienceFeePercent={tool.convenience_fee_percent ?? undefined}
                 />
               </div>
 
