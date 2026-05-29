@@ -20,6 +20,13 @@ interface StackRecord {
   created_at: string
 }
 
+
+const CHAT_MODELS = [
+  { id: "meta/llama-3.3-70b-instruct",                  name: "Llama 3.3 70B"   },
+  { id: "mistralai/mistral-large-3-675b-instruct-2512", name: "Mistral Large 3" },
+  { id: "moonshotai/kimi-k2.6",                         name: "Kimi K2.6"       },
+]
+
 const STARTERS = [
   "I'm building a SaaS product with AI features",
   "Best stack for an Indian startup on a tight budget",
@@ -130,6 +137,7 @@ export function ChatInterface({ isAuthenticated }: { isAuthenticated: boolean })
   const [streamText, setStreamText] = useState("")
   const [currentStackId, setCurrentStackId] = useState<string | null>(null)
   const [currentTools, setCurrentTools] = useState<string[]>([])
+  const [modelId, setModelId] = useState(CHAT_MODELS[0].id)
   const [feedbackGiven, setFeedbackGiven] = useState<"positive" | "negative" | null>(null)
   const [isSaved, setIsSaved] = useState(false)
   const [history, setHistory] = useState<StackRecord[]>([])
@@ -240,7 +248,7 @@ export function ChatInterface({ isAuthenticated }: { isAuthenticated: boolean })
       const res = await fetch("/api/playground/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: updated }),
+        body: JSON.stringify({ messages: updated, modelId }),
       })
 
       if (!res.ok) {
@@ -333,7 +341,18 @@ export function ChatInterface({ isAuthenticated }: { isAuthenticated: boolean })
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {/* History button */}
+          {/* Model selector */}
+          <select
+            value={modelId}
+            onChange={(e) => setModelId(e.target.value)}
+            className="text-[10px] font-bold px-2.5 py-1.5 rounded-lg outline-none transition-colors"
+            style={{ background: "rgba(140,110,80,0.06)", color: "#7A6A57", border: "1px solid rgba(140,110,80,0.12)" }}
+          >
+            {CHAT_MODELS.map((m) => (
+              <option key={m.id} value={m.id}>{m.name}</option>
+            ))}
+          </select>
+        {/* History button */}
           <button onClick={() => setShowHistory(true)}
             className="relative flex items-center gap-1.5 text-[10px] font-bold px-3 py-1.5 rounded-lg transition-colors hover:bg-gray-50"
             style={{ color: "#A0907E" }}>
