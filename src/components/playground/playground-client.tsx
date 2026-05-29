@@ -526,8 +526,10 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
   const [copied, setCopied] = useState(false)
   const searchParams = useSearchParams()
   const [sessionUsage, setSessionUsage] = useState(profile?.playground_usage_count || 0)
+  const [messages, setMessages] = useState<{role:"user"|"assistant"; content:string}[]>([])
   const outputRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const chatEndRef = useRef<HTMLDivElement>(null)
 
   const isPremium = profile?.is_premium_playground || false
   const hasReachedLimit = !isPremium && sessionUsage >= 10
@@ -603,21 +605,23 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
 
   async function generate() {
     if (!idea.trim() || loading) return
+    const userMsg = { role: "user" as const, content: idea }
+    const updatedMessages = [...messages, userMsg]
+    setMessages(updatedMessages)
     setOutput("")
     setError("")
+    setIdea("")
     setLoading(true)
     setIsSelectingTools(stack.length === 0)
+    setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50)
     
     try {
-      const res = await fetch("/api/playground/generate", {
+      const res = await fetch("/api/playground/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
-          tools: stack.length > 0 ? stack : tools, 
-          productIdea: idea,
-          budget: budget === "" ? 0 : budget,
+          messages: updatedMessages,
           modelId: selectedModelId,
-          usdToInrRate,
         }),
       })
 
@@ -688,11 +692,22 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
         }
       }
       setTimeout(() => outputRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100)
+      // Add AI response to message history
+      if (accumulatedText) {
+        setMessages(prev => [...prev, { role: "assistant", content: accumulatedText }])
+      }
     } catch (err: any) {
       setError(err?.message ?? "Network error — check your connection and try again")
     } finally {
       setLoading(false)
     }
+  }
+
+  function resetChat() {
+    setMessages([])
+    setOutput("")
+    setError("")
+    clear()
   }
 
   async function copyOutput() {
@@ -913,93 +928,100 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
               </div>
             </div>
 
-            <div className="p-6 rounded-3xl space-y-6" style={{ background: "#fff", border: "1px solid rgba(140,110,80,0.1)", boxShadow: "0 20px 50px -12px rgba(140,110,80,0.12)" }}>
-              <div className="space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <label className="text-xs font-bold uppercase tracking-widest flex items-center gap-2" style={{ color: "#A0907E" }}>
-                    <Sparkles size={12} className="text-[#6366f1]" />
-                    Describe your idea
-                  </label>
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
-                    <div className="flex flex-col gap-1.5 w-full sm:w-auto">
-                      <div className="flex items-center gap-2 bg-[rgba(140,110,80,0.04)] px-3 py-1.5 rounded-lg border border-[rgba(140,110,80,0.08)] transition-all focus-within:border-[#6366f1]/30 w-full sm:w-auto">
-                        <span className="text-[10px] font-bold uppercase tracking-tight whitespace-nowrap" style={{ color: "#A0907E" }}>
-                          {budget === "" ? "Budget: Flexible" : "Target Budget"}
-                        </span>
-                        <div className="flex items-center gap-1">
-                          <span className="text-xs font-bold" style={{ color: budget === "" ? "#A0907E" : "#1C1611" }}>₹</span>
-                          <input
-                            type="number"
-                            value={budget}
-                            onChange={e => setBudget(e.target.value === "" ? "" : Number(e.target.value))}
-                            placeholder="Flexible"
-                            className="w-16 bg-transparent outline-none text-xs font-bold"
-                            style={{ color: "#1C1611" }}
-                          />
-                        </div>
+            <div className="rounded-3xl overflow-hidden" style={{ background: "#fff", border: "1px solid rgba(140,110,80,0.1)", boxShadow: "0 20px 50px -12px rgba(140,110,80,0.12)" }}>
+              {/* Chat header */}
+              <div className="flex items-center justify-between px-5 py-3.5" style={{ borderBottom: "1px solid rgba(140,110,80,0.08)" }}>
+                <div className="flex items-center gap-2">
+                  <Sparkles size={12} style={{ color: "#6366f1" }} />
+                  <span className="text-xs font-bold uppercase tracking-widest" style={{ color: "#A0907E" }}>AI Stack Assistant</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <ModelSelector value={selectedModelId} onChange={setSelectedModelId} />
+                  {messages.length > 0 && (
+                    <button onClick={resetChat} className="text-[10px] font-bold px-2.5 py-1.5 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-1" style={{ color: "#A0907E" }}>
+                      <RotateCcw size={10} /> New
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Messages */}
+              <div className="overflow-y-auto px-5 py-4 space-y-3" style={{ minHeight: "120px", maxHeight: "280px" }}>
+                {messages.length === 0 && (
+                  <div className="flex flex-wrap gap-2 py-2">
+                    {SUGGESTIONS.map(s => (
+                      <button key={s} onClick={() => setIdea(s)}
+                        className="text-[10px] font-medium px-3 py-1.5 rounded-full border transition-all hover:bg-[rgba(140,110,80,0.05)]"
+                        style={{ background: "rgba(140,110,80,0.02)", borderColor: "rgba(140,110,80,0.1)", color: "#7A6A57" }}>
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {messages.map((msg, i) => (
+                  <div key={i} className={`flex gap-2.5 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                    {msg.role === "assistant" && (
+                      <div className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: "rgba(99,102,241,0.08)" }}>
+                        <Sparkles size={10} style={{ color: "#6366f1" }} />
                       </div>
-                      <p className="text-[9px] font-medium opacity-60 w-full" style={{ color: "#7A6A57" }}>
-                        {budget === "" ? "AI will suggest an optimal budget based on tools" : "AI will suggest a stack that fits this budget"}
-                      </p>
-                    </div>
-                    <div className="w-full sm:w-auto">
-                      <ModelSelector value={selectedModelId} onChange={setSelectedModelId} />
+                    )}
+                    <div className="max-w-[85%] px-3.5 py-2.5 text-xs leading-relaxed"
+                      style={{
+                        background: msg.role === "user" ? "#1C1611" : "rgba(140,110,80,0.05)",
+                        color: msg.role === "user" ? "#fff" : "#1C1611",
+                        borderRadius: msg.role === "user" ? "1rem 1rem 0.25rem 1rem" : "1rem 1rem 1rem 0.25rem",
+                      }}>
+                      {msg.content.replace(/\[STACK:[^\]]+\]/gi, "").trim()}
                     </div>
                   </div>
+                ))}
+                {loading && !output && (
+                  <div className="flex gap-2.5">
+                    <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: "rgba(99,102,241,0.08)" }}>
+                      <Sparkles size={10} style={{ color: "#6366f1" }} />
+                    </div>
+                    <div className="px-3.5 py-2.5 rounded-2xl flex items-center gap-2" style={{ background: "rgba(140,110,80,0.05)", borderRadius: "1rem 1rem 1rem 0.25rem" }}>
+                      <Loader2 size={11} className="animate-spin" style={{ color: "#6366f1" }} />
+                      <span className="text-xs" style={{ color: "#A0907E" }}>{isSelectingTools ? "Searching tools..." : "Thinking..."}</span>
+                    </div>
+                  </div>
+                )}
+                <div ref={chatEndRef} />
+              </div>
+
+              {/* Input row */}
+              <div className="px-4 pb-4 pt-2" style={{ borderTop: "1px solid rgba(140,110,80,0.07)" }}>
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg" style={{ background: "rgba(140,110,80,0.04)", border: "1px solid rgba(140,110,80,0.08)" }}>
+                    <span className="text-[10px] font-bold" style={{ color: "#A0907E" }}>₹</span>
+                    <input type="number" value={budget} onChange={e => setBudget(e.target.value === "" ? "" : Number(e.target.value))}
+                      placeholder="Budget" className="w-14 bg-transparent outline-none text-[10px] font-bold" style={{ color: "#1C1611" }} />
+                  </div>
+                  <span className="text-[10px]" style={{ color: "#C4B0A0" }}>
+                    {budget === "" ? "Flexible budget" : "Target budget set"}
+                  </span>
                 </div>
-                
-                <div className="relative group">
+                <div className="flex items-end gap-2 px-3.5 py-2.5 rounded-2xl" style={{ background: "rgba(140,110,80,0.04)", border: "1px solid rgba(140,110,80,0.12)" }}>
                   <textarea
                     ref={textareaRef}
                     value={idea}
                     onChange={e => setIdea(e.target.value)}
-                    placeholder="E.g. I want to build a real-time analytics dashboard for D2C brands in India using Shopify data..."
-                    className="w-full min-h-[160px] p-5 rounded-2xl outline-none transition-all duration-300 resize-none text-[0.9375rem] leading-relaxed"
-                    style={{
-                      background: "rgba(140,110,80,0.03)",
-                      border: "1px solid rgba(140,110,80,0.1)",
-                      color: "#1C1611",
-                    }}
+                    onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); generate() } }}
+                    placeholder="Describe what you're building..."
+                    rows={1}
+                    className="flex-1 bg-transparent outline-none resize-none text-sm leading-relaxed"
+                    style={{ color: "#1C1611", minHeight: "24px", maxHeight: "100px" }}
                   />
-                  <div className="absolute bottom-4 right-4 flex items-center gap-2 opacity-0 group-focus-within:opacity-100 transition-opacity">
-                    <span className="text-[10px] font-medium" style={{ color: "#C4B0A0" }}>Press ⌘+Enter to build</span>
-                  </div>
+                  <button onClick={generate} disabled={!canGenerate}
+                    className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 transition-all disabled:opacity-30"
+                    style={{ background: canGenerate ? "#1C1611" : "rgba(140,110,80,0.1)" }}>
+                    {loading
+                      ? <Loader2 size={13} className="animate-spin" style={{ color: "#7A6A57" }} />
+                      : <Sparkles size={13} style={{ color: canGenerate ? "#fff" : "#A0907E" }} />
+                    }
+                  </button>
                 </div>
-              </div>
-
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-2">
-                <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-                  {SUGGESTIONS.map(s => (
-                    <button
-                      key={s}
-                      onClick={() => setIdea(s)}
-                      className="text-[10px] font-medium px-3 py-1.5 rounded-full border transition-all duration-150 hover:bg-[rgba(140,110,80,0.05)]"
-                      style={{ background: "#fff", borderColor: "rgba(140,110,80,0.1)", color: "#7A6A57" }}
-                    >
-                      {s}
-                    </button>
-                  ))}
-                </div>
-
-                <button
-                  onClick={generate}
-                  disabled={!canGenerate}
-                  title={!canGenerate ? (idea.trim().length === 0 ? "Describe your idea to generate a plan" : hasReachedLimit ? "Usage limit reached" : "Please fill in all details") : "Generate build plan"}
-                  className="w-full sm:w-auto flex items-center justify-center sm:justify-start gap-2 px-5 py-3 sm:py-2.5 rounded-xl font-bold text-sm transition-all duration-200 disabled:opacity-35 disabled:cursor-not-allowed group shadow-sm hover:shadow-md shrink-0"
-                  style={{
-                    background: canGenerate ? "#1C1611" : "rgba(140,110,80,0.1)",
-                    color: canGenerate ? "#fff" : "#A0907E",
-                  }}
-                >
-                  {loading ? (
-                    <><Loader2 size={13} className="animate-spin" /> {isSelectingTools ? "Architecting..." : "Generating…"}</>
-                  ) : (
-                    <>
-                      <Sparkles size={13} className={canGenerate ? "text-[#6366f1] group-hover:scale-110 transition-transform" : "opacity-40"} />
-                      Build Roadmap
-                    </>
-                  )}
-                </button>
+                <p className="text-[10px] text-center mt-1.5" style={{ color: "#C4B0A0" }}>Enter to send · Shift+Enter for new line</p>
               </div>
             </div>
           </div>
