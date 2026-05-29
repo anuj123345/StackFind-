@@ -101,7 +101,9 @@ const SUGGESTIONS = [
 
 function MarkdownOutput({ text }: { text: string }) {
   const html = useMemo(() => {
-    let out = text.replace(/\[\s*STACK:[\s\S]*?\]/gi, "")
+    let out = text
+      .replace(/%%MASTER_STACK_START%%[\s\S]*?(%%MASTER_STACK_END%%|$)/g, "")
+      .replace(/\[\s*STACK:[\s\S]*?\]/gi, "")
     out = out.replace(/\|(.+)\|\n\|[-| :]+\|\n((?:\|.+\|\n?)*)/g, (_, header, rows) => {
       const ths = header.split("|").filter((c: string) => c.trim()).map((c: string) =>
         `<th class="pg-th">${c.trim()}</th>`).join("")
@@ -709,7 +711,9 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
         
         const chunk = decoder.decode(value, { stream: true })
         accumulatedText += chunk
-        setOutput(accumulatedText)
+        // Strip MASTER_STACK block from visible output
+        const visibleText = accumulatedText.replace(/%%MASTER_STACK_START%%[\s\S]*?(%%MASTER_STACK_END%%|$)/g, "").trim()
+        setOutput(visibleText)
         
         // Check for [STACK: slug1, slug2] and update the UI
         if (!stackProcessed && (accumulatedText.includes("[STACK:") || accumulatedText.includes("[STACK:"))) {
@@ -849,7 +853,8 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
 
       // Add AI response to message history
       if (accumulatedText) {
-        setMessages(prev => [...prev, { role: "assistant", content: accumulatedText }])
+        const cleanContent = accumulatedText.replace(/%%MASTER_STACK_START%%[\s\S]*?(%%MASTER_STACK_END%%|$)/g, "").replace(/\[\s*STACK:[\s\S]*?\]/gi, "").trim()
+        setMessages(prev => [...prev, { role: "assistant", content: cleanContent }])
       }
     } catch (err: any) {
       setError(err?.message ?? "Network error — check your connection and try again")
@@ -1127,7 +1132,7 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
                         color: msg.role === "user" ? "#fff" : "#1C1611",
                         borderRadius: msg.role === "user" ? "1rem 1rem 0.25rem 1rem" : "1rem 1rem 1rem 0.25rem",
                       }}>
-                      {msg.content.replace(/\[STACK:[^\]]+\]/gi, "").trim()}
+                      {msg.content.replace(/%%MASTER_STACK_START%%[\s\S]*?(%%MASTER_STACK_END%%|$)/g, "").replace(/\[STACK:[^\]]+\]/gi, "").trim()}
                     </div>
                   </div>
                 ))}
