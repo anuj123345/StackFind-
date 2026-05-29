@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server"
 import { StateGraph, Annotation, END, START } from "@langchain/langgraph"
 import { AIMessage, BaseMessage, HumanMessage, SystemMessage } from "@langchain/core/messages"
-import { ChatAnthropic } from "@langchain/anthropic"
+import { ChatOpenAI } from "@langchain/openai"
 import { tool } from "@langchain/core/tools"
 import { ToolNode } from "@langchain/langgraph/prebuilt"
 import { z } from "zod"
@@ -118,10 +118,14 @@ function shouldContinue({ messages }: typeof AgentState.State): "tools" | typeof
 }
 
 async function runAgent({ messages }: typeof AgentState.State) {
-  const model = new ChatAnthropic({
-    model: "claude-3-5-haiku-20241022",
-    apiKey: process.env.ANTHROPIC_API_KEY!,
+  const model = new ChatOpenAI({
+    model: "meta/llama-3.3-70b-instruct",
+    apiKey: process.env.NVIDIA_API_KEY!,
+    configuration: {
+      baseURL: "https://integrate.api.nvidia.com/v1",
+    },
     streaming: true,
+    maxTokens: 2000,
   }).bindTools(agentTools)
 
   const response = await model.invoke(messages)

@@ -187,7 +187,7 @@ export function ChatInterface({ isAuthenticated }: ChatInterfaceProps) {
               StackFind AI
             </p>
             <p className="text-[10px]" style={{ color: "#C4B0A0" }}>
-              LangGraph · searches 2500+ tools
+              LangGraph · Llama 3.3 70B · 2500+ tools
             </p>
           </div>
         </div>
