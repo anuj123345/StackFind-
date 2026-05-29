@@ -7,140 +7,180 @@ export const maxDuration = 60
 
 // ─── NVIDIA NIM client ────────────────────────────────────────────────────────
 
-function getNimClient() {
+function nimClient() {
   return new OpenAI({
     apiKey: process.env.NVIDIA_API_KEY!,
     baseURL: "https://integrate.api.nvidia.com/v1",
   })
 }
 
-// ─── Available models ─────────────────────────────────────────────────────────
+// ─── Model configs — each has a distinct personality and output format ────────
 
-export const CHAT_MODELS = [
-  { id: "meta/llama-3.3-70b-instruct",                   name: "Llama 3.3 70B"   },
-  { id: "mistralai/mistral-large-3-675b-instruct-2512",  name: "Mistral Large 3" },
-  { id: "moonshotai/kimi-k2.6",                          name: "Kimi K2.6"       },
-]
+const MODEL_CONFIGS: Record<string, { label: string; systemPrompt: string }> = {
+  "meta/llama-3.3-70b-instruct": {
+    label: "Stack Architect",
+    systemPrompt: `You are Stack Architect — a senior solution architect who gives structured, complete tech stack recommendations.
 
-// ─── Tool definitions (OpenAI format) ────────────────────────────────────────
+ALWAYS start your response with a stack declaration on the very first line:
+[STACK: slug1, slug2, slug3, slug4, slug5]
+Use only slugs from the AVAILABLE TOOLS list.
 
-const tools: OpenAI.Chat.ChatCompletionTool[] = [
-  {
-    type: "function",
-    function: {
-      name: "search_tools",
-      description:
-        "Search StackFind's database of 2500+ AI tools by name, use case, or description. " +
-        "Run multiple searches for different categories — e.g. 'auth', 'database', 'payments' separately.",
-      parameters: {
-        type: "object",
-        properties: {
-          query: {
-            type: "string",
-            description: "What to search for — tool name, use case, or category",
-          },
-          limit: {
-            type: "number",
-            description: "Max results to return. Default 8.",
-          },
-        },
-        required: ["query"],
-      },
-    },
+Then format your response EXACTLY like this:
+
+## 🏗️ Recommended Stack
+
+| Category | Tool | Pricing | Why |
+|----------|------|---------|-----|
+| [category] | [Tool Name] | [Free/Freemium/Paid] | [one line reason] |
+
+## 📐 Architecture Overview
+[2-3 sentences on how the tools connect and work together]
+
+## 🚀 Implementation Order
+1. **[Tool]** — [why start here]
+2. **[Tool]** — [what it unlocks]
+3. **[Tool]** — [when to add this]
+
+## 💰 Monthly Cost Estimate
+- MVP stage: ₹[X] — [what's free vs paid]
+- Growth stage: ₹[X] — [what scales]
+
+Be specific. Be opinionated. No vague answers.`,
   },
-  {
-    type: "function",
-    function: {
-      name: "get_tool_details",
-      description:
-        "Get detailed info about specific tools by their slugs. Use after search_tools to compare before recommending.",
-      parameters: {
-        type: "object",
-        properties: {
-          slugs: {
-            type: "array",
-            items: { type: "string" },
-            description: "Array of tool slugs from previous search results",
-          },
-        },
-        required: ["slugs"],
-      },
-    },
+
+  "mistralai/mistral-large-3-675b-instruct-2512": {
+    label: "Quick Builder",
+    systemPrompt: `You are Quick Builder — fast, opinionated stack advice with zero fluff. Get to the point.
+
+ALWAYS start your response with a stack declaration on the very first line:
+[STACK: slug1, slug2, slug3, slug4]
+Use only slugs from the AVAILABLE TOOLS list.
+
+Then format your response EXACTLY like this:
+
+## ⚡ Your Stack
+
+**[Tool]** → [category, one-line reason]
+**[Tool]** → [category, one-line reason]
+**[Tool]** → [category, one-line reason]
+
+## 🔀 If You Want Alternatives
+| Instead of... | Try... | When |
+|---------------|--------|------|
+| [tool] | [alt tool] | [condition] |
+
+## 📋 Ship It In This Order
+1. **Day 1** — [tool]: [exact first step]
+2. **Week 1** — [tool]: [what to add next]
+3. **Month 1** — [tool]: [final integration]
+
+## 💡 One Thing Most Builders Miss
+[One sharp, specific insight for this exact use case]
+
+Short. Sharp. Actionable.`,
   },
-]
 
-// ─── Tool execution ───────────────────────────────────────────────────────────
+  "moonshotai/kimi-k2.6": {
+    label: "Deep Analyst",
+    systemPrompt: `You are Deep Analyst — you reason through stack decisions with depth, covering trade-offs, risks, and future-proofing. Think before recommending.
 
-async function executeTool(name: string, args: Record<string, unknown>): Promise<string> {
-  const supabase = await createClient()
+ALWAYS start your response with a stack declaration on the very first line:
+[STACK: slug1, slug2, slug3, slug4]
+Use only slugs from the AVAILABLE TOOLS list.
 
-  if (name === "search_tools") {
-    const query = args.query as string
-    const limit = (args.limit as number) || 8
+Then format your response EXACTLY like this:
 
-    const { data, error } = await supabase
-      .from("tools")
-      .select(
-        "slug, name, tagline, pricing_model, starting_price_usd, starting_price_inr, is_made_in_india, tool_categories(categories(slug, name))"
-      )
-      .eq("status", "approved")
-      .or(`name.ilike.%${query}%,tagline.ilike.%${query}%,description.ilike.%${query}%`)
-      .limit(limit)
+## 🎯 Recommended Stack
 
-    if (error) return `Search error: ${error.message}`
-    if (!data?.length) return `No tools found for: "${query}"`
+[Explain in 2 sentences why this specific combination fits this specific use case — not generic]
 
-    return JSON.stringify(
-      data.map((t: any) => ({
-        slug: t.slug,
-        name: t.name,
-        tagline: t.tagline,
-        pricing_model: t.pricing_model,
-        starting_price_usd: t.starting_price_usd,
-        starting_price_inr: t.starting_price_inr,
-        is_made_in_india: t.is_made_in_india,
-        categories: (t.tool_categories || [])
-          .map((tc: any) => tc.categories?.name)
-          .filter(Boolean),
-      }))
-    )
-  }
+## 🧠 Why Each Tool
 
-  if (name === "get_tool_details") {
-    const slugs = args.slugs as string[]
-    const { data, error } = await supabase
-      .from("tools")
-      .select(
-        "slug, name, tagline, description, pricing_model, starting_price_usd, starting_price_inr, website, has_inr_billing, has_upi, is_made_in_india"
-      )
-      .in("slug", slugs)
-      .eq("status", "approved")
+**[Tool]**: [Why this over alternatives — be specific about the trade-off made]
+**[Tool]**: [Why this over alternatives — be specific about the trade-off made]
+**[Tool]**: [Why this over alternatives — be specific about the trade-off made]
 
-    if (error) return `Error: ${error.message}`
-    return JSON.stringify(data || [])
-  }
+## ⚖️ Trade-offs You Should Know
+| Tool | Strength for this project | Risk to watch |
+|------|--------------------------|---------------|
+| [tool] | [specific strength] | [specific risk] |
 
-  return "Unknown tool"
+## 🔮 How This Scales
+- **100 users**: [what's fine, what needs attention]
+- **10K users**: [what changes, what breaks first]
+- **What you'd replace at scale**: [honest answer]
+
+## 🚨 Biggest Risk For This Project
+[One specific, honest warning — not generic advice]`,
+  },
 }
 
-// ─── System prompt ────────────────────────────────────────────────────────────
+// ─── Pre-fetch relevant tools from Supabase ───────────────────────────────────
 
-const SYSTEM_PROMPT = `You are StackFind AI — a senior software architect helping developers and founders pick the right AI tools and tech stack for their projects.
+async function fetchRelevantTools(userQuery: string) {
+  const supabase = await createClient()
 
-You have access to a real database of 2500+ curated tools via search_tools and get_tool_details.
+  // Extract search terms from the query
+  const terms = userQuery
+    .toLowerCase()
+    .replace(/[^a-z0-9 ]/g, " ")
+    .split(" ")
+    .filter((w) => w.length > 3)
+    .slice(0, 6)
 
-Your workflow:
-1. Understand what the user is building
-2. Run multiple targeted searches — one per category needed (auth, database, AI, payments, deployment, etc.)
-3. Compare results and recommend the best coherent stack
-4. Be specific and opinionated — one clear recommendation per category with reasoning
-5. Handle follow-up questions naturally
+  // Run parallel searches for different aspects
+  const searches = await Promise.all([
+    // Broad semantic match
+    supabase
+      .from("tools")
+      .select("slug, name, tagline, pricing_model, starting_price_usd, starting_price_inr, is_made_in_india, tool_categories(categories(name))")
+      .eq("status", "approved")
+      .or(terms.map((t) => `name.ilike.%${t}%,tagline.ilike.%${t}%,description.ilike.%${t}%`).join(","))
+      .limit(20),
 
-Rules:
-- Always search before recommending. Never recommend from memory alone.
-- Mention pricing tier (free/freemium/paid) for every tool
-- Format the final stack clearly: **Tool Name** → what it does in this project
-- Keep answers concise and actionable. No padding.`
+    // Always fetch core infra tools
+    supabase
+      .from("tools")
+      .select("slug, name, tagline, pricing_model, starting_price_usd, starting_price_inr, is_made_in_india, tool_categories(categories(name))")
+      .eq("status", "approved")
+      .in("tool_categories.categories.slug", ["auth", "database", "deployment", "payments", "backend-db"])
+      .order("upvotes", { ascending: false })
+      .limit(30),
+  ])
+
+  // Merge and deduplicate
+  const allTools = [
+    ...(searches[0].data || []),
+    ...(searches[1].data || []),
+  ]
+  const seen = new Set<string>()
+  const unique = allTools.filter((t) => {
+    if (seen.has(t.slug)) return false
+    seen.add(t.slug)
+    return true
+  })
+
+  return unique.slice(0, 50)
+}
+
+// ─── Format tools for prompt context ─────────────────────────────────────────
+
+function formatToolsForPrompt(tools: any[]): string {
+  return tools
+    .map((t) => {
+      const categories = (t.tool_categories || [])
+        .map((tc: any) => tc.categories?.name)
+        .filter(Boolean)
+        .join(", ")
+      const price = t.starting_price_inr
+        ? `₹${t.starting_price_inr}/mo`
+        : t.starting_price_usd
+        ? `$${t.starting_price_usd}/mo`
+        : "Free"
+      return `- ${t.name} (slug: ${t.slug}) [${categories}] · ${t.pricing_model} · ${price}: ${t.tagline}`
+    })
+    .join("\n")
+}
 
 // ─── Route handler ────────────────────────────────────────────────────────────
 
@@ -156,62 +196,63 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: "No messages provided" }, { status: 400 })
     }
 
-    const model = CHAT_MODELS.find((m) => m.id === modelId)?.id || CHAT_MODELS[0].id
-    const nim = getNimClient()
+    const model =
+      modelId && MODEL_CONFIGS[modelId] ? modelId : "meta/llama-3.3-70b-instruct"
+    const config = MODEL_CONFIGS[model]
 
-    // Build message history
+    // Get the last user message for tool fetching
+    const lastUserMsg =
+      [...clientMessages].reverse().find((m: any) => m.role === "user")?.content || ""
+
+    // Pre-fetch relevant tools
+    const relevantTools = await fetchRelevantTools(lastUserMsg)
+    const toolsContext = formatToolsForPrompt(relevantTools)
+
+    // Build messages with tool context injected
+    const systemMessage = `${config.systemPrompt}
+
+---
+AVAILABLE TOOLS (ONLY recommend from this list — use exact slugs):
+${toolsContext}
+---`
+
     const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
-      { role: "system", content: SYSTEM_PROMPT },
+      { role: "system", content: systemMessage },
       ...clientMessages.map((m: { role: string; content: string }) => ({
         role: m.role as "user" | "assistant",
         content: m.content,
       })),
     ]
 
+    const client = nimClient()
     const encoder = new TextEncoder()
 
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          // Agent loop: run up to 5 iterations (call → tool → call → ...)
-          for (let i = 0; i < 5; i++) {
-            const response = await nim.chat.completions.create({
-              model,
-              messages,
-              tools,
-              tool_choice: "auto",
-              max_tokens: 2000,
-            })
+          // Use streaming API for real-time output
+          const streamResponse = await client.chat.completions.create({
+            model,
+            messages,
+            max_tokens: 2000,
+            stream: true,
+            temperature: 0.7,
+          })
 
-            const message = response.choices[0].message
-
-            // No tool calls — stream final response
-            if (!message.tool_calls?.length) {
-              const content = message.content || ""
+          for await (const chunk of streamResponse) {
+            const content = chunk.choices[0]?.delta?.content
+            if (content) {
               controller.enqueue(encoder.encode(content))
-              break
-            }
-
-            // Execute tool calls
-            messages.push(message)
-
-            for (const toolCall of message.tool_calls) {
-              const fn = (toolCall as any).function
-              const args = JSON.parse(fn.arguments)
-              const result = await executeTool(fn.name, args)
-              messages.push({
-                role: "tool",
-                tool_call_id: toolCall.id,
-                content: result,
-              })
             }
           }
 
           controller.close()
         } catch (err: any) {
-          console.error("Chat agent error:", err)
+          console.error("Chat stream error:", err?.message)
           controller.enqueue(
-            encoder.encode(`\n\nSomething went wrong: ${err.message}`)
+            encoder.encode(
+              "\n\nError connecting to AI. Please try again or switch models."
+            )
           )
           controller.close()
         }
