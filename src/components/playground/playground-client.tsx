@@ -539,68 +539,66 @@ interface MasterStackTool {
 
 type MasterStack = Record<string, MasterStackTool[]>
 
-function normalizeKey(s: string): string {
-  return s.toLowerCase().replace(/[^a-z0-9]/g, "")
-}
-
-function parseMasterStack(text: string, allTools: PlaygroundTool[]): MasterStack | null {
-  // Try with END tag first, then without (handles token-limit cutoff)
+// Parse MASTER_STACK JSON — returns raw structure with slugs
+function parseMasterStackRaw(text: string): Record<string, {name: string; slug: string; pricing: string; website?: string}[]> | null {
   let match = text.match(/%%MASTER_STACK_START%%\s*([\s\S]*?)%%MASTER_STACK_END%%/)
-  if (!match) {
-    match = text.match(/%%MASTER_STACK_START%%\s*([\s\S]*)$/)
-  }
+  if (!match) match = text.match(/%%MASTER_STACK_START%%\s*([\s\S]*)$/)
   if (!match) return null
 
-  // Extract JSON — find the {...} block even if there's trailing garbage
   const rawBlock = match[1].trim()
   const jsonStart = rawBlock.indexOf("{")
   const jsonEnd = rawBlock.lastIndexOf("}")
   if (jsonStart === -1 || jsonEnd === -1) return null
-  const jsonStr = rawBlock.slice(jsonStart, jsonEnd + 1)
 
   try {
-    const json = JSON.parse(jsonStr)
-    const bySlug = new Map(allTools.map(t => [t.slug, t]))
-    const byName = new Map(allTools.map(t => [t.name.toLowerCase(), t]))
-    // Fuzzy: normalize name (remove spaces, hyphens, case)
-    const byFuzzy = new Map(allTools.map(t => [normalizeKey(t.name), t]))
-    const bySlugFuzzy = new Map(allTools.map(t => [normalizeKey(t.slug), t]))
+    const json = JSON.parse(rawBlock.slice(jsonStart, jsonEnd + 1))
+    // Validate it's a category → tools array structure
+    if (typeof json !== "object" || Array.isArray(json)) return null
+    return json
+  } catch {
+    return null
+  }
+}
+
+// Resolve slugs from DB via API — guaranteed accurate
+async function resolveStackFromDB(
+  rawStack: Record<string, {name: string; slug: string; pricing: string; website?: string}[]>
+): Promise<MasterStack> {
+  // Collect all slugs
+  const allSlugs = Object.values(rawStack).flat().map(t => t.slug).filter(Boolean)
+  if (!allSlugs.length) return {}
+
+  try {
+    const res = await fetch("/api/tools/resolve", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ slugs: allSlugs }),
+    })
+    const { toolMap = {} } = await res.json()
 
     const result: MasterStack = {}
-    for (const [category, toolList] of Object.entries(json)) {
-      if (!Array.isArray(toolList)) continue
-      result[category] = (toolList as any[]).map(t => {
-        const nameLower = (t.name || "").toLowerCase()
-        const db = bySlug.get(t.slug)
-          || byName.get(nameLower)
-          || byFuzzy.get(normalizeKey(t.name || ""))
-          || bySlugFuzzy.get(normalizeKey(t.slug || ""))
-        if (db) {
-          return {
-            name: db.name, slug: db.slug, pricing: db.pricing_model,
-            website: db.website, logoUrl: db.logo_url, fromDB: true,
-            startingPriceUsd: db.starting_price_usd,
-            startingPriceInr: db.starting_price_inr,
-            managedBillingEnabled: db.managed_billing_enabled,
-            convenienceFeePercent: db.convenience_fee_percent,
-          }
-        }
-        // Default mapper — tool not in DB, use JSON data as-is
+    for (const [category, tools] of Object.entries(rawStack)) {
+      if (!Array.isArray(tools)) continue
+      const resolved = (tools as any[]).map(t => {
+        const db = toolMap[t.slug?.toLowerCase?.() || ""]
+        if (db) return { ...db, fromDB: true }
+        // Not in DB — use AI-provided data, keep as external
         return {
           name: t.name || "Unknown",
-          slug: t.slug || (t.name || "").toLowerCase().replace(/[^a-z0-9]/g, "-"),
+          slug: t.slug || "",
           pricing: t.pricing || "unknown",
           website: t.website || null,
           aiWebsite: t.website || null,
           logoUrl: null, fromDB: false,
           startingPriceUsd: null, startingPriceInr: null,
           managedBillingEnabled: null, convenienceFeePercent: null,
-        }
+        } as MasterStackTool
       })
+      if (resolved.length > 0) result[category] = resolved
     }
-    return Object.keys(result).length > 0 ? result : null
+    return result
   } catch {
-    return null
+    return {}
   }
 }
 
@@ -864,26 +862,28 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
         }
       }
 
-      // Parse master stack JSON from complete response
+      // Parse + resolve master stack via DB API (no client-side matching)
       if (accumulatedText) {
-        const parsed = parseMasterStack(accumulatedText, tools)
-        if (parsed) {
-          setMasterStack(parsed)
-          // Also sync useStack with DB-matched tools for billing
-          const allMasterTools = (Object.values(parsed).flat() as MasterStackTool[])
-          const dbTools = allMasterTools
-            .filter(t => t.fromDB)
-            .map(t => ({
-              slug: t.slug, name: t.name, tagline: "",
-              website: t.website, logoUrl: t.logoUrl,
-              pricingModel: t.pricing as any,
-              startingPriceUsd: t.startingPriceUsd,
-              startingPriceInr: t.startingPriceInr,
-              managedBillingEnabled: t.managedBillingEnabled,
-              convenienceFeePercent: t.convenienceFeePercent,
-              categories: [],
-            }))
-          if (dbTools.length > 0) setFullStack(dbTools as any)
+        const raw = parseMasterStackRaw(accumulatedText)
+        if (raw) {
+          const resolved = await resolveStackFromDB(raw)
+          if (Object.keys(resolved).length > 0) {
+            setMasterStack(resolved)
+            // Sync DB-matched tools to useStack for billing
+            const dbTools = (Object.values(resolved).flat() as MasterStackTool[])
+              .filter(t => t.fromDB)
+              .map(t => ({
+                slug: t.slug, name: t.name, tagline: "",
+                website: t.website, logoUrl: t.logoUrl,
+                pricingModel: t.pricing as any,
+                startingPriceUsd: t.startingPriceUsd,
+                startingPriceInr: t.startingPriceInr,
+                managedBillingEnabled: t.managedBillingEnabled,
+                convenienceFeePercent: t.convenienceFeePercent,
+                categories: [],
+              }))
+            if (dbTools.length > 0) setFullStack(dbTools as any)
+          }
         }
       }
 
