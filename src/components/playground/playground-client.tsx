@@ -530,6 +530,7 @@ interface MasterStackTool {
   website?: string | null
   logoUrl?: string | null
   fromDB: boolean
+  aiWebsite?: string | null  // website from AI JSON when not in DB
   startingPriceUsd?: number | null
   startingPriceInr?: number | null
   managedBillingEnabled?: boolean | null
@@ -538,20 +539,42 @@ interface MasterStackTool {
 
 type MasterStack = Record<string, MasterStackTool[]>
 
+function normalizeKey(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9]/g, "")
+}
+
 function parseMasterStack(text: string, allTools: PlaygroundTool[]): MasterStack | null {
-  const match = text.match(/%%MASTER_STACK_START%%\s*([\s\S]*?)%%MASTER_STACK_END%%/)
+  // Try with END tag first, then without (handles token-limit cutoff)
+  let match = text.match(/%%MASTER_STACK_START%%\s*([\s\S]*?)%%MASTER_STACK_END%%/)
+  if (!match) {
+    match = text.match(/%%MASTER_STACK_START%%\s*([\s\S]*)$/)
+  }
   if (!match) return null
 
+  // Extract JSON — find the {...} block even if there's trailing garbage
+  const rawBlock = match[1].trim()
+  const jsonStart = rawBlock.indexOf("{")
+  const jsonEnd = rawBlock.lastIndexOf("}")
+  if (jsonStart === -1 || jsonEnd === -1) return null
+  const jsonStr = rawBlock.slice(jsonStart, jsonEnd + 1)
+
   try {
-    const json = JSON.parse(match[1].trim())
+    const json = JSON.parse(jsonStr)
     const bySlug = new Map(allTools.map(t => [t.slug, t]))
     const byName = new Map(allTools.map(t => [t.name.toLowerCase(), t]))
+    // Fuzzy: normalize name (remove spaces, hyphens, case)
+    const byFuzzy = new Map(allTools.map(t => [normalizeKey(t.name), t]))
+    const bySlugFuzzy = new Map(allTools.map(t => [normalizeKey(t.slug), t]))
 
     const result: MasterStack = {}
     for (const [category, toolList] of Object.entries(json)) {
       if (!Array.isArray(toolList)) continue
       result[category] = (toolList as any[]).map(t => {
-        const db = bySlug.get(t.slug) || byName.get((t.name || "").toLowerCase())
+        const nameLower = (t.name || "").toLowerCase()
+        const db = bySlug.get(t.slug)
+          || byName.get(nameLower)
+          || byFuzzy.get(normalizeKey(t.name || ""))
+          || bySlugFuzzy.get(normalizeKey(t.slug || ""))
         if (db) {
           return {
             name: db.name, slug: db.slug, pricing: db.pricing_model,
@@ -567,7 +590,9 @@ function parseMasterStack(text: string, allTools: PlaygroundTool[]): MasterStack
           name: t.name || "Unknown",
           slug: t.slug || (t.name || "").toLowerCase().replace(/[^a-z0-9]/g, "-"),
           pricing: t.pricing || "unknown",
-          website: null, logoUrl: null, fromDB: false,
+          website: t.website || null,
+          aiWebsite: t.website || null,
+          logoUrl: null, fromDB: false,
           startingPriceUsd: null, startingPriceInr: null,
           managedBillingEnabled: null, convenienceFeePercent: null,
         }
@@ -1235,11 +1260,18 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
                               )}
                               <div>
                                 <p className="text-xs font-bold leading-tight" style={{ color: "#1C1611" }}>{tool.name}</p>
-                                <p className="text-[9px]" style={{ color: tool.fromDB ? "#C4B0A0" : "#6366f1" }}>
-                                  {tool.fromDB
-                                    ? (tool.pricing === "free" ? "Free" : tool.pricing === "freemium" ? "Freemium" : tool.startingPriceInr ? `₹${tool.startingPriceInr}/mo` : tool.startingPriceUsd ? `$${tool.startingPriceUsd}/mo` : "Paid")
-                                    : "Explore →"}
-                                </p>
+                                {tool.fromDB ? (
+                                  <p className="text-[9px]" style={{ color: "#C4B0A0" }}>
+                                    {tool.pricing === "free" ? "Free" : tool.pricing === "freemium" ? "Freemium" : tool.startingPriceInr ? `₹${tool.startingPriceInr}/mo` : tool.startingPriceUsd ? `$${tool.startingPriceUsd}/mo` : "Paid"}
+                                  </p>
+                                ) : (
+                                  <a href={tool.aiWebsite || tool.website || `https://www.google.com/search?q=${encodeURIComponent(tool.name)}`}
+                                    target="_blank" rel="noopener noreferrer"
+                                    className="text-[9px] hover:underline" style={{ color: "#6366f1" }}
+                                    onClick={e => e.stopPropagation()}>
+                                    Explore →
+                                  </a>
+                                )}
                               </div>
                             </div>
                             {tool.fromDB && (

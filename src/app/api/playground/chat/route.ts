@@ -50,11 +50,16 @@ Be specific. Be opinionated. No vague answers.
 After your complete response, on a new line output this exact block with EVERY tool you mentioned:
 %%MASTER_STACK_START%%
 {
-  "Category Name": [{"name": "Tool Name", "slug": "tool-slug", "pricing": "free|freemium|paid"}],
-  "Another Category": [{"name": "Tool Name", "slug": "tool-slug", "pricing": "freemium"}]
+  "Frontend": [{"name": "Tool Name", "slug": "tool-slug", "pricing": "free", "website": "https://..."}],
+  "Database": [{"name": "Tool Name", "slug": "tool-slug", "pricing": "freemium", "website": "https://..."}]
 }
 %%MASTER_STACK_END%%
-Rules: Include ALL tools from your response. Use the exact slug from AVAILABLE TOOLS. Categories reflect function (e.g. "Frontend", "Database", "Auth", "Payments", "AI/ML", "DevTools", "Analytics", "Email", "Marketing"). Valid JSON only.`,
+Rules:
+- Include ALL tools you mention in your response
+- Use the exact slug from AVAILABLE TOOLS list — copy it exactly
+- If a tool is not in AVAILABLE TOOLS, use its common slug format (lowercase, hyphens)
+- Use ONLY these standard categories: "Frontend", "Backend", "Database", "Auth", "Payments", "AI/ML", "DevTools", "Analytics", "Email", "Marketing", "Storage", "Hosting", "Communication", "Design", "Productivity"
+- Valid JSON only — no trailing commas, no comments`,
   },
 
   "mistralai/mistral-large-3-675b-instruct-2512": {
@@ -91,11 +96,16 @@ Short. Sharp. Actionable.
 After your complete response, on a new line output this exact block with EVERY tool you mentioned:
 %%MASTER_STACK_START%%
 {
-  "Category Name": [{"name": "Tool Name", "slug": "tool-slug", "pricing": "free|freemium|paid"}],
-  "Another Category": [{"name": "Tool Name", "slug": "tool-slug", "pricing": "freemium"}]
+  "Frontend": [{"name": "Tool Name", "slug": "tool-slug", "pricing": "free", "website": "https://..."}],
+  "Database": [{"name": "Tool Name", "slug": "tool-slug", "pricing": "freemium", "website": "https://..."}]
 }
 %%MASTER_STACK_END%%
-Rules: Include ALL tools from your response. Use the exact slug from AVAILABLE TOOLS. Categories reflect function (e.g. "Frontend", "Database", "Auth", "Payments", "AI/ML", "DevTools", "Analytics", "Email", "Marketing"). Valid JSON only.`,
+Rules:
+- Include ALL tools you mention in your response
+- Use the exact slug from AVAILABLE TOOLS list — copy it exactly
+- If a tool is not in AVAILABLE TOOLS, use its common slug format (lowercase, hyphens)
+- Use ONLY these standard categories: "Frontend", "Backend", "Database", "Auth", "Payments", "AI/ML", "DevTools", "Analytics", "Email", "Marketing", "Storage", "Hosting", "Communication", "Design", "Productivity"
+- Valid JSON only — no trailing commas, no comments`,
   },
 
   "moonshotai/kimi-k2.6": {
@@ -134,11 +144,16 @@ Then format your response EXACTLY like this:
 After your complete response, on a new line output this exact block with EVERY tool you mentioned:
 %%MASTER_STACK_START%%
 {
-  "Category Name": [{"name": "Tool Name", "slug": "tool-slug", "pricing": "free|freemium|paid"}],
-  "Another Category": [{"name": "Tool Name", "slug": "tool-slug", "pricing": "freemium"}]
+  "Frontend": [{"name": "Tool Name", "slug": "tool-slug", "pricing": "free", "website": "https://..."}],
+  "Database": [{"name": "Tool Name", "slug": "tool-slug", "pricing": "freemium", "website": "https://..."}]
 }
 %%MASTER_STACK_END%%
-Rules: Include ALL tools from your response. Use the exact slug from AVAILABLE TOOLS. Categories reflect function (e.g. "Frontend", "Database", "Auth", "Payments", "AI/ML", "DevTools", "Analytics", "Email", "Marketing"). Valid JSON only.`,
+Rules:
+- Include ALL tools you mention in your response
+- Use the exact slug from AVAILABLE TOOLS list — copy it exactly
+- If a tool is not in AVAILABLE TOOLS, use its common slug format (lowercase, hyphens)
+- Use ONLY these standard categories: "Frontend", "Backend", "Database", "Auth", "Payments", "AI/ML", "DevTools", "Analytics", "Email", "Marketing", "Storage", "Hosting", "Communication", "Design", "Productivity"
+- Valid JSON only — no trailing commas, no comments`,
   },
 }
 
