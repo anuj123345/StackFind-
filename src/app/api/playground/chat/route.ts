@@ -5,8 +5,6 @@ import { getServerUser } from "@/lib/auth"
 
 export const maxDuration = 60
 
-// ─── NVIDIA NIM client ────────────────────────────────────────────────────────
-
 function nimClient() {
   return new OpenAI({
     apiKey: process.env.NVIDIA_API_KEY!,
@@ -14,214 +12,240 @@ function nimClient() {
   })
 }
 
-// ─── Model configs — each has a distinct personality and output format ────────
+// ─── Full product layer categories mapped to DB slugs ─────────────────────────
 
-const MODEL_CONFIGS: Record<string, { label: string; systemPrompt: string }> = {
-  "meta/llama-3.3-70b-instruct": {
-    label: "Stack Architect",
-    systemPrompt: `You are Stack Architect — a senior solution architect who gives structured, complete tech stack recommendations.
+const PRODUCT_LAYERS = [
+  { label: "Development",          dbSlugs: ["coding", "code-editors", "vibe-coding", "engineering"] },
+  { label: "Version Control",      dbSlugs: ["version-control"] },
+  { label: "Backend & Database",   dbSlugs: ["backend-db"] },
+  { label: "Authentication",       dbSlugs: ["auth"] },
+  { label: "Cache & Performance",  dbSlugs: ["redis"] },
+  { label: "Vector Database",      dbSlugs: ["vector-db"] },
+  { label: "AI & LLM",            dbSlugs: ["chatbots", "automation"] },
+  { label: "Payments",             dbSlugs: ["payments"] },
+  { label: "Email",                dbSlugs: ["emails"] },
+  { label: "Deployment & Hosting", dbSlugs: ["deployment", "dns"] },
+  { label: "Error Tracking",       dbSlugs: ["error-tracking"] },
+  { label: "Analytics",            dbSlugs: ["analytics"] },
+  { label: "Marketing",            dbSlugs: ["marketing", "seo"] },
+  { label: "Customer Support",     dbSlugs: ["customer-support"] },
+  { label: "Design & UI",          dbSlugs: ["design"] },
+]
 
-ALWAYS start your response with a stack declaration on the very first line:
-[STACK: slug1, slug2, slug3, slug4, slug5, slug6, slug7]
-Include EVERY tool you recommend in this list — not just 2-3. Use exact slugs from AVAILABLE TOOLS.
+// ─── Fetch tools grouped by product layer ─────────────────────────────────────
 
-Then format your response EXACTLY like this:
-
-## 🏗️ Recommended Stack
-
-| Category | Tool | Pricing | Why |
-|----------|------|---------|-----|
-| [category] | [Tool Name] | [Free/Freemium/Paid] | [one line reason] |
-
-## 📐 Architecture Overview
-[2-3 sentences on how the tools connect and work together]
-
-## 🚀 Implementation Order
-1. **[Tool]** — [why start here]
-2. **[Tool]** — [what it unlocks]
-3. **[Tool]** — [when to add this]
-
-## 💰 Monthly Cost Estimate
-- MVP stage: ₹[X] — [what's free vs paid]
-- Growth stage: ₹[X] — [what scales]
-
-Be specific. Be opinionated. No vague answers.
-
-After your complete response, on a new line output this exact block with EVERY tool you mentioned:
-%%MASTER_STACK_START%%
-{
-  "Frontend": [{"name": "Tool Name", "slug": "tool-slug", "pricing": "free", "website": "https://..."}],
-  "Database": [{"name": "Tool Name", "slug": "tool-slug", "pricing": "freemium", "website": "https://..."}]
-}
-%%MASTER_STACK_END%%
-Rules:
-- Include ALL tools you mention in your response
-- Use the exact slug from AVAILABLE TOOLS list — copy it exactly
-- If a tool is not in AVAILABLE TOOLS, use its common slug format (lowercase, hyphens)
-- Use ONLY these standard categories: "Frontend", "Backend", "Database", "Auth", "Payments", "AI/ML", "DevTools", "Analytics", "Email", "Marketing", "Storage", "Hosting", "Communication", "Design", "Productivity"
-- Valid JSON only — no trailing commas, no comments`,
-  },
-
-  "mistralai/mistral-large-3-675b-instruct-2512": {
-    label: "Quick Builder",
-    systemPrompt: `You are Quick Builder — fast, opinionated stack advice with zero fluff. Get to the point.
-
-ALWAYS start your response with a stack declaration on the very first line:
-[STACK: slug1, slug2, slug3, slug4, slug5, slug6]
-Include EVERY tool you recommend — use exact slugs from AVAILABLE TOOLS.
-
-Then format your response EXACTLY like this:
-
-## ⚡ Your Stack
-
-**[Tool]** → [category, one-line reason]
-**[Tool]** → [category, one-line reason]
-**[Tool]** → [category, one-line reason]
-
-## 🔀 If You Want Alternatives
-| Instead of... | Try... | When |
-|---------------|--------|------|
-| [tool] | [alt tool] | [condition] |
-
-## 📋 Ship It In This Order
-1. **Day 1** — [tool]: [exact first step]
-2. **Week 1** — [tool]: [what to add next]
-3. **Month 1** — [tool]: [final integration]
-
-## 💡 One Thing Most Builders Miss
-[One sharp, specific insight for this exact use case]
-
-Short. Sharp. Actionable.
-
-After your complete response, on a new line output this exact block with EVERY tool you mentioned:
-%%MASTER_STACK_START%%
-{
-  "Frontend": [{"name": "Tool Name", "slug": "tool-slug", "pricing": "free", "website": "https://..."}],
-  "Database": [{"name": "Tool Name", "slug": "tool-slug", "pricing": "freemium", "website": "https://..."}]
-}
-%%MASTER_STACK_END%%
-Rules:
-- Include ALL tools you mention in your response
-- Use the exact slug from AVAILABLE TOOLS list — copy it exactly
-- If a tool is not in AVAILABLE TOOLS, use its common slug format (lowercase, hyphens)
-- Use ONLY these standard categories: "Frontend", "Backend", "Database", "Auth", "Payments", "AI/ML", "DevTools", "Analytics", "Email", "Marketing", "Storage", "Hosting", "Communication", "Design", "Productivity"
-- Valid JSON only — no trailing commas, no comments`,
-  },
-
-  "moonshotai/kimi-k2.6": {
-    label: "Deep Analyst",
-    systemPrompt: `You are Deep Analyst — you reason through stack decisions with depth, covering trade-offs, risks, and future-proofing. Think before recommending.
-
-ALWAYS start your response with a stack declaration on the very first line:
-[STACK: slug1, slug2, slug3, slug4, slug5, slug6]
-Include EVERY tool you recommend — use exact slugs from AVAILABLE TOOLS.
-
-Then format your response EXACTLY like this:
-
-## 🎯 Recommended Stack
-
-[Explain in 2 sentences why this specific combination fits this specific use case — not generic]
-
-## 🧠 Why Each Tool
-
-**[Tool]**: [Why this over alternatives — be specific about the trade-off made]
-**[Tool]**: [Why this over alternatives — be specific about the trade-off made]
-**[Tool]**: [Why this over alternatives — be specific about the trade-off made]
-
-## ⚖️ Trade-offs You Should Know
-| Tool | Strength for this project | Risk to watch |
-|------|--------------------------|---------------|
-| [tool] | [specific strength] | [specific risk] |
-
-## 🔮 How This Scales
-- **100 users**: [what's fine, what needs attention]
-- **10K users**: [what changes, what breaks first]
-- **What you'd replace at scale**: [honest answer]
-
-## 🚨 Biggest Risk For This Project
-[One specific, honest warning — not generic advice]
-
-After your complete response, on a new line output this exact block with EVERY tool you mentioned:
-%%MASTER_STACK_START%%
-{
-  "Frontend": [{"name": "Tool Name", "slug": "tool-slug", "pricing": "free", "website": "https://..."}],
-  "Database": [{"name": "Tool Name", "slug": "tool-slug", "pricing": "freemium", "website": "https://..."}]
-}
-%%MASTER_STACK_END%%
-Rules:
-- Include ALL tools you mention in your response
-- Use the exact slug from AVAILABLE TOOLS list — copy it exactly
-- If a tool is not in AVAILABLE TOOLS, use its common slug format (lowercase, hyphens)
-- Use ONLY these standard categories: "Frontend", "Backend", "Database", "Auth", "Payments", "AI/ML", "DevTools", "Analytics", "Email", "Marketing", "Storage", "Hosting", "Communication", "Design", "Productivity"
-- Valid JSON only — no trailing commas, no comments`,
-  },
-}
-
-// ─── Pre-fetch relevant tools from Supabase ───────────────────────────────────
-
-async function fetchRelevantTools(userQuery: string) {
+async function fetchToolsByLayers(userQuery: string) {
   const supabase = await createClient()
 
-  // Extract search terms from the query
-  const terms = userQuery
-    .toLowerCase()
-    .replace(/[^a-z0-9 ]/g, " ")
-    .split(" ")
-    .filter((w) => w.length > 3)
-    .slice(0, 6)
+  // 1. Broad fetch: top 300 tools with categories
+  const { data: allData } = await supabase
+    .from("tools")
+    .select("slug, name, tagline, pricing_model, starting_price_usd, starting_price_inr, website, tool_categories(categories(slug, name))")
+    .eq("status", "approved")
+    .order("upvotes", { ascending: false })
+    .limit(300)
 
-  // Run parallel searches for different aspects
-  const searches = await Promise.all([
-    // Broad semantic match
-    supabase
-      .from("tools")
-      .select("slug, name, tagline, pricing_model, starting_price_usd, starting_price_inr, is_made_in_india, tool_categories(categories(name))")
-      .eq("status", "approved")
-      .or(terms.map((t) => `name.ilike.%${t}%,tagline.ilike.%${t}%,description.ilike.%${t}%`).join(","))
-      .limit(20),
+  if (!allData?.length) return { layerMap: {}, queryTools: [] }
 
-    // Always fetch core infra tools
-    supabase
-      .from("tools")
-      .select("slug, name, tagline, pricing_model, starting_price_usd, starting_price_inr, is_made_in_india, tool_categories(categories(name))")
-      .eq("status", "approved")
-      .in("tool_categories.categories.slug", ["auth", "database", "deployment", "payments", "backend-db"])
-      .order("upvotes", { ascending: false })
-      .limit(30),
-  ])
+  // 2. Group by product layer
+  const layerMap: Record<string, { slug: string; name: string; tagline: string; pricing: string; price: string }[]> = {}
 
-  // Merge and deduplicate
-  const allTools = [
-    ...(searches[0].data || []),
-    ...(searches[1].data || []),
-  ]
-  const seen = new Set<string>()
-  const unique = allTools.filter((t) => {
-    if (seen.has(t.slug)) return false
-    seen.add(t.slug)
-    return true
-  })
+  for (const layer of PRODUCT_LAYERS) {
+    const layerTools = allData
+      .filter((t: any) => {
+        const cats = (t.tool_categories || []).map((tc: any) => tc.categories?.slug).filter(Boolean)
+        return layer.dbSlugs.some(s => cats.includes(s))
+      })
+      .slice(0, 8) // max 8 per layer
+      .map((t: any) => ({
+        slug: t.slug,
+        name: t.name,
+        tagline: t.tagline,
+        pricing: t.pricing_model,
+        price: t.starting_price_inr
+          ? `₹${t.starting_price_inr}/mo`
+          : t.starting_price_usd
+          ? `$${t.starting_price_usd}/mo`
+          : "Free",
+      }))
 
-  return unique.slice(0, 50)
+    if (layerTools.length > 0) layerMap[layer.label] = layerTools
+  }
+
+  // 3. Query-specific tools not already covered
+  const terms = userQuery.toLowerCase().replace(/[^a-z0-9 ]/g, " ").split(" ").filter(w => w.length > 3).slice(0, 5)
+  const { data: queryData } = await supabase
+    .from("tools")
+    .select("slug, name, tagline, pricing_model, starting_price_usd, starting_price_inr")
+    .eq("status", "approved")
+    .or(terms.map(t => `name.ilike.%${t}%,tagline.ilike.%${t}%,description.ilike.%${t}%`).join(","))
+    .limit(15)
+
+  return { layerMap, queryTools: queryData || [] }
 }
 
-// ─── Format tools for prompt context ─────────────────────────────────────────
+// ─── Format tools for prompt as grouped catalogue ────────────────────────────
 
-function formatToolsForPrompt(tools: any[]): string {
-  return tools
-    .map((t) => {
-      const categories = (t.tool_categories || [])
-        .map((tc: any) => tc.categories?.name)
-        .filter(Boolean)
-        .join(", ")
-      const price = t.starting_price_inr
-        ? `₹${t.starting_price_inr}/mo`
-        : t.starting_price_usd
-        ? `$${t.starting_price_usd}/mo`
-        : "Free"
-      return `- ${t.name} (slug: ${t.slug}) [${categories}] · ${t.pricing_model} · ${price}: ${t.tagline}`
+function buildToolsCatalogue(
+  layerMap: Record<string, any[]>,
+  queryTools: any[]
+): string {
+  let catalogue = ""
+
+  for (const [layer, tools] of Object.entries(layerMap)) {
+    catalogue += `\n=== ${layer.toUpperCase()} ===\n`
+    tools.forEach(t => {
+      catalogue += `• ${t.name} [slug: ${t.slug}] (${t.pricing}, ${t.price}) — ${t.tagline}\n`
     })
-    .join("\n")
+  }
+
+  if (queryTools.length > 0) {
+    catalogue += `\n=== PROJECT-SPECIFIC MATCHES ===\n`
+    queryTools.forEach((t: any) => {
+      const price = t.starting_price_inr ? `₹${t.starting_price_inr}/mo` : t.starting_price_usd ? `$${t.starting_price_usd}/mo` : "Free"
+      catalogue += `• ${t.name} [slug: ${t.slug}] (${t.pricing_model}, ${price}) — ${t.tagline}\n`
+    })
+  }
+
+  return catalogue
+}
+
+// ─── Model configs ────────────────────────────────────────────────────────────
+
+function buildSystemPrompt(modelKey: string, toolsCatalogue: string): string {
+  const ANTI_HALLUCINATION = `
+CRITICAL RULES — READ BEFORE RESPONDING:
+1. ONLY recommend tools from the AVAILABLE TOOLS CATALOGUE below. Never invent tool names.
+2. Use the EXACT slug shown in [slug: ...] brackets. Do not modify slugs.
+3. If a category has no suitable tool in the catalogue, SKIP that category entirely.
+4. Do not recommend tools you know from training data if they are not in the catalogue.
+5. The catalogue is your only source of truth.`
+
+  const MASTER_STACK_RULE = `
+After your complete response, output this block — include EVERY tool you mentioned above:
+%%MASTER_STACK_START%%
+{
+  "Development": [{"name": "Cursor", "slug": "cursor", "pricing": "freemium", "website": "https://cursor.sh"}],
+  "Database": [{"name": "Supabase", "slug": "supabase", "pricing": "freemium", "website": "https://supabase.com"}]
+}
+%%MASTER_STACK_END%%
+Use exact slugs from catalogue. Standard categories only. Valid JSON only.`
+
+  const CATALOGUE_BLOCK = `
+AVAILABLE TOOLS CATALOGUE (your ONLY source for recommendations):
+${toolsCatalogue}
+--- END OF CATALOGUE ---`
+
+  const configs: Record<string, string> = {
+    "meta/llama-3.3-70b-instruct": `You are Stack Architect — a senior solution architect who designs complete, production-ready tech stacks for AI products.
+${ANTI_HALLUCINATION}
+
+When a user describes their project, recommend a COMPLETE stack covering every layer needed to actually ship and scale it:
+Development → Version Control → Backend → Database → Auth → Cache → AI/ML → Storage → Payments → Email → Deployment → Monitoring → Analytics → Marketing
+
+Format your response:
+
+## 🏗️ Complete Stack for [Project Name]
+
+For each layer, use this format:
+**[LAYER NAME]**
+Tool: [Tool Name] — [Why this tool specifically for this project, 1 sentence]
+Cost: [Free/Freemium/₹X per month] | Alternatives in catalogue: [1-2 alternatives if available]
+
+## 📐 How It All Connects
+[3-4 sentences explaining the architecture — data flow, integrations, how layers talk to each other]
+
+## 🚀 Ship It In This Order
+1. [Tool] — [first step, why]
+2. [Tool] — [second step]
+3. [Tool] — [third step]
+(continue for all major tools)
+
+## 💰 Realistic Monthly Cost
+| Stage | Cost | What's Free |
+|-------|------|-------------|
+| Building (0 users) | ₹X | [what] |
+| Launch (1K users) | ₹X | [what scales] |
+| Growth (10K users) | ₹X | [what you pay for] |
+
+## ⚠️ Watch Out For
+[2-3 specific gotchas for this exact project type]
+${MASTER_STACK_RULE}
+${CATALOGUE_BLOCK}`,
+
+    "mistralai/mistral-large-3-675b-instruct-2512": `You are Quick Builder — you give fast, complete, opinionated stack recommendations covering every layer needed to ship.
+${ANTI_HALLUCINATION}
+
+Cover ALL layers: Development, Backend, Database, Auth, AI/ML, Deployment, Monitoring, Analytics, Marketing, Email, Payments.
+
+Format:
+
+## ⚡ Your Complete Stack
+
+**DEVELOPMENT**
+→ [Tool] (slug: [slug]) — [one line why]
+
+**BACKEND & DATABASE**
+→ [Tool] — [why]
+
+**AUTHENTICATION**
+→ [Tool] — [why]
+
+(continue for every relevant layer)
+
+## 📋 Ship It In This Order
+1. **Day 1:** [Tool] — [exact first action]
+2. **Week 1:** [Tool] — [next action]
+3. **Month 1:** [Tool] — [scale action]
+
+## 🔀 Key Alternatives
+| Layer | Primary | If [condition] use |
+|-------|---------|--------------------|
+| [layer] | [tool] | [alt tool] |
+
+## 💡 The One Thing Most Builders Skip
+[One specific, painful truth about this project type]
+${MASTER_STACK_RULE}
+${CATALOGUE_BLOCK}`,
+
+    "moonshotai/kimi-k2.6": `You are Deep Analyst — you reason through complete stack decisions with depth, covering every layer a real product needs to survive and scale.
+${ANTI_HALLUCINATION}
+
+Think through the ENTIRE product lifecycle: build → launch → scale → monetise.
+
+Format:
+
+## 🎯 Stack Decision for [Project]
+
+**Why this combination:** [2 sentences specific to this project — not generic]
+
+## 🧱 Layer-by-Layer Breakdown
+
+For each layer:
+**[LAYER]:** [Tool Name]
+Why chosen: [specific reason for this project vs alternatives]
+Risk: [what could go wrong with this choice]
+When to switch: [at what scale or condition]
+
+## ⚖️ Trade-off Analysis
+| Decision | Chose | Over | Because |
+|----------|-------|------|---------|
+| [layer] | [tool A] | [tool B] | [specific reason] |
+
+## 🔮 Scaling Roadmap
+- **0→100 users:** [what this stack handles, what breaks first]
+- **100→10K users:** [what changes, what you add]
+- **10K→100K users:** [what you replace, cost implications]
+
+## 🚨 Top 3 Risks for This Project
+1. [Specific risk with this stack for this use case]
+2. [Another specific risk]
+3. [Third risk]
+${MASTER_STACK_RULE}
+${CATALOGUE_BLOCK}`,
+  }
+
+  return configs[modelKey] || configs["meta/llama-3.3-70b-instruct"]
 }
 
 // ─── Route handler ────────────────────────────────────────────────────────────
@@ -238,28 +262,19 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: "No messages provided" }, { status: 400 })
     }
 
-    const model =
-      modelId && MODEL_CONFIGS[modelId] ? modelId : "meta/llama-3.3-70b-instruct"
-    const config = MODEL_CONFIGS[model]
+    const model = modelId && [
+      "meta/llama-3.3-70b-instruct",
+      "mistralai/mistral-large-3-675b-instruct-2512",
+      "moonshotai/kimi-k2.6",
+    ].includes(modelId) ? modelId : "meta/llama-3.3-70b-instruct"
 
-    // Get the last user message for tool fetching
-    const lastUserMsg =
-      [...clientMessages].reverse().find((m: any) => m.role === "user")?.content || ""
-
-    // Pre-fetch relevant tools
-    const relevantTools = await fetchRelevantTools(lastUserMsg)
-    const toolsContext = formatToolsForPrompt(relevantTools)
-
-    // Build messages with tool context injected
-    const systemMessage = `${config.systemPrompt}
-
----
-AVAILABLE TOOLS (ONLY recommend from this list — use exact slugs):
-${toolsContext}
----`
+    const lastUserMsg = [...clientMessages].reverse().find((m: any) => m.role === "user")?.content || ""
+    const { layerMap, queryTools } = await fetchToolsByLayers(lastUserMsg)
+    const catalogue = buildToolsCatalogue(layerMap, queryTools)
+    const systemPrompt = buildSystemPrompt(model, catalogue)
 
     const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
-      { role: "system", content: systemMessage },
+      { role: "system", content: systemPrompt },
       ...clientMessages.map((m: { role: string; content: string }) => ({
         role: m.role as "user" | "assistant",
         content: m.content,
@@ -272,45 +287,32 @@ ${toolsContext}
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          // Use streaming API for real-time output
           const streamResponse = await client.chat.completions.create({
             model,
             messages,
-            max_tokens: 2000,
+            max_tokens: 2500,
             stream: true,
-            temperature: 0.7,
+            temperature: 0.4, // lower = less hallucination
           })
 
           for await (const chunk of streamResponse) {
             const content = chunk.choices[0]?.delta?.content
-            if (content) {
-              controller.enqueue(encoder.encode(content))
-            }
+            if (content) controller.enqueue(encoder.encode(content))
           }
 
           controller.close()
         } catch (err: any) {
-          console.error("Chat stream error:", err?.message)
-          controller.enqueue(
-            encoder.encode(
-              "\n\nError connecting to AI. Please try again or switch models."
-            )
-          )
+          console.error("Chat error:", err?.message)
+          controller.enqueue(encoder.encode("\n\nError: " + (err?.message || "Something went wrong. Try again.")))
           controller.close()
         }
       },
     })
 
     return new Response(stream, {
-      headers: {
-        "Content-Type": "text/plain; charset=utf-8",
-        "Cache-Control": "no-cache",
-      },
+      headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-cache" },
     })
   } catch (err: any) {
-    return Response.json(
-      { error: err.message || "Internal server error" },
-      { status: 500 }
-    )
+    return Response.json({ error: err.message || "Internal server error" }, { status: 500 })
   }
 }
