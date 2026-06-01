@@ -560,29 +560,43 @@ function parseMasterStackRaw(text: string): Record<string, {name: string; slug: 
   }
 }
 
-// Resolve slugs from DB via API — guaranteed accurate
+// Extract bold tool names from Build Plan text — catches tools missed by MASTER_STACK
+function extractBoldNames(text: string): string[] {
+  const matches = text.match(/\*\*([^*]+)\*\*/g) || []
+  return [...new Set(
+    matches
+      .map(m => m.replace(/\*\*/g, "").trim())
+      .filter(n => n.length > 2 && n.length < 40 && !n.match(/^(Ship|Deploy|Build|Launch|Scale|Day|Week|Month|How|Why|Note|Step|The|Your|All|For|With|From)$/i))
+  )]
+}
+
+// Resolve slugs + names from DB via API — guaranteed accurate
 async function resolveStackFromDB(
-  rawStack: Record<string, {name: string; slug: string; pricing: string; website?: string}[]>
+  rawStack: Record<string, {name: string; slug: string; pricing: string; website?: string}[]>,
+  buildPlanText?: string
 ): Promise<MasterStack> {
-  // Collect all slugs
   const allSlugs = Object.values(rawStack).flat().map(t => t.slug).filter(Boolean)
-  if (!allSlugs.length) return {}
+  // Also extract bold names from Build Plan text as fallback
+  const boldNames = buildPlanText ? extractBoldNames(buildPlanText) : []
+
+  if (!allSlugs.length && !boldNames.length) return {}
 
   try {
     const res = await fetch("/api/tools/resolve", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ slugs: allSlugs }),
+      body: JSON.stringify({ slugs: allSlugs, names: boldNames }),
     })
     const { toolMap = {} } = await res.json()
 
     const result: MasterStack = {}
+
+    // First pass: MASTER_STACK categories
     for (const [category, tools] of Object.entries(rawStack)) {
       if (!Array.isArray(tools)) continue
       const resolved = (tools as any[]).map(t => {
-        const db = toolMap[t.slug?.toLowerCase?.() || ""]
+        const db = toolMap[t.slug?.toLowerCase?.() || ""] || toolMap[t.name?.toLowerCase?.() || ""]
         if (db) return { ...db, fromDB: true }
-        // Not in DB — use AI-provided data, keep as external
         return {
           name: t.name || "Unknown",
           slug: t.slug || "",
@@ -596,6 +610,28 @@ async function resolveStackFromDB(
       })
       if (resolved.length > 0) result[category] = resolved
     }
+
+    // Second pass: add tools found via bold text that aren't already in a category
+    const alreadyIncluded = new Set(Object.values(result).flat().map((t: any) => t.slug))
+    const extraTools: MasterStackTool[] = []
+
+    for (const name of boldNames) {
+      const db = toolMap[name.toLowerCase()]
+      if (db && !alreadyIncluded.has(db.slug)) {
+        extraTools.push({ ...db, fromDB: true })
+        alreadyIncluded.add(db.slug)
+      }
+    }
+
+    // Group extra tools by their DB category
+    if (extraTools.length > 0) {
+      for (const tool of extraTools) {
+        const cat = (tool as any).categoryName || "Other"
+        if (!result[cat]) result[cat] = []
+        result[cat].push(tool)
+      }
+    }
+
     return result
   } catch {
     return {}
@@ -866,7 +902,7 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
       if (accumulatedText) {
         const raw = parseMasterStackRaw(accumulatedText)
         if (raw) {
-          const resolved = await resolveStackFromDB(raw)
+          const resolved = await resolveStackFromDB(raw, accumulatedText)
           if (Object.keys(resolved).length > 0) {
             setMasterStack(resolved)
             // Sync DB-matched tools to useStack for billing
