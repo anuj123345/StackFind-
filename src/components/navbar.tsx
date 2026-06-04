@@ -71,7 +71,7 @@ export function Navbar() {
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-50 flex justify-center pt-5 px-4">
+      <header className="absolute top-0 left-0 right-0 z-50 flex justify-center pt-5 px-4">
         <nav
           className="nav-pill flex items-center gap-1 px-4 py-2 w-fit max-w-[95vw]"
           style={{

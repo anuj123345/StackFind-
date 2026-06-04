@@ -143,7 +143,7 @@ export function HeroSection({ stats }: HeroSectionProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.7, delay: 0.48 }}
-          className="flex flex-wrap items-center justify-center gap-0 w-full max-w-3xl"
+          className="flex flex-nowrap items-center justify-center gap-0 w-full max-w-4xl overflow-x-auto"
           style={{
             borderTop: "1px solid rgba(255,255,255,0.15)",
             paddingTop: "1.25rem",
@@ -200,7 +200,6 @@ export function HeroSection({ stats }: HeroSectionProps) {
         style={{ color: "rgba(255,255,255,0.55)" }}
         aria-hidden
       >
-        <span className="text-[9px] font-black tracking-[0.18em] uppercase" style={{ textShadow: "0 1px 4px rgba(0,0,0,0.3)" }}>Explore Directory</span>
         <motion.div
           animate={{ y: [0, 5, 0] }}
           transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
