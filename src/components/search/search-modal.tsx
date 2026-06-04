@@ -214,7 +214,7 @@ export function SearchModal() {
                             {r.is_made_in_india && (
                               <span className="text-[10px]">🇮🇳</span>
                             )}
-                            {r.categories.map(cat => (
+                            {(r.categories ?? []).map(cat => (
                               <span
                                 key={cat}
                                 className="text-[10px] font-medium px-1.5 py-0.5 rounded-full"

@@ -15,13 +15,12 @@ interface ToolWithRel {
 }
 
 function flattenCategories<T extends Tool>(tool: T & ToolWithRel): T & { categoryNames: string[], categorySlugs: string[] } {
-  const categoryNames: string[] = (tool.tool_categories ?? [])
-    .map((tc) => tc.categories?.name)
-    .filter((n): n is string => !!n)
-    
-  const categorySlugs: string[] = (tool.tool_categories ?? [])
-    .map((tc) => tc.categories?.slug)
-    .filter((n): n is string => !!n)
+  const categoryNames: string[] = Array.isArray(tool.tool_categories)
+    ? tool.tool_categories.map((tc) => tc.categories?.name).filter((n): n is string => !!n)
+    : []
+  const categorySlugs: string[] = Array.isArray(tool.tool_categories)
+    ? tool.tool_categories.map((tc) => tc.categories?.slug).filter((n): n is string => !!n)
+    : []
   
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { tool_categories: _, ...rest } = tool

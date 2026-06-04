@@ -147,7 +147,7 @@ function FeaturedCard({ tool, delay, color }: { tool: ToolWithCategoryNames; del
           <div className="flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: color }} />
             <div className="flex gap-1">
-              {tool.categoryNames.slice(0, 1).map(c => (
+              {(tool.categoryNames ?? []).slice(0, 1).map(c => (
                 <span key={c} className="text-[10px] px-2 py-0.5 rounded-full"
                   style={{ background: "rgba(140,110,80,0.06)", color: "#C4B0A0" }}>
                   {c}

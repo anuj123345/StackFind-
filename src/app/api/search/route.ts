@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
     pricing_model: tool.pricing_model,
     is_made_in_india: tool.is_made_in_india,
     website: tool.website,
-    categories: (tool.tool_categories as any[])
+    categories: ((tool.tool_categories as any[]) ?? [])
       .map((tc: any) => tc.categories?.name)
       .filter(Boolean)
       .slice(0, 2),
