@@ -381,6 +381,25 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: "Sign in to use AI Chat" }, { status: 401 })
     }
 
+    // ── Server-side usage enforcement — cannot be bypassed from client ──
+    const supabase = await createClient()
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("is_premium_playground, playground_usage_count")
+      .eq("id", user.id)
+      .single()
+
+    const isPremium = profile?.is_premium_playground === true
+    const usageCount = profile?.playground_usage_count ?? 0
+    const FREE_LIMIT = 10
+
+    if (!isPremium && usageCount >= FREE_LIMIT) {
+      return Response.json({
+        error: "Free limit reached. Upgrade to Pro to continue.",
+        code: "USAGE_LIMIT_REACHED",
+      }, { status: 403 })
+    }
+
     const { messages: clientMessages, modelId } = await req.json()
     if (!clientMessages?.length) {
       return Response.json({ error: "No messages provided" }, { status: 400 })

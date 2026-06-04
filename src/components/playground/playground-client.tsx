@@ -859,6 +859,10 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
+        // If server enforces usage limit, update local state to show paywall
+        if (res.status === 403 && data?.code === "USAGE_LIMIT_REACHED") {
+          setSessionUsage(10) // triggers hasReachedLimit = true → shows paywall
+        }
         setError(data?.error ?? `Server error ${res.status}`)
         return
       }
