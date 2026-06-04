@@ -89,7 +89,6 @@ export function SubmitForm() {
     has_upi:          false,
     has_gst_invoice:  false,
     starting_price_inr: "" as string | number,
-    pricing_modelling: "", // structured text format: "label: value (unit)\nlabel2: value2"
   })
 
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle")
@@ -105,19 +104,10 @@ export function SubmitForm() {
     setStatus("loading")
     setErrorMsg("")
     try {
-      // Parse modelling text: "Label: Value (Unit)"
-      const modelling = form.pricing_modelling.split("\n").filter(l => l.includes(":")).map(line => {
-        const [label, rest] = line.split(":").map(s => s.trim())
-        const unitMatch = rest.match(/\(([^)]+)\)/)
-        const unit = unitMatch ? unitMatch[1] : undefined
-        const value = rest.replace(/\([^)]+\)/, "").trim()
-        return { label, value, unit }
-      })
-
       const res = await fetch("/api/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, pricing_modelling: modelling }),
+        body: JSON.stringify(form),
       })
       const data = await res.json()
       if (!res.ok) {
@@ -166,7 +156,7 @@ export function SubmitForm() {
               pricing_model: "freemium", email: "",
               is_made_in_india: false, has_inr_billing: false,
               has_upi: false, has_gst_invoice: false,
-              starting_price_inr: "", pricing_modelling: "",
+              starting_price_inr: "",
             })
           }}
           className="mt-8 text-sm font-medium underline underline-offset-2"
@@ -297,18 +287,7 @@ export function SubmitForm() {
             />
           </div>
         </div>
-        <div>
-          <Label htmlFor={`${uid}-pricing-modelling`}>Pricing Detail <span style={{ color: "#C4B0A0", fontWeight: 400 }}>(e.g. Unit: Cost)</span></Label>
-          <textarea
-            id={`${uid}-pricing-modelling`}
-            rows={2}
-            placeholder="Token: ₹0.20 (1k)&#10;Flat: ₹499 (mo)"
-            value={form.pricing_modelling}
-            onChange={e => set("pricing_modelling", e.target.value)}
-            style={{ ...field, fontSize: "0.8125rem", resize: "vertical", minHeight: "54px" }}
-            {...focus}
-          />
-        </div>
+
       </div>
 
       {/* India features */}

@@ -168,10 +168,11 @@ export async function POST(req: NextRequest) {
   if (existing) {
     return NextResponse.json({ error: "A tool with this name already exists in our directory" }, { status: 409 })
   }
+  // Check for duplicate submission by website URL using JSONB filter
   const { data: existingSub } = await supabase
     .from("submissions")
     .select("id")
-    .eq("tool_data->website" as "email", normalUrl)  // approximate check
+    .filter("tool_data->>website", "eq", normalUrl)
     .neq("status", "rejected")
     .limit(1)
   if (existingSub && existingSub.length > 0) {
@@ -215,7 +216,8 @@ export async function POST(req: NextRequest) {
     has_upi: Boolean(has_upi) || autoIndia,
     has_gst_invoice: Boolean(has_gst_invoice),
     starting_price_inr: starting_price_inr ? Number(starting_price_inr) : null,
-    pricing_modelling: Array.isArray(pricing_modelling) ? pricing_modelling : [],
+    // pricing_modelling stored for reference only (not a tools table column)
+    pricing_detail: Array.isArray(pricing_modelling) ? pricing_modelling : [],
     has_india_support: autoIndia,
     auto_categories: categories,
     security_check: {

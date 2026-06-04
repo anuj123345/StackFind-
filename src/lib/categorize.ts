@@ -31,7 +31,7 @@ const TOPIC_MAP: Record<string, string> = {
   "data-science":             "analytics",
   "research":                 "research",
   "education":                "education",
-  "health-and-fitness":       "health",
+  "health-and-fitness":       "healthcare",
   "finance":                  "finance",
   "legal":                    "legal",
   "human-resources":          "hr",
@@ -42,7 +42,6 @@ const TOPIC_MAP: Record<string, string> = {
   "podcasting":               "audio",
   "speech-recognition":       "audio",
   "3d":                       "3d",
-  "gaming":                   "gaming",
   "security":                 "security",
   "translation":              "translation",
 }
@@ -58,6 +57,8 @@ const KEYWORD_RULES: Array<{ keywords: string[]; category: string }> = [
   { keywords: ["productivity", "task", "calendar", "schedule", "focus", "notes", "meeting", "transcrib", "summary"], category: "productivity" },
   { keywords: ["chat", "chatbot", "assistant", "conversation", "llm", "language model", "gpt", "ai model", "talk"], category: "chatbots" },
   { keywords: ["india", "hindi", "bharat", "indian", "rupee", "upi", "desi", "vernacular", "regional language"], category: "made-in-india" },
+  { keywords: ["health", "medical", "clinical", "doctor", "patient", "fitness", "wellness", "therapy", "mental health"], category: "healthcare" },
+  { keywords: ["3d", "spatial", "vr", "ar", "augmented reality", "virtual reality"], category: "3d" },
 ]
 
 export function detectCategories(

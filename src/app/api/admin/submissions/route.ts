@@ -69,7 +69,6 @@ export async function POST(req: NextRequest) {
   const td = sub.tool_data as Record<string, unknown>
 
   const slug = td.slug as string
-  const categories: string[] = Array.isArray(td.auto_categories) ? td.auto_categories as string[] : []
 
   // Check not already approved
   const { data: existing } = await supabase.from("tools").select("id").eq("slug", slug).single()
@@ -78,6 +77,16 @@ export async function POST(req: NextRequest) {
     await supabase.from("submissions").update({ status: "approved" }).eq("id", submissionId)
     return NextResponse.json({ success: true, action: "approved", note: "Tool already existed in directory" })
   }
+
+  // Parse auto_categories — could be array or JSON string from JSONB
+  const rawCats = td.auto_categories
+  const categories: string[] = Array.isArray(rawCats)
+    ? rawCats as string[]
+    : typeof rawCats === "string"
+      ? (() => { try { return JSON.parse(rawCats) } catch { return [] } })()
+      : []
+
+  const startingPriceInr = td.starting_price_inr ? Number(td.starting_price_inr) : null
 
   const { data: tool, error: toolErr } = await supabase
     .from("tools")
@@ -89,6 +98,7 @@ export async function POST(req: NextRequest) {
       website: (td.website as string | null) ?? null,
       logo_url: (td.logo_url as string | null) ?? null,
       pricing_model: (td.pricing_model as "free" | "freemium" | "paid" | "open_source") ?? "freemium",
+      starting_price_inr: startingPriceInr,
       has_inr_billing: Boolean(td.has_inr_billing),
       has_gst_invoice: Boolean(td.has_gst_invoice),
       has_upi: Boolean(td.has_upi),
@@ -96,7 +106,7 @@ export async function POST(req: NextRequest) {
       is_made_in_india: Boolean(td.is_made_in_india),
       status: "approved",
       approved_at: new Date().toISOString(),
-      submitted_by: sub.email,
+      submitted_by: null,   // UUID column — email stored in submissions table
       featured_until: null,
       screenshots: [],
     })
