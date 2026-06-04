@@ -95,8 +95,8 @@ export function HeroSection({ stats }: HeroSectionProps) {
           <br />
           <span
             style={{
-              color: "#818cf8",
-              textShadow: "0 0 60px rgba(99,102,241,0.5), 0 2px 20px rgba(0,0,0,0.2)",
+              color: "#4f46e5",
+              textShadow: "0 0 40px rgba(79,70,229,0.6), 0 2px 20px rgba(0,0,0,0.15)",
             }}
           >
             Build the future.
