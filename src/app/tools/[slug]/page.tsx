@@ -10,7 +10,6 @@ import type { Metadata } from "next"
 import { DetailLogo } from "@/components/tools/detail-logo"
 import { RedditInsights, RedditBuzzSidebar } from "@/components/tools/reddit-insights"
 import { ToolDescription } from "@/components/tools/tool-description"
-import { PricingBreakdown } from "@/components/tools/pricing-breakdown"
 
 export const dynamic = "force-dynamic"
 
@@ -141,26 +140,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
               <ToolDescription slug={slug} initialDescription={tool.description} />
 
               <div className="pt-4">
-                <div className="flex items-center gap-3 mb-6">
-                  <span
-                    className="text-[0.6875rem] font-semibold tracking-[0.14em] uppercase"
-                    style={{ color: "#C4B0A0" }}
-                  >
-                    Pricing & Billing
-                  </span>
-                  <div className="flex-1 h-px" style={{ background: "rgba(140,110,80,0.1)" }} />
-                </div>
-                <PricingBreakdown 
-                  toolId={tool.id}
-                  modelling={undefined}
-                  hasUpi={tool.has_upi}
-                  hasInrBilling={tool.has_inr_billing}
-                  startingPriceInr={tool.starting_price_inr ?? undefined}
-                  startingPriceUsd={tool.starting_price_usd ?? undefined}
-                  managedBillingEnabled={tool.managed_billing_enabled ?? undefined}
-                  inrPurchaseLink={tool.inr_purchase_link ?? undefined}
-                  convenienceFeePercent={tool.convenience_fee_percent ?? undefined}
-                />
+
               </div>
 
               <RedditInsights toolName={tool.name} />
