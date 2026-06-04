@@ -92,7 +92,7 @@ Give me the complete stack with build order, realistic monthly cost at each stag
     name: "AI App",
     emoji: "🤖",
     description: "LLM-powered",
-    slugs: ["cursor", "github", "vercel", "supabase", "openai", "pinecone", "upstash", "resend"],
+    slugs: ["cursor", "github", "vercel", "supabase", "chatgpt", "pinecone", "upstash", "resend"],
     prompt: `I'm building an AI-powered web app. The core product is an LLM-based assistant — users describe a problem, the AI processes it and returns a structured, useful output.
 
 What the product does: users authenticate, submit queries or documents, the AI responds with processed results. Users can view their history and share outputs.
@@ -792,31 +792,47 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
     })
   }, [toggleStack])
 
-  function loadPreset(preset: typeof PRESET_STACKS[0]) {
-    // 1. Clear and load suggested tools into stack panel
-    clear()
-    for (const slug of preset.slugs) {
-      const tool = tools.find(t => t.slug === slug)
-      if (tool) {
-        add({
-          slug: tool.slug, name: tool.name, tagline: tool.tagline,
-          website: tool.website, logoUrl: tool.logo_url,
-          pricingModel: tool.pricing_model,
-          startingPriceUsd: tool.starting_price_usd,
-          startingPriceInr: tool.starting_price_inr,
-          managedBillingEnabled: tool.managed_billing_enabled,
-          convenienceFeePercent: tool.convenience_fee_percent,
-          categories: [tool.categoryName],
-        })
-      }
-    }
-    // 2. Inject rich prompt into chat input
+  async function loadPreset(preset: typeof PRESET_STACKS[0]) {
+    // 1. Inject rich prompt immediately — user sees it right away
     setIdea(preset.prompt)
-    // 3. Auto-scroll to chat and focus
+
+    // 2. Resolve slugs from DB (not client-side array which can be incomplete)
+    try {
+      const res = await fetch("/api/tools/resolve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slugs: preset.slugs }),
+      })
+      const { toolMap = {} } = await res.json()
+
+      clear()
+      for (const slug of preset.slugs) {
+        const db = toolMap[slug]
+        if (db) {
+          add({
+            slug: db.slug,
+            name: db.name,
+            tagline: db.tagline ?? "",
+            website: db.website ?? null,
+            logoUrl: db.logoUrl ?? null,
+            pricingModel: db.pricing ?? "freemium",
+            startingPriceUsd: db.startingPriceUsd ?? null,
+            startingPriceInr: db.startingPriceInr ?? null,
+            managedBillingEnabled: db.managedBillingEnabled ?? null,
+            convenienceFeePercent: db.convenienceFeePercent ?? null,
+            categories: [db.categoryName ?? "Other"],
+          })
+        }
+      }
+    } catch {
+      // Silent fail — prompt is already injected, stack panel just stays empty
+    }
+
+    // 3. Focus textarea so user can tweak prompt before sending
     setTimeout(() => {
-      const chatInput = document.querySelector("textarea[placeholder*='project']") as HTMLTextAreaElement | null
+      const chatInput = document.querySelector("textarea") as HTMLTextAreaElement | null
       chatInput?.focus()
-    }, 100)
+    }, 150)
   }
 
   async function generate() {

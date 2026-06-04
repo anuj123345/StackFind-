@@ -143,7 +143,6 @@ export type PlaygroundTool = {
   convenience_fee_percent: number
   categorySlug: string
   categoryName: string
-  pricing_modelling?: any
 }
 
 const PLAYGROUND_CATEGORIES = [
@@ -157,24 +156,12 @@ const PLAYGROUND_CATEGORIES = [
 export async function getPlaygroundTools(): Promise<PlaygroundTool[]> {
   const supabase = await createClient()
   
-  // Try to fetch with pricing_modelling first
-  let { data, error } = await supabase
+  const { data } = await supabase
     .from('tools')
-    .select('id, slug, name, tagline, website, logo_url, pricing_model, starting_price_usd, starting_price_inr, is_made_in_india, managed_billing_enabled, convenience_fee_percent, pricing_modelling, tool_categories(categories(slug, name))')
+    .select('id, slug, name, tagline, website, logo_url, pricing_model, starting_price_usd, starting_price_inr, is_made_in_india, managed_billing_enabled, convenience_fee_percent, tool_categories(categories(slug, name))')
     .eq('status', 'approved')
     .order('upvotes', { ascending: false })
     .limit(10000)
-
-  // Fallback if column is missing
-  if (error && error.code === '42703') {
-    const fallback = await supabase
-      .from('tools')
-      .select('id, slug, name, tagline, website, logo_url, pricing_model, starting_price_usd, starting_price_inr, is_made_in_india, managed_billing_enabled, convenience_fee_percent, tool_categories(categories(slug, name))')
-      .eq('status', 'approved')
-      .order('upvotes', { ascending: false })
-      .limit(10000)
-    data = fallback.data as any
-  }
 
   if (!data) return []
 
@@ -205,8 +192,7 @@ export async function getPlaygroundTools(): Promise<PlaygroundTool[]> {
       is_made_in_india: row.is_made_in_india,
       managed_billing_enabled: row.managed_billing_enabled,
       convenience_fee_percent: row.convenience_fee_percent,
-      pricing_modelling: row.pricing_modelling,
-      // Tools not in a playground category go under "others"
+          // Tools not in a playground category go under "others"
       categorySlug: playgroundCat?.slug ?? 'others',
       categoryName: playgroundCat?.name ?? 'Others',
     })
@@ -253,22 +239,11 @@ export async function getToolsBySlugs(slugs: string[]): Promise<PlaygroundTool[]
   if (!slugs.length) return []
   const supabase = await createClient()
   
-  // Try to fetch with pricing_modelling first
-  let { data, error } = await supabase
+  const { data } = await supabase
     .from('tools')
-    .select('id, slug, name, tagline, website, logo_url, pricing_model, starting_price_usd, starting_price_inr, is_made_in_india, managed_billing_enabled, convenience_fee_percent, pricing_modelling')
+    .select('id, slug, name, tagline, website, logo_url, pricing_model, starting_price_usd, starting_price_inr, is_made_in_india, managed_billing_enabled, convenience_fee_percent')
     .in('slug', slugs)
     .eq('status', 'approved')
-
-  // Fallback if column is missing
-  if (error && error.code === '42703') {
-    const fallback = await supabase
-      .from('tools')
-      .select('id, slug, name, tagline, website, logo_url, pricing_model, starting_price_usd, starting_price_inr, is_made_in_india, managed_billing_enabled, convenience_fee_percent')
-      .in('slug', slugs)
-      .eq('status', 'approved')
-    data = fallback.data as any
-  }
 
   if (!data) return []
 
@@ -285,7 +260,6 @@ export async function getToolsBySlugs(slugs: string[]): Promise<PlaygroundTool[]
     is_made_in_india: row.is_made_in_india,
     managed_billing_enabled: row.managed_billing_enabled,
     convenience_fee_percent: row.convenience_fee_percent,
-    pricing_modelling: row.pricing_modelling, // Will be undefined if missing
     categorySlug: '',
     categoryName: '',
   }))
