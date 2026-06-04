@@ -1279,34 +1279,48 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
               </div>
             </div>
 
-            <div className="rounded-3xl" style={{ background: "#fff", border: "1px solid rgba(140,110,80,0.1)", boxShadow: "0 20px 50px -12px rgba(140,110,80,0.12)", overflow: "visible" }}>
-              {/* Chat header */}
-              <div className="flex items-center justify-between px-5 py-3.5 rounded-t-3xl" style={{ borderBottom: "1px solid rgba(140,110,80,0.08)", background: "#fff" }}>
-                <div className="flex items-center gap-2">
-                  <Sparkles size={12} style={{ color: "#6366f1" }} />
-                  <span className="text-xs font-bold uppercase tracking-widest" style={{ color: "#A0907E" }}>AI Stack Assistant</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <ModelSelector value={selectedModelId} onChange={setSelectedModelId} />
+            {/* ── AI Chat Card — Direction 2: Warm Studio ── */}
+            <div className="rounded-3xl overflow-hidden" style={{ background: "#fff", border: "1px solid rgba(140,110,80,0.1)", boxShadow: "0 20px 60px -12px rgba(140,110,80,0.13)" }}>
+
+              {/* Gradient header */}
+              <div className="px-6 pt-5 pb-4" style={{ background: "linear-gradient(160deg, #FAF7F2 0%, #F0EAE0 100%)", borderBottom: "1px solid rgba(140,110,80,0.08)" }}>
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <div className="w-5 h-5 rounded-lg flex items-center justify-center" style={{ background: "rgba(99,102,241,0.12)" }}>
+                        <Sparkles size={11} style={{ color: "#6366f1" }} />
+                      </div>
+                      <span className="text-[11px] font-black uppercase tracking-[0.14em]" style={{ color: "#A0907E" }}>AI Stack Assistant</span>
+                    </div>
+                    <p className="text-[12px] leading-snug" style={{ color: "#C4B0A0", maxWidth: "28ch" }}>
+                      Describe your idea. Get a complete, production-ready stack.
+                    </p>
+                  </div>
                   {messages.length > 0 && (
-                    <button onClick={resetChat} className="text-[10px] font-bold px-2.5 py-1.5 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-1" style={{ color: "#A0907E" }}>
+                    <button onClick={resetChat}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-semibold transition-all hover:opacity-80"
+                      style={{ background: "rgba(140,110,80,0.08)", color: "#7A6A57" }}>
                       <RotateCcw size={10} /> New
                     </button>
                   )}
                 </div>
               </div>
 
-              {/* Messages */}
-              <div className="overflow-y-auto px-5 py-4 space-y-3" style={{ minHeight: "120px", maxHeight: "280px" }}>
+              {/* Messages area */}
+              <div className="overflow-y-auto px-5 py-4 space-y-3" style={{ minHeight: "100px", maxHeight: "260px" }}>
                 {messages.length === 0 && (
-                  <div className="flex flex-wrap gap-2 py-2">
-                    {SUGGESTIONS.map(s => (
-                      <button key={s} onClick={() => setIdea(s)}
-                        className="text-[10px] font-medium px-3 py-1.5 rounded-full border transition-all hover:bg-[rgba(140,110,80,0.05)]"
-                        style={{ background: "rgba(140,110,80,0.02)", borderColor: "rgba(140,110,80,0.1)", color: "#7A6A57" }}>
-                        {s}
-                      </button>
-                    ))}
+                  <div className="py-1">
+                    {/* Suggestion chips — single scrollable row */}
+                    <p className="text-[10px] font-semibold uppercase tracking-widest mb-2.5" style={{ color: "#C4B0A0" }}>Try an example</p>
+                    <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+                      {SUGGESTIONS.map(s => (
+                        <button key={s} onClick={() => setIdea(s)}
+                          className="flex-shrink-0 text-[11px] font-medium px-3.5 py-2 rounded-xl border transition-all duration-150 hover:border-indigo-200 hover:bg-indigo-50/40 hover:text-indigo-700 whitespace-nowrap"
+                          style={{ background: "rgba(140,110,80,0.03)", borderColor: "rgba(140,110,80,0.12)", color: "#7A6A57" }}>
+                          {s}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
                 {messages.map((msg, i) => (
@@ -1320,7 +1334,7 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
                       style={{
                         background: msg.role === "user" ? "#1C1611" : "rgba(140,110,80,0.05)",
                         color: msg.role === "user" ? "#fff" : "#1C1611",
-                        borderRadius: msg.role === "user" ? "1rem 1rem 0.25rem 1rem" : "1rem 1rem 1rem 0.25rem",
+                        borderRadius: msg.role === "user" ? "1rem 1rem 0.25rem 1rem" : "0.25rem 1rem 1rem 1rem",
                       }}>
                       {msg.role === "user"
                         ? <p className="text-xs leading-relaxed" style={{ color: "#fff" }}>{msg.content}</p>
@@ -1334,7 +1348,7 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
                     <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: "rgba(99,102,241,0.08)" }}>
                       <Sparkles size={10} style={{ color: "#6366f1" }} />
                     </div>
-                    <div className="px-3.5 py-2.5 rounded-2xl flex items-center gap-2" style={{ background: "rgba(140,110,80,0.05)", borderRadius: "1rem 1rem 1rem 0.25rem" }}>
+                    <div className="px-3.5 py-2.5 flex items-center gap-2" style={{ background: "rgba(140,110,80,0.05)", borderRadius: "0.25rem 1rem 1rem 1rem" }}>
                       <Loader2 size={11} className="animate-spin" style={{ color: "#6366f1" }} />
                       <span className="text-xs" style={{ color: "#A0907E" }}>{isSelectingTools ? "Searching tools..." : "Thinking..."}</span>
                     </div>
@@ -1343,39 +1357,52 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
                 <div ref={chatEndRef} />
               </div>
 
-              {/* Input row */}
-              <div className="px-4 pb-4 pt-2" style={{ borderTop: "1px solid rgba(140,110,80,0.07)" }}>
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg" style={{ background: "rgba(140,110,80,0.04)", border: "1px solid rgba(140,110,80,0.08)" }}>
-                    <span className="text-[10px] font-bold" style={{ color: "#A0907E" }}>₹</span>
-                    <input type="number" value={budget} onChange={e => setBudget(e.target.value === "" ? "" : Number(e.target.value))}
-                      placeholder="Budget" className="w-14 bg-transparent outline-none text-[10px] font-bold" style={{ color: "#1C1611" }} />
-                  </div>
-                  <span className="text-[10px]" style={{ color: "#C4B0A0" }}>
-                    {budget === "" ? "Flexible budget" : "Target budget set"}
-                  </span>
-                </div>
-                <div className="flex items-end gap-2 px-3.5 py-2.5 rounded-2xl" style={{ background: "rgba(140,110,80,0.04)", border: "1px solid rgba(140,110,80,0.12)" }}>
+              {/* Input area — full width, indigo glow on focus */}
+              <div className="px-4 pt-3 pb-3" style={{ borderTop: "1px solid rgba(140,110,80,0.07)" }}>
+                <div className="relative rounded-2xl transition-all duration-200"
+                  style={{ background: "rgba(250,247,242,0.8)", border: "1.5px solid rgba(140,110,80,0.14)" }}
+                  onFocusCapture={e => { const el = e.currentTarget as HTMLElement; el.style.borderColor = "rgba(99,102,241,0.4)"; el.style.boxShadow = "0 0 0 3px rgba(99,102,241,0.07)" }}
+                  onBlurCapture={e => { const el = e.currentTarget as HTMLElement; el.style.borderColor = "rgba(140,110,80,0.14)"; el.style.boxShadow = "none" }}>
                   <textarea
                     ref={textareaRef}
                     value={idea}
                     onChange={e => setIdea(e.target.value)}
                     onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); generate() } }}
                     placeholder="Describe what you're building..."
-                    rows={1}
-                    className="flex-1 bg-transparent outline-none resize-none text-sm leading-relaxed"
-                    style={{ color: "#1C1611", minHeight: "24px", maxHeight: "100px" }}
+                    rows={2}
+                    className="w-full bg-transparent outline-none resize-none text-[13px] leading-relaxed px-4 pt-3 pb-2"
+                    style={{ color: "#1C1611", minHeight: "56px", maxHeight: "120px" }}
                   />
-                  <button onClick={generate} disabled={!canGenerate}
-                    className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 transition-all disabled:opacity-30"
-                    style={{ background: canGenerate ? "#1C1611" : "rgba(140,110,80,0.1)" }}>
-                    {loading
-                      ? <Loader2 size={13} className="animate-spin" style={{ color: "#7A6A57" }} />
-                      : <Sparkles size={13} style={{ color: canGenerate ? "#fff" : "#A0907E" }} />
-                    }
-                  </button>
+                  {/* Send button inside textarea */}
+                  <div className="flex items-center justify-end px-3 pb-2.5">
+                    <button onClick={generate} disabled={!canGenerate}
+                      className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-[11px] font-bold transition-all duration-150 disabled:opacity-30 hover:opacity-90"
+                      style={{ background: canGenerate ? "#1C1611" : "rgba(140,110,80,0.1)", color: canGenerate ? "#fff" : "#A0907E" }}>
+                      {loading
+                        ? <><Loader2 size={11} className="animate-spin" /> Generating...</>
+                        : <><Sparkles size={11} /> Generate Stack</>
+                      }
+                    </button>
+                  </div>
                 </div>
-                <p className="text-[10px] text-center mt-1.5" style={{ color: "#C4B0A0" }}>Enter to send · Shift+Enter for new line</p>
+              </div>
+
+              {/* Footer bar — model + budget controls */}
+              <div className="flex items-center justify-between px-4 py-2.5" style={{ borderTop: "1px solid rgba(140,110,80,0.07)", background: "rgba(250,247,242,0.5)" }}>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] font-semibold" style={{ color: "#C4B0A0" }}>Model</span>
+                  <ModelSelector value={selectedModelId} onChange={setSelectedModelId} />
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-semibold" style={{ color: "#C4B0A0" }}>Budget</span>
+                  <div className="flex items-center gap-1 px-2.5 py-1 rounded-lg" style={{ background: "rgba(140,110,80,0.06)", border: "1px solid rgba(140,110,80,0.1)" }}>
+                    <span className="text-[10px] font-bold" style={{ color: "#A0907E" }}>₹</span>
+                    <input type="number" value={budget} onChange={e => setBudget(e.target.value === "" ? "" : Number(e.target.value))}
+                      placeholder="Flexible"
+                      className="w-16 bg-transparent outline-none text-[10px] font-semibold"
+                      style={{ color: "#1C1611" }} />
+                  </div>
+                </div>
               </div>
             </div>
           </div>

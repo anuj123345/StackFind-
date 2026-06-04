@@ -423,3 +423,6 @@ input::placeholder {
   0% { transform: scale(1.08); opacity: 0; filter: blur(20px); }
   100% { transform: scale(1); opacity: 1; filter: blur(0px); }
 }
+/* Hide scrollbar for chip rows */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
