@@ -61,30 +61,109 @@ const CATEGORIES = [
   { slug: "others",          name: "Others"         },
 ]
 
-const PRESET_STACKS: { name: string; emoji: string; description: string; slugs: string[] }[] = [
+const PRESET_STACKS: { name: string; emoji: string; description: string; slugs: string[]; prompt: string }[] = [
   {
     name: "MVP SaaS",
-    emoji: "≡ƒÜÇ",
+    emoji: "🚀",
     description: "Ship fast",
     slugs: ["cursor", "github", "vercel", "supabase", "clerk", "stripe", "resend", "sentry"],
+    prompt: `I'm building an MVP SaaS — a B2B productivity tool for small teams. Solo founder. Need to ship a working product in 4 weeks with paying users.
+
+What the product does: users sign up, use a core workflow feature, and pay monthly via subscription.
+
+Constraints:
+- Budget: under ₹5,000/month while building
+- Team: solo, no DevOps experience
+- Timeline: 4 weeks to first paying customer
+- Market: global, English-speaking
+
+What I need from the stack:
+- User auth with roles (admin + member)
+- PostgreSQL database with row-level security
+- Stripe subscription billing (monthly + annual plans)
+- Transactional email (welcome, billing receipts, password reset)
+- Error tracking from day one — I cannot afford silent failures
+- Deployment that auto-scales without manual intervention
+- Analytics to understand where users drop off
+
+Give me the complete stack with build order, realistic monthly cost at each stage, and the two biggest technical risks for a solo SaaS founder.`,
   },
   {
     name: "AI App",
-    emoji: "≡ƒñû",
+    emoji: "🤖",
     description: "LLM-powered",
-    slugs: ["cursor", "github", "vercel", "supabase", "clerk", "pinecone", "upstash", "resend"],
+    slugs: ["cursor", "github", "vercel", "supabase", "openai", "pinecone", "upstash", "resend"],
+    prompt: `I'm building an AI-powered web app. The core product is an LLM-based assistant — users describe a problem, the AI processes it and returns a structured, useful output.
+
+What the product does: users authenticate, submit queries or documents, the AI responds with processed results. Users can view their history and share outputs.
+
+Constraints:
+- Budget: under ₹10,000/month including AI API costs
+- Team: 1-2 engineers, both can code
+- Timeline: 6 weeks to beta with 50 real users
+- Market: global
+
+Technical requirements:
+- Streaming AI responses (not waiting 30 seconds for a full reply)
+- Conversation history per user stored in database
+- Rate limiting per user tier (free vs paid)
+- Vector storage for RAG if the product uses documents or knowledge bases
+- Auth with Google OAuth (users expect it)
+- The AI quality is the product — infrastructure should be invisible
+
+Key questions to address: Which LLM API, why that model, when to consider fine-tuning, how to prevent hallucination for this use case, and what breaks first at 1,000 daily users.`,
   },
   {
     name: "Indian Startup",
     emoji: "🇮🇳",
     description: "Built for India",
     slugs: ["cursor", "github", "vercel", "supabase", "clerk", "razorpay", "resend", "posthog"],
+    prompt: `I'm building a product specifically for the Indian market — targeting tier 1 and tier 2 city users, both mobile and desktop.
+
+What the product does: a consumer or SMB tool that helps Indian users with [a core workflow]. Users pay via UPI, debit cards, and credit cards in INR.
+
+Constraints:
+- Budget: under ₹8,000/month while building
+- Team: 1-2 founders
+- Timeline: 8 weeks to launch with first 100 users
+- Market: India-first, possibly expanding to SEA later
+
+India-specific requirements:
+- Razorpay for payments — UPI, cards, net banking, EMI support
+- INR pricing throughout, GST invoice generation
+- Works well on 4G mobile connections — performance matters
+- Hindi language support may be needed later — plan for i18n
+- WhatsApp as a notification channel (Indian users prefer it over email)
+- Data residency: prefer tools with India/Singapore regions
+
+Give me the complete stack optimised for Indian infrastructure and user behaviour. Include INR cost estimates at each growth stage and call out any tools that do not work well in India.`,
   },
   {
     name: "Indie Hacker",
     emoji: "⚡",
     description: "Zero to shipped",
     slugs: ["cursor", "github", "railway", "pocketbase", "better-auth", "lemon-squeezy", "resend", "posthog"],
+    prompt: `I'm building a solo side project. Goal: idea to revenue in one weekend. No team, no DevOps, no complexity.
+
+What the product does: a focused single-feature tool that solves one specific problem. Users pay a one-time fee or small monthly subscription to access it.
+
+Constraints:
+- Budget: as close to free as possible until it earns money — ideally under ₹1,500/month total
+- Team: just me, building nights and weekends
+- Timeline: working prototype in 2 days, launch in 1 week
+- Revenue target: ₹50,000/month within 3 months or kill it
+
+What I actually need (nothing more):
+- Auth: simple email/password or magic link — no enterprise SSO
+- Database: something I can set up in 10 minutes
+- Payments: one-time purchases or simple subscriptions, global customers
+- Deployment: push to deploy, zero config
+- Email: just transactional, no marketing automation yet
+- Analytics: know if anyone is using it
+
+What I do NOT need: microservices, Kubernetes, a CDN, Redis, a message queue, or anything that requires a devops engineer to maintain.
+
+Give me the minimum viable stack. Every tool must have a free tier that covers my first 100 users. Tell me what to add only when I hit specific revenue or scale milestones.`,
   },
 ]
 
@@ -714,6 +793,7 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
   }, [toggleStack])
 
   function loadPreset(preset: typeof PRESET_STACKS[0]) {
+    // 1. Clear and load suggested tools into stack panel
     clear()
     for (const slug of preset.slugs) {
       const tool = tools.find(t => t.slug === slug)
@@ -730,6 +810,13 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
         })
       }
     }
+    // 2. Inject rich prompt into chat input
+    setIdea(preset.prompt)
+    // 3. Auto-scroll to chat and focus
+    setTimeout(() => {
+      const chatInput = document.querySelector("textarea[placeholder*='project']") as HTMLTextAreaElement | null
+      chatInput?.focus()
+    }, 100)
   }
 
   async function generate() {
@@ -1092,9 +1179,10 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
                   <button
                     key={preset.name}
                     onClick={() => loadPreset(preset)}
-                    className="text-left rounded-2xl p-3.5 transition-all duration-150 hover:scale-[1.02] active:scale-[0.99]"
+                    className="group text-left rounded-2xl p-3.5 transition-all duration-200 hover:scale-[1.02] hover:shadow-md active:scale-[0.99]"
                     style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(140,110,80,0.1)" }}
                   >
+                    {/* Tool logos */}
                     <div className="flex items-center gap-1 mb-3 flex-wrap">
                       {preset.toolData.slice(0, 5).map(t => <LogoBubble key={t.slug} tool={t} size={24} />)}
                       {preset.toolData.length > 5 && (
@@ -1103,8 +1191,18 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
                         </div>
                       )}
                     </div>
+
+                    {/* Name + description */}
                     <p className="text-xs font-bold leading-tight" style={{ color: "#1C1611" }}>{preset.name}</p>
                     <p className="text-[10px] mt-0.5" style={{ color: "#C4B0A0" }}>{preset.description}</p>
+
+                    {/* Generate CTA — visible on hover */}
+                    <div className="flex items-center gap-1 mt-2.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                      <span className="text-[10px] font-semibold" style={{ color: "#6366f1" }}>Generate stack</span>
+                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                        <path d="M2 5h6M5.5 2.5L8 5l-2.5 2.5" stroke="#6366f1" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </div>
                   </button>
                 ))}
               </div>
