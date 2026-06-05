@@ -2,6 +2,11 @@ import { NextRequest } from "next/server"
 import OpenAI from "openai"
 import { createClient } from "@/lib/supabase/server"
 import { getServerUser } from "@/lib/auth"
+import {
+  detectIntent,
+  runComparisonFlow,
+  buildDomainEnrichedPrompt,
+} from "@/lib/multi-agent"
 
 export const maxDuration = 60
 
@@ -412,9 +417,46 @@ export async function POST(req: NextRequest) {
     ].includes(modelId) ? modelId : "meta/llama-3.3-70b-instruct"
 
     const lastUserMsg = [...clientMessages].reverse().find((m: any) => m.role === "user")?.content || ""
+
+    // ── Multi-agent intent detection ──────────────────────────────────────────
+    const intent = detectIntent(lastUserMsg)
     const { layerMap, queryTools } = await fetchToolsByLayers(lastUserMsg)
     const catalogue = buildToolsCatalogue(layerMap, queryTools)
-    const systemPrompt = buildSystemPrompt(model, catalogue)
+    const encoder = new TextEncoder()
+
+    // ── Scenario 2: Stack Comparison ─────────────────────────────────────────
+    if (intent.type === "comparison") {
+      const stream = new ReadableStream({
+        async start(controller) {
+          try {
+            // Signal to client that comparison is running
+            controller.enqueue(encoder.encode("🔄 **Running parallel stack analysis...**\n\n"))
+            const fullOutput = await runComparisonFlow(
+              intent.entityA, intent.entityB, lastUserMsg, catalogue
+            )
+            controller.enqueue(encoder.encode(fullOutput))
+            controller.close()
+          } catch (err: any) {
+            controller.enqueue(encoder.encode("\n\nError: " + (err?.message || "Comparison failed. Try again.")))
+            controller.close()
+          }
+        },
+      })
+      return new Response(stream, {
+        headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-cache" },
+      })
+    }
+
+    // ── Scenario 3: Domain Research ───────────────────────────────────────────
+    let enrichedCatalogue = catalogue
+    let domainPrefix = ""
+    if (intent.type === "domain_research") {
+      domainPrefix = `🔬 **Analysing ${intent.domain} domain...**\n\n`
+      enrichedCatalogue = await buildDomainEnrichedPrompt(intent.domain, lastUserMsg, catalogue)
+    }
+
+    // ── Standard flow (with optional domain enrichment) ────────────────────
+    const systemPrompt = buildSystemPrompt(model, enrichedCatalogue)
 
     const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
       { role: "system", content: systemPrompt },
@@ -425,22 +467,24 @@ export async function POST(req: NextRequest) {
     ]
 
     const client = nimClient()
-    const encoder = new TextEncoder()
 
     const stream = new ReadableStream({
       async start(controller) {
         try {
+          // Emit domain analysis prefix if applicable
+          if (domainPrefix) controller.enqueue(encoder.encode(domainPrefix))
+
           const streamResponse = await client.chat.completions.create({
             model,
             messages,
             max_tokens: 2500,
             stream: true,
-            temperature: 0.4, // lower = less hallucination
+            temperature: 0.4,
           })
 
           for await (const chunk of streamResponse) {
-            const content = chunk.choices[0]?.delta?.content
-            if (content) controller.enqueue(encoder.encode(content))
+            const chunkContent = chunk.choices[0]?.delta?.content
+            if (chunkContent) controller.enqueue(encoder.encode(chunkContent))
           }
 
           controller.close()

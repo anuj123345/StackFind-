@@ -1336,7 +1336,12 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
                     </div>
                     <div className="px-3.5 py-2.5 rounded-2xl flex items-center gap-2" style={{ background: "rgba(140,110,80,0.05)", borderRadius: "1rem 1rem 1rem 0.25rem" }}>
                       <Loader2 size={11} className="animate-spin" style={{ color: "#6366f1" }} />
-                      <span className="text-xs" style={{ color: "#A0907E" }}>{isSelectingTools ? "Searching tools..." : "Thinking..."}</span>
+                      <span className="text-xs" style={{ color: "#A0907E" }}>
+                        {isSelectingTools ? "Searching tools..." :
+                         idea.match(/(vs\.?|versus|or|compare)/i) ? "Running parallel stack analysis..." :
+                         idea.match(/health|medical|fintech|edtech|logistics|legal|ayurved/i) ? "Researching domain..." :
+                         "Architecting your stack..."}
+                      </span>
                     </div>
                   </div>
                 )}
