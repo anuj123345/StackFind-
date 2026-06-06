@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server"
 import { getServerUser } from "@/lib/auth"
 import {
   detectIntent,
-  runComparisonFlow,
+  buildComparisonMessages,
   buildDomainEnrichedPrompt,
 } from "@/lib/multi-agent"
 
@@ -424,17 +424,25 @@ export async function POST(req: NextRequest) {
     const catalogue = buildToolsCatalogue(layerMap, queryTools)
     const encoder = new TextEncoder()
 
-    // ── Scenario 2: Stack Comparison ─────────────────────────────────────────
+    // ── Scenario 2: Stack Comparison — single call, fully streamed ──────────
     if (intent.type === "comparison") {
-      const stream = new ReadableStream({
+      const compMessages = buildComparisonMessages(
+        intent.entityA, intent.entityB, lastUserMsg, catalogue
+      )
+      const compStream = new ReadableStream({
         async start(controller) {
           try {
-            // Signal to client that comparison is running
-            controller.enqueue(encoder.encode("🔄 **Running parallel stack analysis...**\n\n"))
-            const fullOutput = await runComparisonFlow(
-              intent.entityA, intent.entityB, lastUserMsg, catalogue
-            )
-            controller.enqueue(encoder.encode(fullOutput))
+            const streamResponse = await nimClient().chat.completions.create({
+              model,
+              messages: compMessages as OpenAI.Chat.ChatCompletionMessageParam[],
+              max_tokens: 2200,
+              stream: true,
+              temperature: 0.35,
+            })
+            for await (const chunk of streamResponse) {
+              const text = chunk.choices[0]?.delta?.content
+              if (text) controller.enqueue(encoder.encode(text))
+            }
             controller.close()
           } catch (err: any) {
             controller.enqueue(encoder.encode("\n\nError: " + (err?.message || "Comparison failed. Try again.")))
@@ -442,7 +450,7 @@ export async function POST(req: NextRequest) {
           }
         },
       })
-      return new Response(stream, {
+      return new Response(compStream, {
         headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-cache" },
       })
     }
