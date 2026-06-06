@@ -435,7 +435,7 @@ export async function POST(req: NextRequest) {
             const streamResponse = await nimClient().chat.completions.create({
               model,
               messages: compMessages as OpenAI.Chat.ChatCompletionMessageParam[],
-              max_tokens: 2200,
+              max_tokens: 3500,
               stream: true,
               temperature: 0.35,
             })
@@ -485,7 +485,7 @@ export async function POST(req: NextRequest) {
           const streamResponse = await client.chat.completions.create({
             model,
             messages,
-            max_tokens: 2500,
+            max_tokens: 3200,
             stream: true,
             temperature: 0.4,
           })

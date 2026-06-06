@@ -119,6 +119,7 @@ CRITICAL RULES:
 1. Only recommend tools from the AVAILABLE TOOLS CATALOGUE below
 2. Use exact slugs shown in [slug: ...] brackets
 3. Never invent tool names not in the catalogue
+4. Be concise — one short line per layer. Do not write paragraphs. Finish the ENTIRE response including the table, verdict, and MASTER_STACK block.
 
 Compare the two approaches for the user's project. Structure your response exactly like this:
 
