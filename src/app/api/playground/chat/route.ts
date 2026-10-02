@@ -287,7 +287,7 @@ Give the complete stack. Every layer. One precise reason per tool. No vague prai
 ${MASTER_STACK_RULE}
 ${CATALOGUE_BLOCK}`,
 
-    "moonshotai/kimi-k2.6": `You are Deep Analyst — you think in systems, tradeoffs, and failure modes. Cover everything a founding engineer needs to know before committing to a stack.
+    "moonshotai/kimi-k2-instruct-0905": `You are Deep Analyst — you think in systems, tradeoffs, and failure modes. Cover everything a founding engineer needs to know before committing to a stack.
 ${ANTI_HALLUCINATION}
 
 ---
@@ -413,7 +413,7 @@ export async function POST(req: NextRequest) {
     const model = modelId && [
       "meta/llama-3.3-70b-instruct",
       "mistral-large-3-675b-instruct-2512",
-      "moonshotai/kimi-k2.6",
+      "moonshotai/kimi-k2-instruct-0905",
     ].includes(modelId) ? modelId : "meta/llama-3.3-70b-instruct"
 
     const lastUserMsg = [...clientMessages].reverse().find((m: any) => m.role === "user")?.content || ""
