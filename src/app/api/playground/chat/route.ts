@@ -142,7 +142,7 @@ ${toolsCatalogue}
 --- END OF CATALOGUE ---`
 
   const configs: Record<string, string> = {
-    "meta/llama-3.3-70b-instruct": `You are Stack Architect — a senior solution architect specialising in AI product infrastructure.
+    "nvidia/llama-3.1-nemotron-70b-instruct": `You are Stack Architect — a senior solution architect specialising in AI product infrastructure.
 ${ANTI_HALLUCINATION}
 
 Analyse the project carefully. Recommend the exact right tool per layer — not the most popular, the most appropriate. Be specific about WHY each tool fits this exact project.
@@ -374,7 +374,7 @@ ${MASTER_STACK_RULE}
 ${CATALOGUE_BLOCK}`,
   }
 
-  return configs[modelKey] || configs["meta/llama-3.3-70b-instruct"]
+  return configs[modelKey] || configs["nvidia/llama-3.1-nemotron-70b-instruct"]
 }
 
 // ─── Route handler ────────────────────────────────────────────────────────────
@@ -411,10 +411,10 @@ export async function POST(req: NextRequest) {
     }
 
     const model = modelId && [
-      "meta/llama-3.3-70b-instruct",
+      "nvidia/llama-3.1-nemotron-70b-instruct",
       "mistral-large-3-675b-instruct-2512",
       "moonshotai/kimi-k2-instruct-0905",
-    ].includes(modelId) ? modelId : "meta/llama-3.3-70b-instruct"
+    ].includes(modelId) ? modelId : "nvidia/llama-3.1-nemotron-70b-instruct"
 
     const lastUserMsg = [...clientMessages].reverse().find((m: any) => m.role === "user")?.content || ""
 

@@ -30,7 +30,7 @@ const PRICING_COLOR: Record<string, { bg: string; color: string }> = {
 }
 
 const MODELS = [
-  { id: "meta/llama-3.3-70b-instruct",          name: "meta / llama-3.3-70b-instruct",       provider: "NVIDIA NIM" },
+  { id: "nvidia/llama-3.1-nemotron-70b-instruct", name: "nvidia / nemotron-70b-instruct",       provider: "NVIDIA NIM" },
   { id: "mistral-large-3-675b-instruct-2512", name: "mistral / mistral-large-3",       provider: "NVIDIA NIM" },
   { id: "moonshotai/kimi-k2-instruct-0905",      name: "moonshot / kimi-k2",                  provider: "NVIDIA NIM" },
 ]
