@@ -136,12 +136,16 @@ async function fetchPH(daysBack = 1): Promise<PHPost[]> {
         node {
           name tagline description url website votesCount
           thumbnail { url }
-          largeThumbnail: thumbnail { url }
           topics { edges { node { slug } } }
         }
       }
     }
   }`
+
+  if (!process.env.PRODUCT_HUNT_TOKEN) {
+    console.error("[cron/discover] PRODUCT_HUNT_TOKEN is not set — skipping PH fetch")
+    return []
+  }
 
   const res = await fetch("https://api.producthunt.com/v2/api/graphql", {
     method: "POST",
@@ -153,8 +157,15 @@ async function fetchPH(daysBack = 1): Promise<PHPost[]> {
     next: { revalidate: 0 },
   })
 
-  if (!res.ok) return []
+  if (!res.ok) {
+    const body = await res.text().catch(() => "")
+    console.error(`[cron/discover] PH API error ${res.status}:`, body.slice(0, 300))
+    return []
+  }
   const json = await res.json()
+  if (json.errors) {
+    console.error("[cron/discover] PH GraphQL errors:", JSON.stringify(json.errors).slice(0, 500))
+  }
 
   return (json?.data?.posts?.edges ?? []).map((e: { node: Record<string, unknown> }) => {
     const n = e.node as {
@@ -186,9 +197,15 @@ function slugify(s: string): string {
 // ─── Route handler ────────────────────────────────────────────────────────────
 
 export async function GET(req: NextRequest) {
-  const secret = req.headers.get("x-cron-secret") ?? req.nextUrl.searchParams.get("secret")
-  if (process.env.CRON_SECRET && secret !== process.env.CRON_SECRET) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  // Vercel Cron sends: Authorization: Bearer <CRON_SECRET>
+  // Manual/test calls can use ?secret=<CRON_SECRET> or x-cron-secret header
+  if (process.env.CRON_SECRET) {
+    const authHeader = req.headers.get("authorization") ?? ""
+    const bearerToken = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null
+    const secret = bearerToken ?? req.headers.get("x-cron-secret") ?? req.nextUrl.searchParams.get("secret")
+    if (secret !== process.env.CRON_SECRET) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
   }
 
   // Allow fetching multiple days back (default 1)
@@ -198,7 +215,10 @@ export async function GET(req: NextRequest) {
     const posts = await fetchPH(Math.min(daysBack, 7))
 
     if (!posts.length) {
-      return NextResponse.json({ inserted: 0, message: "No posts from PH or API unavailable" })
+      return NextResponse.json({
+        inserted: 0,
+        message: "No posts returned — check PRODUCT_HUNT_TOKEN env var and Vercel function logs"
+      })
     }
 
     const supabase = serviceClient()
