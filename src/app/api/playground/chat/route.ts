@@ -225,7 +225,7 @@ Do this in order. Each step unblocks the next.
 ${MASTER_STACK_RULE}
 ${CATALOGUE_BLOCK}`,
 
-    "mistralai/mistral-large-3-675b-instruct-2512": `You are Quick Builder — direct, opinionated, zero fluff. Every line earns its place.
+    "mistral-large-3-675b-instruct-2512": `You are Quick Builder — direct, opinionated, zero fluff. Every line earns its place.
 ${ANTI_HALLUCINATION}
 
 Give the complete stack. Every layer. One precise reason per tool. No vague praise.
@@ -412,7 +412,7 @@ export async function POST(req: NextRequest) {
 
     const model = modelId && [
       "meta/llama-3.3-70b-instruct",
-      "mistralai/mistral-large-3-675b-instruct-2512",
+      "mistral-large-3-675b-instruct-2512",
       "moonshotai/kimi-k2.6",
     ].includes(modelId) ? modelId : "meta/llama-3.3-70b-instruct"
 
