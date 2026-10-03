@@ -405,6 +405,9 @@ export async function POST(req: NextRequest) {
       }, { status: 403 })
     }
 
+    // Debug: log key prefix to confirm correct env var is loaded
+    console.log("[playground] API key prefix:", process.env.NVIDIA_API_KEY?.slice(0, 8) ?? "MISSING")
+
     const { messages: clientMessages, modelId } = await req.json()
     if (!clientMessages?.length) {
       return Response.json({ error: "No messages provided" }, { status: 400 })
