@@ -30,9 +30,9 @@ const PRICING_COLOR: Record<string, { bg: string; color: string }> = {
 }
 
 const MODELS = [
-  { id: "deepseek-ai/deepseek-v4.1-flash",        name: "deepseek / v4.1-flash",               provider: "NVIDIA NIM" },
-  { id: "mistralai/mistral-large-2-instruct",     name: "mistral / large-2",                   provider: "NVIDIA NIM" },
-  { id: "google/gemma-4-31b-it",                  name: "google / gemma-4-31b",                provider: "NVIDIA NIM" },
+  { id: "claude-3-5-haiku-20241022",  name: "claude / haiku-3.5",   provider: "Anthropic" },
+  { id: "claude-3-5-sonnet-20241022", name: "claude / sonnet-3.5",  provider: "Anthropic" },
+  { id: "claude-3-haiku-20240307",    name: "claude / haiku-3",     provider: "Anthropic" },
 ]
 
 const CATEGORIES = [

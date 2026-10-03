@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server"
-import OpenAI from "openai"
+import Anthropic from "@anthropic-ai/sdk"
 import { createClient } from "@/lib/supabase/server"
 import { getServerUser } from "@/lib/auth"
 import {
@@ -10,12 +10,16 @@ import {
 
 export const maxDuration = 60
 
-function nimClient() {
-  return new OpenAI({
-    apiKey: process.env.NVIDIA_API_KEY!,
-    baseURL: "https://integrate.api.nvidia.com/v1",
-  })
+function anthropicClient() {
+  return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 }
+
+const ALLOWED_MODELS = [
+  "claude-3-5-haiku-20241022",
+  "claude-3-5-sonnet-20241022",
+  "claude-3-haiku-20240307",
+]
+const DEFAULT_MODEL = "claude-3-5-haiku-20241022"
 
 // ─── Full product layer categories mapped to DB slugs ─────────────────────────
 
@@ -142,7 +146,7 @@ ${toolsCatalogue}
 --- END OF CATALOGUE ---`
 
   const configs: Record<string, string> = {
-    "deepseek-ai/deepseek-v4.1-flash": `You are Stack Architect — a senior solution architect specialising in AI product infrastructure.
+    "claude-3-5-haiku-20241022": `You are Stack Architect — a senior solution architect specialising in AI product infrastructure.
 ${ANTI_HALLUCINATION}
 
 Analyse the project carefully. Recommend the exact right tool per layer — not the most popular, the most appropriate. Be specific about WHY each tool fits this exact project.
@@ -225,7 +229,7 @@ Do this in order. Each step unblocks the next.
 ${MASTER_STACK_RULE}
 ${CATALOGUE_BLOCK}`,
 
-    "mistral-large-3-675b-instruct-2512": `You are Quick Builder — direct, opinionated, zero fluff. Every line earns its place.
+    "claude-3-5-sonnet-20241022": `You are Quick Builder — direct, opinionated, zero fluff. Every line earns its place.
 ${ANTI_HALLUCINATION}
 
 Give the complete stack. Every layer. One precise reason per tool. No vague praise.
@@ -287,7 +291,7 @@ Give the complete stack. Every layer. One precise reason per tool. No vague prai
 ${MASTER_STACK_RULE}
 ${CATALOGUE_BLOCK}`,
 
-    "moonshotai/kimi-k2-instruct-0905": `You are Deep Analyst — you think in systems, tradeoffs, and failure modes. Cover everything a founding engineer needs to know before committing to a stack.
+    "claude-3-haiku-20240307": `You are Deep Analyst — you think in systems, tradeoffs, and failure modes. Cover everything a founding engineer needs to know before committing to a stack.
 ${ANTI_HALLUCINATION}
 
 ---
@@ -374,7 +378,7 @@ ${MASTER_STACK_RULE}
 ${CATALOGUE_BLOCK}`,
   }
 
-  return configs[modelKey] || configs["deepseek-ai/deepseek-v4.1-flash"]
+  return configs[modelKey] || configs["claude-3-5-haiku-20241022"]
 }
 
 // ─── Route handler ────────────────────────────────────────────────────────────
@@ -405,19 +409,12 @@ export async function POST(req: NextRequest) {
       }, { status: 403 })
     }
 
-    // Debug: log key prefix to confirm correct env var is loaded
-    console.log("[playground] API key prefix:", process.env.NVIDIA_API_KEY?.slice(0, 8) ?? "MISSING")
-
     const { messages: clientMessages, modelId } = await req.json()
     if (!clientMessages?.length) {
       return Response.json({ error: "No messages provided" }, { status: 400 })
     }
 
-    const model = modelId && [
-      "deepseek-ai/deepseek-v4.1-flash",
-      "mistralai/mistral-large-2-instruct",
-      "google/gemma-4-31b-it",
-    ].includes(modelId) ? modelId : "deepseek-ai/deepseek-v4.1-flash"
+    const model = modelId && ALLOWED_MODELS.includes(modelId) ? modelId : DEFAULT_MODEL
 
     const lastUserMsg = [...clientMessages].reverse().find((m: any) => m.role === "user")?.content || ""
 
@@ -435,16 +432,18 @@ export async function POST(req: NextRequest) {
       const compStream = new ReadableStream({
         async start(controller) {
           try {
-            const streamResponse = await nimClient().chat.completions.create({
+            const systemMsg = compMessages.find((m: any) => m.role === "system")?.content as string | undefined
+            const userMsgs = compMessages.filter((m: any) => m.role !== "system") as { role: "user" | "assistant"; content: string }[]
+            const streamResponse = anthropicClient().messages.stream({
               model,
-              messages: compMessages as OpenAI.Chat.ChatCompletionMessageParam[],
               max_tokens: 3500,
-              stream: true,
-              temperature: 0.35,
+              system: systemMsg,
+              messages: userMsgs,
             })
-            for await (const chunk of streamResponse) {
-              const text = chunk.choices[0]?.delta?.content
-              if (text) controller.enqueue(encoder.encode(text))
+            for await (const event of streamResponse) {
+              if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
+                controller.enqueue(encoder.encode(event.delta.text))
+              }
             }
             controller.close()
           } catch (err: any) {
@@ -469,33 +468,27 @@ export async function POST(req: NextRequest) {
     // ── Standard flow (with optional domain enrichment) ────────────────────
     const systemPrompt = buildSystemPrompt(model, enrichedCatalogue)
 
-    const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
-      { role: "system", content: systemPrompt },
-      ...clientMessages.map((m: { role: string; content: string }) => ({
-        role: m.role as "user" | "assistant",
-        content: m.content,
-      })),
-    ]
-
-    const client = nimClient()
+    const anthropicMessages = clientMessages.map((m: { role: string; content: string }) => ({
+      role: m.role as "user" | "assistant",
+      content: m.content,
+    }))
 
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          // Emit domain analysis prefix if applicable
           if (domainPrefix) controller.enqueue(encoder.encode(domainPrefix))
 
-          const streamResponse = await client.chat.completions.create({
+          const streamResponse = anthropicClient().messages.stream({
             model,
-            messages,
             max_tokens: 3200,
-            stream: true,
-            temperature: 0.4,
+            system: systemPrompt,
+            messages: anthropicMessages,
           })
 
-          for await (const chunk of streamResponse) {
-            const chunkContent = chunk.choices[0]?.delta?.content
-            if (chunkContent) controller.enqueue(encoder.encode(chunkContent))
+          for await (const event of streamResponse) {
+            if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
+              controller.enqueue(encoder.encode(event.delta.text))
+            }
           }
 
           controller.close()
