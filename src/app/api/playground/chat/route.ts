@@ -142,7 +142,7 @@ ${toolsCatalogue}
 --- END OF CATALOGUE ---`
 
   const configs: Record<string, string> = {
-    "nvidia/llama-3.1-nemotron-70b-instruct": `You are Stack Architect — a senior solution architect specialising in AI product infrastructure.
+    "deepseek-ai/deepseek-v4.1-flash": `You are Stack Architect — a senior solution architect specialising in AI product infrastructure.
 ${ANTI_HALLUCINATION}
 
 Analyse the project carefully. Recommend the exact right tool per layer — not the most popular, the most appropriate. Be specific about WHY each tool fits this exact project.
@@ -374,7 +374,7 @@ ${MASTER_STACK_RULE}
 ${CATALOGUE_BLOCK}`,
   }
 
-  return configs[modelKey] || configs["nvidia/llama-3.1-nemotron-70b-instruct"]
+  return configs[modelKey] || configs["deepseek-ai/deepseek-v4.1-flash"]
 }
 
 // ─── Route handler ────────────────────────────────────────────────────────────
@@ -411,10 +411,10 @@ export async function POST(req: NextRequest) {
     }
 
     const model = modelId && [
-      "nvidia/llama-3.1-nemotron-70b-instruct",
-      "mistral-large-3-675b-instruct-2512",
-      "moonshotai/kimi-k2-instruct-0905",
-    ].includes(modelId) ? modelId : "nvidia/llama-3.1-nemotron-70b-instruct"
+      "deepseek-ai/deepseek-v4.1-flash",
+      "mistralai/mistral-large-2-instruct",
+      "google/gemma-4-31b-it",
+    ].includes(modelId) ? modelId : "deepseek-ai/deepseek-v4.1-flash"
 
     const lastUserMsg = [...clientMessages].reverse().find((m: any) => m.role === "user")?.content || ""
 
