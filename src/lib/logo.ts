@@ -13,8 +13,8 @@ export function getLogoUrl(
   website: string | null | undefined,
   storedLogoUrl?: string | null
 ): string | null {
-  // Admin-stored URL (ProductHunt logos, custom uploads, etc.) — use directly
-  if (storedLogoUrl && !storedLogoUrl.includes("logo.clearbit.com")) {
+  // Admin-stored URL (ProductHunt logos, Google favicons, custom uploads) — use directly
+  if (storedLogoUrl) {
     return storedLogoUrl
   }
 
