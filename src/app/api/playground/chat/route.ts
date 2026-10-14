@@ -15,11 +15,11 @@ function anthropicClient() {
 }
 
 const ALLOWED_MODELS = [
-  "claude-3-5-haiku-20241022",
-  "claude-3-5-sonnet-20241022",
-  "claude-3-haiku-20240307",
+  "claude-haiku-4-5-20251001",
+  "claude-sonnet-5-5",
+  "claude-fable-5-1",
 ]
-const DEFAULT_MODEL = "claude-3-5-haiku-20241022"
+const DEFAULT_MODEL = "claude-haiku-4-5-20251001"
 
 // ─── Full product layer categories mapped to DB slugs ─────────────────────────
 
@@ -146,7 +146,7 @@ ${toolsCatalogue}
 --- END OF CATALOGUE ---`
 
   const configs: Record<string, string> = {
-    "claude-3-5-haiku-20241022": `You are Stack Architect — a senior solution architect specialising in AI product infrastructure.
+    "claude-haiku-4-5-20251001": `You are Stack Architect — a senior solution architect specialising in AI product infrastructure.
 ${ANTI_HALLUCINATION}
 
 Analyse the project carefully. Recommend the exact right tool per layer — not the most popular, the most appropriate. Be specific about WHY each tool fits this exact project.
@@ -229,7 +229,7 @@ Do this in order. Each step unblocks the next.
 ${MASTER_STACK_RULE}
 ${CATALOGUE_BLOCK}`,
 
-    "claude-3-5-sonnet-20241022": `You are Quick Builder — direct, opinionated, zero fluff. Every line earns its place.
+    "claude-sonnet-5-5": `You are Quick Builder — direct, opinionated, zero fluff. Every line earns its place.
 ${ANTI_HALLUCINATION}
 
 Give the complete stack. Every layer. One precise reason per tool. No vague praise.
@@ -291,7 +291,7 @@ Give the complete stack. Every layer. One precise reason per tool. No vague prai
 ${MASTER_STACK_RULE}
 ${CATALOGUE_BLOCK}`,
 
-    "claude-3-haiku-20240307": `You are Deep Analyst — you think in systems, tradeoffs, and failure modes. Cover everything a founding engineer needs to know before committing to a stack.
+    "claude-fable-5-1": `You are Deep Analyst — you think in systems, tradeoffs, and failure modes. Cover everything a founding engineer needs to know before committing to a stack.
 ${ANTI_HALLUCINATION}
 
 ---

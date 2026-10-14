@@ -30,9 +30,9 @@ const PRICING_COLOR: Record<string, { bg: string; color: string }> = {
 }
 
 const MODELS = [
-  { id: "claude-3-5-haiku-20241022",  name: "claude / haiku-3.5",   provider: "Anthropic" },
-  { id: "claude-3-5-sonnet-20241022", name: "claude / sonnet-3.5",  provider: "Anthropic" },
-  { id: "claude-3-haiku-20240307",    name: "claude / haiku-3",     provider: "Anthropic" },
+  { id: "claude-haiku-4-5-20251001",  name: "claude / haiku-4.5",   provider: "Anthropic" },
+  { id: "claude-sonnet-5-5",          name: "claude / sonnet-5.5",  provider: "Anthropic" },
+  { id: "claude-fable-5-1",           name: "claude / fable-5.1",   provider: "Anthropic" },
 ]
 
 const CATEGORIES = [
