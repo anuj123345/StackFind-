@@ -196,7 +196,8 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
     try {
       const res = await fetch("/api/admin/analytics", { headers: { "x-admin-key": adminKey } })
       const data = await res.json()
-      setStats(data)
+      // API returns { stats: {...}, recentActivity: [...] } — flatten stats to top level
+      setStats({ ...data.stats, recentActivity: data.recentActivity })
     } finally { setStatsLoading(false) }
   }
 
@@ -448,7 +449,7 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <StatCard 
                   label="Market Reach" 
-                  value={stats?.totalTools || "0"} 
+                  value={stats?.totalReach || "0"}
                   trend="+12%" 
                   icon={<Activity size={20} />} 
                   color="indigo" 
@@ -464,7 +465,7 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
                 />
                 <StatCard 
                   label="Revenue Potential" 
-                  value={`₹${stats?.totalLeads || "0"}`} 
+                  value={`₹${stats?.pendingLeads || "0"}`}
                   trend="High Signal" 
                   icon={<Zap size={20} />} 
                   color="emerald" 
