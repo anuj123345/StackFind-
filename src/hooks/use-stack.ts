@@ -35,7 +35,17 @@ export function useStack() {
   const [stack, setStack] = useState<StackTool[]>([])
 
   useEffect(() => {
-    setStack(readStorage())
+    // Deduplicate any stale localStorage state on mount
+    const raw = readStorage()
+    const seen = new Set<string>()
+    const clean = raw.filter(t => {
+      if (seen.has(t.slug)) return false
+      seen.add(t.slug)
+      return true
+    })
+    if (clean.length !== raw.length) writeStorage(clean)
+    setStack(clean)
+
     const handler = () => setStack(readStorage())
     window.addEventListener("stack-updated", handler)
     return () => window.removeEventListener("stack-updated", handler)
@@ -59,10 +69,18 @@ export function useStack() {
 
   const toggle = useCallback((tool: StackTool) => {
     const current = readStorage()
-    if (current.find(t => t.slug === tool.slug)) {
+    const exists = current.find(t => t.slug === tool.slug)
+    if (exists) {
       dispatch(current.filter(t => t.slug !== tool.slug))
     } else {
-      dispatch([...current, tool])
+      // Deduplicate existing entries before appending (guard against stale localStorage)
+      const seen = new Set<string>()
+      const clean = current.filter(t => {
+        if (seen.has(t.slug)) return false
+        seen.add(t.slug)
+        return true
+      })
+      dispatch([...clean, tool])
     }
   }, [dispatch])
 
@@ -71,7 +89,14 @@ export function useStack() {
   const isInStack = useCallback((slug: string) => stack.some(t => t.slug === slug), [stack])
 
   const setFullStack = useCallback((tools: StackTool[]) => {
-    dispatch(tools)
+    // Deduplicate by slug before writing — multiple callers may overlap
+    const seen = new Set<string>()
+    const deduped = tools.filter(t => {
+      if (seen.has(t.slug)) return false
+      seen.add(t.slug)
+      return true
+    })
+    dispatch(deduped)
   }, [dispatch])
 
   return { stack, add, remove, toggle, clear, isInStack, setFullStack }
