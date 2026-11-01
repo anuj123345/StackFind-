@@ -65,13 +65,26 @@ export async function getMadeInIndiaTools(limit = 12): Promise<ToolWithCategoryN
 
 export async function getAllTools(): Promise<ToolWithCategoryNames[]> {
   const supabase = await createClient()
-  const { data } = await supabase
-    .from('tools')
-    .select('*, tool_categories(categories(name, slug))')
-    .eq('status', 'approved')
-    .order('upvotes', { ascending: false })
-    .range(0, 9999)
-  return (data ?? []).map(flattenCategories)
+  const PAGE_SIZE = 1000
+  const allData: any[] = []
+  let from = 0
+
+  // Supabase PostgREST hard-caps at 1000 rows per request — paginate to get all
+  while (true) {
+    const { data, error } = await supabase
+      .from('tools')
+      .select('*, tool_categories(categories(name, slug))')
+      .eq('status', 'approved')
+      .order('upvotes', { ascending: false })
+      .range(from, from + PAGE_SIZE - 1)
+
+    if (error || !data || data.length === 0) break
+    allData.push(...data)
+    if (data.length < PAGE_SIZE) break
+    from += PAGE_SIZE
+  }
+
+  return allData.map(flattenCategories)
 }
 
 export async function getCategories(): Promise<Category[]> {
@@ -118,14 +131,26 @@ export async function getCategoryBySlug(slug: string): Promise<Category | null> 
 
 export async function getToolsByCategory(categorySlug: string): Promise<ToolWithCategoryNames[]> {
   const supabase = await createClient()
-  const { data } = await supabase
-    .from('tools')
-    .select('*, tool_categories!inner(categories!inner(name, slug))')
-    .eq('status', 'approved')
-    .eq('tool_categories.categories.slug', categorySlug)
-    .order('upvotes', { ascending: false })
-    .range(0, 9999)
-  return (data ?? []).map(flattenCategories)
+  const PAGE_SIZE = 1000
+  const allData: any[] = []
+  let from = 0
+
+  while (true) {
+    const { data, error } = await supabase
+      .from('tools')
+      .select('*, tool_categories!inner(categories!inner(name, slug))')
+      .eq('status', 'approved')
+      .eq('tool_categories.categories.slug', categorySlug)
+      .order('upvotes', { ascending: false })
+      .range(from, from + PAGE_SIZE - 1)
+
+    if (error || !data || data.length === 0) break
+    allData.push(...data)
+    if (data.length < PAGE_SIZE) break
+    from += PAGE_SIZE
+  }
+
+  return allData.map(flattenCategories)
 }
 
 export type PlaygroundTool = {
@@ -155,15 +180,27 @@ const PLAYGROUND_CATEGORIES = [
 
 export async function getPlaygroundTools(): Promise<PlaygroundTool[]> {
   const supabase = await createClient()
-  
-  const { data } = await supabase
-    .from('tools')
-    .select('id, slug, name, tagline, website, logo_url, pricing_model, starting_price_usd, starting_price_inr, is_made_in_india, managed_billing_enabled, convenience_fee_percent, tool_categories(categories(slug, name))')
-    .eq('status', 'approved')
-    .order('upvotes', { ascending: false })
-    .range(0, 9999)
 
-  if (!data) return []
+  const PAGE_SIZE = 1000
+  const allData: any[] = []
+  let from = 0
+
+  while (true) {
+    const { data, error } = await supabase
+      .from('tools')
+      .select('id, slug, name, tagline, website, logo_url, pricing_model, starting_price_usd, starting_price_inr, is_made_in_india, managed_billing_enabled, convenience_fee_percent, tool_categories(categories(slug, name))')
+      .eq('status', 'approved')
+      .order('upvotes', { ascending: false })
+      .range(from, from + PAGE_SIZE - 1)
+
+    if (error || !data || data.length === 0) break
+    allData.push(...data)
+    if (data.length < PAGE_SIZE) break
+    from += PAGE_SIZE
+  }
+
+  const data = allData
+  if (!data.length) return []
 
   const seen = new Set<string>()
   const result: PlaygroundTool[] = []
