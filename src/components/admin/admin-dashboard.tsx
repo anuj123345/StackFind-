@@ -226,8 +226,14 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
     try {
       const res = await fetch("/api/admin/users", { headers: { "x-admin-key": adminKey } })
       const data = await res.json()
+      if (!res.ok) {
+        console.error("[admin] loadUsers failed:", res.status, data)
+        return
+      }
       setUsers(data.users ?? [])
       setUsersLoaded(true)
+    } catch (e) {
+      console.error("[admin] loadUsers error:", e)
     } finally { setUsersLoading(false) }
   }
 
@@ -731,6 +737,8 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
                     Regular Logins
                   </h3>
                   <div className="space-y-4 relative z-10">
+                    {usersLoading && <div className="text-sm text-[#7A6A57] animate-pulse">Loading users...</div>}
+                    {!usersLoading && users.length === 0 && <div className="text-sm text-[#7A6A57]">No users found.</div>}
                     {users.slice(0, 5).map(u => (
                       <div key={u.id} className="flex items-center justify-between p-3 rounded-xl hover:bg-[#FAF7F2] transition-colors border border-transparent hover:border-[rgba(140,110,80,0.08)]">
                         <div className="flex items-center gap-3">
