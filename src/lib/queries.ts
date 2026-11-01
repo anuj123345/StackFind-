@@ -70,7 +70,7 @@ export async function getAllTools(): Promise<ToolWithCategoryNames[]> {
     .select('*, tool_categories(categories(name, slug))')
     .eq('status', 'approved')
     .order('upvotes', { ascending: false })
-    .limit(10000)
+    .range(0, 9999)
   return (data ?? []).map(flattenCategories)
 }
 
@@ -124,7 +124,7 @@ export async function getToolsByCategory(categorySlug: string): Promise<ToolWith
     .eq('status', 'approved')
     .eq('tool_categories.categories.slug', categorySlug)
     .order('upvotes', { ascending: false })
-    .limit(10000)
+    .range(0, 9999)
   return (data ?? []).map(flattenCategories)
 }
 
@@ -161,7 +161,7 @@ export async function getPlaygroundTools(): Promise<PlaygroundTool[]> {
     .select('id, slug, name, tagline, website, logo_url, pricing_model, starting_price_usd, starting_price_inr, is_made_in_india, managed_billing_enabled, convenience_fee_percent, tool_categories(categories(slug, name))')
     .eq('status', 'approved')
     .order('upvotes', { ascending: false })
-    .limit(10000)
+    .range(0, 9999)
 
   if (!data) return []
 
