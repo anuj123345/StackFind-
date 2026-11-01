@@ -60,6 +60,7 @@ interface AdminDashboardProps {
   tools: Tool[]
   categories: Pick<Category, "id" | "slug" | "name">[]
   adminKey: string
+  initialUsers?: any[]
 }
 
 const PRICING_OPTIONS = ["free", "freemium", "paid", "open_source"] as const
@@ -74,7 +75,7 @@ function slugify(s: string) {
   return s.toLowerCase().trim().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "")
 }
 
-export function AdminDashboard({ tools: initialTools, categories, adminKey }: AdminDashboardProps) {
+export function AdminDashboard({ tools: initialTools, categories, adminKey, initialUsers = [] }: AdminDashboardProps) {
   const [tools, setTools] = useState(initialTools)
   const [showForm, setShowForm] = useState(false)
   const [isPending, startTransition] = useTransition()
@@ -186,8 +187,8 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
   const [billingRequests, setBillingRequests] = useState<BillingRequest[]>([])
   const [leadsLoaded, setLeadsLoaded] = useState(false)
   const [leadsLoading, setLeadsLoading] = useState(false)
-  const [users, setUsers] = useState<any[]>([])
-  const [usersLoaded, setUsersLoaded] = useState(false)
+  const [users, setUsers] = useState<any[]>(initialUsers)
+  const [usersLoaded, setUsersLoaded] = useState(initialUsers.length > 0)
   const [usersLoading, setUsersLoading] = useState(false)
 
   async function loadAnalytics() {

@@ -30,6 +30,19 @@ async function getAllCategories() {
   return data ?? []
 }
 
+async function getAllUsers() {
+  const supabase = createClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+  const { data } = await supabase
+    .from("profiles")
+    .select("*")
+    .order("updated_at", { ascending: false })
+    .limit(100)
+  return data ?? []
+}
+
 export default async function AdminPage() {
   // STRICT SECURITY: Check if user is admin via session/email/cookie first
   const isAdmin = await getServerAdminStatus()
@@ -37,7 +50,7 @@ export default async function AdminPage() {
      redirect("/login?next=/admin")
   }
 
-  const [tools, categories] = await Promise.all([getAllTools(), getAllCategories()])
+  const [tools, categories, users] = await Promise.all([getAllTools(), getAllCategories(), getAllUsers()])
 
-  return <AdminDashboard tools={tools} categories={categories} adminKey="" />
+  return <AdminDashboard tools={tools} categories={categories} adminKey="" initialUsers={users} />
 }
