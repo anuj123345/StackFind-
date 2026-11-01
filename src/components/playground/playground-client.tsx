@@ -725,7 +725,11 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
   const [idea, setIdea] = useState("")
   const [budget, setBudget] = useState<number | "">("")
   const [selectedModelId, setSelectedModelId] = useState(MODELS[0].id)
-  const [output, setOutput] = useState("")
+  const [output, setOutput] = useState<string>(() => {
+    // Restore from sessionStorage so build plan survives tab switches
+    if (typeof window === "undefined") return ""
+    try { return sessionStorage.getItem("stackfind_output") ?? "" } catch { return "" }
+  })
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
   const [isSelectingTools, setIsSelectingTools] = useState(false)
@@ -733,7 +737,14 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
   const [copied, setCopied] = useState(false)
   const searchParams = useSearchParams()
   const [sessionUsage, setSessionUsage] = useState(profile?.playground_usage_count || 0)
-  const [messages, setMessages] = useState<{role:"user"|"assistant"; content:string}[]>([])
+  const [messages, setMessages] = useState<{role:"user"|"assistant"; content:string}[]>(() => {
+    // Restore from sessionStorage so chat history survives tab switches
+    if (typeof window === "undefined") return []
+    try {
+      const saved = sessionStorage.getItem("stackfind_messages")
+      return saved ? JSON.parse(saved) : []
+    } catch { return [] }
+  })
   const [masterStack, setMasterStack] = useState<MasterStack | null>(() => {
     // Restore from sessionStorage so category grouping survives tab switches
     if (typeof window === "undefined") return null
@@ -750,6 +761,22 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
       else sessionStorage.removeItem("stackfind_master_stack")
     } catch { /* ignore */ }
   }, [masterStack])
+
+  // Keep sessionStorage in sync whenever output (build plan) changes
+  useEffect(() => {
+    try {
+      if (output) sessionStorage.setItem("stackfind_output", output)
+      else sessionStorage.removeItem("stackfind_output")
+    } catch { /* ignore */ }
+  }, [output])
+
+  // Keep sessionStorage in sync whenever messages (chat history) changes
+  useEffect(() => {
+    try {
+      if (messages.length > 0) sessionStorage.setItem("stackfind_messages", JSON.stringify(messages))
+      else sessionStorage.removeItem("stackfind_messages")
+    } catch { /* ignore */ }
+  }, [messages])
 
   const outputRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -1064,6 +1091,12 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
     setError("")
     setMasterStack(null)
     clear()
+    // Also wipe sessionStorage so restored state doesn't bleed into the next session
+    try {
+      sessionStorage.removeItem("stackfind_output")
+      sessionStorage.removeItem("stackfind_messages")
+      sessionStorage.removeItem("stackfind_master_stack")
+    } catch { /* ignore */ }
   }
 
   async function copyOutput() {
