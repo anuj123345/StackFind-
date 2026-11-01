@@ -734,7 +734,23 @@ export function PlaygroundClient({ tools, isAuthenticated, profile, usdToInrRate
   const searchParams = useSearchParams()
   const [sessionUsage, setSessionUsage] = useState(profile?.playground_usage_count || 0)
   const [messages, setMessages] = useState<{role:"user"|"assistant"; content:string}[]>([])
-  const [masterStack, setMasterStack] = useState<MasterStack | null>(null)
+  const [masterStack, setMasterStack] = useState<MasterStack | null>(() => {
+    // Restore from sessionStorage so category grouping survives tab switches
+    if (typeof window === "undefined") return null
+    try {
+      const saved = sessionStorage.getItem("stackfind_master_stack")
+      return saved ? JSON.parse(saved) : null
+    } catch { return null }
+  })
+
+  // Keep sessionStorage in sync whenever masterStack changes
+  useEffect(() => {
+    try {
+      if (masterStack) sessionStorage.setItem("stackfind_master_stack", JSON.stringify(masterStack))
+      else sessionStorage.removeItem("stackfind_master_stack")
+    } catch { /* ignore */ }
+  }, [masterStack])
+
   const outputRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const chatEndRef = useRef<HTMLDivElement>(null)
