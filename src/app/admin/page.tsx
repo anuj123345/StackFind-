@@ -38,7 +38,6 @@ export default async function AdminPage() {
   }
 
   const [tools, categories] = await Promise.all([getAllTools(), getAllCategories()])
-  const adminKey = process.env.ADMIN_KEY ?? ""
 
-  return <AdminDashboard tools={tools} categories={categories} adminKey={adminKey} />
+  return <AdminDashboard tools={tools} categories={categories} adminKey="" />
 }

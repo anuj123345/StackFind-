@@ -113,7 +113,6 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
       method,
       headers: {
         "Content-Type": "application/json",
-        "x-admin-key": adminKey,
       },
       body: body ? JSON.stringify(body) : undefined,
     })
@@ -194,7 +193,7 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
   async function loadAnalytics() {
     setStatsLoading(true)
     try {
-      const res = await fetch("/api/admin/analytics", { headers: { "x-admin-key": adminKey } })
+      const res = await fetch("/api/admin/analytics", { headers: { "Content-Type": "application/json" } })
       const data = await res.json()
       // API returns { stats: {...}, recentActivity: [...] } — flatten stats to top level
       setStats({ ...data.stats, recentActivity: data.recentActivity })
@@ -204,7 +203,7 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
   async function loadSubmissions() {
     setSubsLoading(true)
     try {
-      const res = await fetch("/api/admin/submissions?status=pending", { headers: { "x-admin-key": adminKey } })
+      const res = await fetch("/api/admin/submissions?status=pending", { headers: { "Content-Type": "application/json" } })
       const data = await res.json()
       setSubmissions(data.submissions ?? [])
       setSubsLoaded(true)
@@ -214,7 +213,7 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
   async function loadBillingRequests() {
     setLeadsLoading(true)
     try {
-      const res = await fetch("/api/admin/billing-requests?status=pending", { headers: { "x-admin-key": adminKey } })
+      const res = await fetch("/api/admin/billing-requests?status=pending", { headers: { "Content-Type": "application/json" } })
       const data = await res.json()
       setBillingRequests(data.requests ?? [])
       setLeadsLoaded(true)
@@ -224,7 +223,7 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
   async function loadUsers() {
     setUsersLoading(true)
     try {
-      const res = await fetch("/api/admin/users", { headers: { "x-admin-key": adminKey } })
+      const res = await fetch("/api/admin/users", { headers: { "Content-Type": "application/json" } })
       const data = await res.json()
       if (!res.ok) {
         console.error("[admin] loadUsers failed:", res.status, data)
@@ -248,7 +247,7 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
     startTransition(async () => {
       const res = await fetch("/api/admin/submissions", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-admin-key": adminKey },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "approve", submissionId: id }),
       })
       const data = await res.json()
@@ -262,7 +261,7 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
     startTransition(async () => {
       const res = await fetch("/api/admin/submissions", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-admin-key": adminKey },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "reject", submissionId: id }),
       })
       const data = await res.json()
@@ -276,7 +275,7 @@ export function AdminDashboard({ tools: initialTools, categories, adminKey }: Ad
     startTransition(async () => {
       const res = await fetch("/api/admin/billing-requests", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json", "x-admin-key": adminKey },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, status: "processed" }),
       })
       const data = await res.json()
